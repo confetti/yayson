@@ -1,9 +1,13 @@
 gulp = require 'gulp'
-coffee = require 'gulp-coffee'
-gutil = require 'gulp-util'
+source = require 'vinyl-source-stream'
+coffeeify = require 'coffeeify'
+browserify = require 'browserify'
 
 gulp.task 'build', ->
-  gulp.src("./src/*.coffee")
-    .pipe(coffee(bare: true).on("error", gutil.log))
-    .pipe gulp.dest("./lib/")
+  browserify('./src/yayson.coffee')
+    .transform(coffeeify)
+    .bundle()
+    .pipe(source('yayson.js'))
+    .pipe(gulp.dest('./lib/'))
 
+gulp.task 'default', ['build']
