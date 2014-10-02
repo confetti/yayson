@@ -1,95 +1,96 @@
-_ = require 'lodash/dist/lodash.underscore'
 
-TYPES =
-  'events': 'event'
-  'ticketBatches': 'ticketBatch'
-  'images': 'image'
-  'tickets': 'ticket'
-  'sponsors': 'sponsor'
-  'sponsorLevels': 'sponsorLevel'
-  'speakers': 'speaker'
-  'organisers': 'organiser'
-  'payments': 'payment'
+module.exports = (utils) ->
 
-class Record
-  constructor: (options) ->
-    @type = options.type
-    @data = options.data
+  # TODO: move to config
+  TYPES =
+    'events': 'event'
+    'ticketBatches': 'ticketBatch'
+    'images': 'image'
+    'tickets': 'ticket'
+    'sponsors': 'sponsor'
+    'sponsorLevels': 'sponsorLevel'
+    'speakers': 'speaker'
+    'organisers': 'organiser'
+    'payments': 'payment'
 
-class Store
-  constructor: (options) ->
-    @records = []
-    @relations = {}
 
-  toModel: (rec, type, models) ->
-    model = _(rec.data).clone()
-    models[type][model.id] ||= model
+  class Record
+    constructor: (options) ->
+      @type = options.type
+      @data = options.data
 
-    relations = @relations[type]
-    _.each relations, (relationType, attribute) =>
-      if _.isArray model[attribute]
-        model[attribute] = _.map model[attribute], (id) => @find relationType, id, models
-      else
-        model[attribute] = @find relationType, model[attribute], models
+  class Store
+    constructor: (options) ->
+      @records = []
+      @relations = {}
 
-    model
+    toModel: (rec, type, models) ->
+      model = utils.clone rec.data
+      models[type][model.id] ||= model
 
-  setupRelations: (links) ->
-    _.each links, (value, key) =>
-      [type, attribute] = key.split '.'
-      type = TYPES[type] || type
-      @relations[type] ||= {}
-      @relations[type][attribute] = TYPES[value.type] || value.type
+      relations = @relations[type]
+      for attribute, relationType of relations
+        model[attribute] = if model[attribute] instanceof Array
+          model[attribute].map (id) => @find relationType, id, models
+        else
+          @find relationType, model[attribute], models
 
-  findRecord: (type, id) ->
-    _(@records).find (r) ->
-      r.type == type && r.data.id == id
+      model
 
-  findRecords: (type) ->
-    _(@records).filter (r) ->
-      r.type == type
+    setupRelations: (links) ->
+      for key, value of links
+        [type, attribute] = key.split '.'
+        type = TYPES[type] || type
+        @relations[type] ||= {}
+        @relations[type][attribute] = TYPES[value.type] || value.type
 
-  retrive: (type, data) ->
-    @sync data
-    id = data[type].id
-    @find(type, id)
+    findRecord: (type, id) ->
+      utils.find @records, (r) ->
+        r.type == type && r.data.id == id
 
-  find: (type, id, models = {}) ->
-    rec = @findRecord(type, id)
-    return null unless rec?
-    models[type] ||= {}
-    models[type][id] || @toModel(rec, type, models)
+    findRecords: (type) ->
+      utils.filter @records, (r) ->
+        r.type == type
 
-  findAll: (type, models = {}) ->
-    recs = @findRecords(type)
-    return [] unless recs?
-    recs.forEach (rec) =>
+    retrive: (type, data) ->
+      @sync data
+      id = data[type].id
+      @find(type, id)
+
+    find: (type, id, models = {}) ->
+      rec = @findRecord(type, id)
+      return null unless rec?
       models[type] ||= {}
-      @toModel(rec, type, models)
-    _.values models[type]
+      models[type][id] || @toModel(rec, type, models)
 
-  remove: (type, id) ->
-    index = @records.indexOf(@findRecord(type, id))
-    @records.splice(index, 1) unless index < 0
+    findAll: (type, models = {}) ->
+      recs = @findRecords(type)
+      return [] unless recs?
+      recs.forEach (rec) =>
+        models[type] ||= {}
+        @toModel(rec, type, models)
+      utils.values models[type]
 
-  sync: (data) ->
+    remove: (type, id) ->
+      index = @records.indexOf(@findRecord(type, id))
+      @records.splice(index, 1) unless index < 0
 
-    @setupRelations data.links
-    delete data.links
+    sync: (data) ->
+      @setupRelations data.links
+      delete data.links
 
-    for name of data
-      value = data[name]
-      add = (d) =>
-        type = TYPES[name] || name
-        @remove type, d.id
-        @records.push new Record(type: type, data: d)
+      for name of data
+        value = data[name]
+        add = (d) =>
+          type = TYPES[name] || name
+          @remove type, d.id
+          @records.push new Record(type: type, data: d)
 
-      if value instanceof Array
-        value.forEach add
-      else
-        add value
+        if value instanceof Array
+          value.forEach add
+        else
+          add value
 
 
 
-module.exports = Store
 

@@ -1,6 +1,6 @@
 expect = require('chai').expect
 
-Presenter = require '../../src/yayson/presenter'
+Presenter = require('../../src/yayson.coffee').Presenter
 
 describe 'Presenter', ->
   it 'handles null', ->
