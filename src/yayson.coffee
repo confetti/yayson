@@ -14,8 +14,8 @@ Q ||= tryRequire 'q'
 _ ||= tryRequire 'lodash/dist/lodash.underscore'
 _ ||= tryRequire 'underscore'
 
-utils = require('./yayson/utils.coffee')(_, Q)
+utils = require('./yayson/utils')(_, Q)
 
 module.exports =
-  Store: require('./yayson/store.coffee')(utils)
-  Presenter: require('./yayson/presenter.coffee')(utils)
+  Store: require('./yayson/store')(utils)
+  Presenter: require('./yayson/presenter')(utils)
