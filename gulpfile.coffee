@@ -4,6 +4,10 @@ coffeeify = require 'coffeeify'
 browserify = require 'browserify'
 gutil = require 'gulp-util'
 coffee = require 'gulp-coffee'
+http = require 'http'
+ecstatic = require 'ecstatic'
+
+serverport = 5005
 
 gulp.task 'browserify', ->
   browserify('./src/yayson.coffee', {extensions: ['.coffee']})
@@ -18,3 +22,22 @@ gulp.task 'build', ->
     .pipe(gulp.dest('./lib/'))
 
 gulp.task 'default', ['browserify', 'build']
+
+gulp.task 'test-serve', ->
+  http.createServer(ecstatic  root: __dirname + '/' ).listen(serverport)
+
+  console.log "Listening on #{serverport}"
+
+gulp.task 'test-coffee', ->
+  browserify('./test/browser.coffee', {extensions: ['.coffee']})
+    .transform(coffeeify)
+    .bundle()
+    .pipe(source('browser.js'))
+    .pipe(gulp.dest('./test/.tmp/'))
+
+gulp.task 'test-watch', ->
+  gulp.watch('./src/**/*.coffee', ['test-coffee'])
+  gulp.watch('./test/**/*.coffee', ['test-coffee'])
+
+
+gulp.task 'test-browser', ['test-watch', 'test-serve']

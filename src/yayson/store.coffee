@@ -5,12 +5,12 @@ module.exports = (utils) ->
     constructor: (options) ->
       @type = options.type
       @data = options.data
-      @types = options.types || {}
 
   class Store
     constructor: (options) ->
       @records = []
       @relations = {}
+      @types = options.types || {}
 
     toModel: (rec, type, models) ->
       model = utils.clone rec.data
