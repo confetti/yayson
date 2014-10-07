@@ -1,23 +1,11 @@
 
 module.exports = (utils) ->
 
-  # TODO: move to config
-  TYPES =
-    'events': 'event'
-    'ticketBatches': 'ticketBatch'
-    'images': 'image'
-    'tickets': 'ticket'
-    'sponsors': 'sponsor'
-    'sponsorLevels': 'sponsorLevel'
-    'speakers': 'speaker'
-    'organisers': 'organiser'
-    'payments': 'payment'
-
-
   class Record
     constructor: (options) ->
       @type = options.type
       @data = options.data
+      @types = options.types || {}
 
   class Store
     constructor: (options) ->
@@ -40,9 +28,9 @@ module.exports = (utils) ->
     setupRelations: (links) ->
       for key, value of links
         [type, attribute] = key.split '.'
-        type = TYPES[type] || type
+        type = @types[type] || type
         @relations[type] ||= {}
-        @relations[type][attribute] = TYPES[value.type] || value.type
+        @relations[type][attribute] = @types[value.type] || value.type
 
     findRecord: (type, id) ->
       utils.find @records, (r) ->
@@ -82,7 +70,7 @@ module.exports = (utils) ->
       for name of data
         value = data[name]
         add = (d) =>
-          type = TYPES[name] || name
+          type = @types[name] || name
           @remove type, d.id
           @records.push new Record(type: type, data: d)
 
