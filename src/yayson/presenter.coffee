@@ -1,5 +1,7 @@
-module.exports = (utils) ->
+module.exports = (utils, adapter) ->
   class Presenter
+    @adapter: adapter
+
     name: 'object'
     serialize: {}
 
@@ -15,7 +17,7 @@ module.exports = (utils) ->
 
     attributes: (instance) ->
       return null unless instance
-      attributes = utils.clone instance.get()
+      attributes = utils.clone adapter.get instance
       serialize = @serialize()
       for key of serialize
         data = attributes[key]
@@ -33,13 +35,9 @@ module.exports = (utils) ->
       serialize = @serialize()
       for key of serialize
         factory = serialize[key] || throw new Error("Presenter for #{key} in #{@name} is not defined")
-        # Old code keep, until sure that it isn't needed
-        # data = instance.get(key)
-        # continue unless data?
-        # factory = serialize[key]
         presenter = new factory(scope)
 
-        data = instance.get(key)
+        data = adapter.get instance, key
         presenter.toJSON data, defaultPlural: true if data?
 
         name = if scope[@pluralName()]? then @pluralName() else @name

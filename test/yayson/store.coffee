@@ -5,16 +5,17 @@ Store = require('../../src/yayson.coffee').Store
 describe 'Store', ->
 
   beforeEach ->
-    @store = new Store types:
-      'events': 'event'
-      'ticketBatches': 'ticketBatch'
-      'images': 'image'
-      'tickets': 'ticket'
-      'sponsors': 'sponsor'
-      'sponsorLevels': 'sponsorLevel'
-      'speakers': 'speaker'
-      'organisers': 'organiser'
-      'payments': 'payment'
+    @store = new Store
+      types:
+        'events': 'event'
+        'ticketBatches': 'ticketBatch'
+        'images': 'image'
+        'tickets': 'ticket'
+        'sponsors': 'sponsor'
+        'sponsorLevels': 'sponsorLevel'
+        'speakers': 'speaker'
+        'organisers': 'organiser'
+        'payments': 'payment'
 
     @store.records = []
     @store.relations = {}

@@ -16,6 +16,24 @@ _ ||= tryRequire 'underscore'
 
 utils = require('./yayson/utils')(_, Q)
 
-module.exports =
+Adapter = require('./yayson/adapter')
+adapters = require('./yayson/adapters')
+presenterFactory = require('./yayson/presenter')
+
+lookupAdapter = (nameOrAdapter) ->
+  adapters[nameOrAdapter] || Adapter
+
+presenter = (options = {}) ->
+  adapter = lookupAdapter options.adapter
+  presenterFactory(utils, adapter)
+
+yayson =
   Store: require('./yayson/store')(utils)
-  Presenter: require('./yayson/presenter')(utils)
+  presenter: presenter
+  Adapter: Adapter
+
+  # LEGACY: Remove in 2.0
+  Presenter: presenter(adapter: 'sequelize')
+
+
+module.exports = yayson

@@ -21,6 +21,12 @@ A basic `Presenter` can look like this:
       speaker: presenters.apps.speakers.speaker
 ```
 
+By default it is set up to handle standard JS objects. You can also make
+it handle Sequalize models like this:
+
+```
+
+```
 
 ## Parsing data
 
