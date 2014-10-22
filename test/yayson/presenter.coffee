@@ -60,3 +60,16 @@ describe 'Presenter', ->
         'car.tire': type: 'tires'
       tires: [id: 2, car: 1]
 
+  it 'should serialize in pure JS', ->
+
+      `
+      var EventPresenter = function () { Presenter.call(this); }
+      EventPresenter.prototype = new Presenter()
+      EventPresenter.prototype.attributes = function() {
+        return {hej: 'test'}
+      }
+      var presenter = new EventPresenter()
+      var json = presenter.toJSON({id: 1})
+      `
+      expect(json.object.hej).to.eq 'test'
+

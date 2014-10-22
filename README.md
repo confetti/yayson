@@ -8,8 +8,8 @@ A library for serializing and reading JSON API standardized data in JavaScript.
 A basic `Presenter` can look like this:
 
 ```coffee
-  class ScheduleItemPresenter extends Presenter
-    name: 'scheduleItem'
+  class ItemPresenter extends Presenter
+    name: 'item'
 
     attributes: ->
       attrs = super
@@ -17,8 +17,35 @@ A basic `Presenter` can look like this:
       attrs
 
     serialize: ->
-      event: presenters.event
-      speaker: presenters.apps.speakers.speaker
+      event: EventPresenter
+
+  presenter = new ItemPresenter()
+  presenter.present(item)
+```
+
+In JavaScript this would be done as:
+
+```javascript
+var ItemPresenter = function () { Presenter.call(this); }
+ItemPresenter.prototype = new Presenter()
+
+ItemPresenter.prototype.name = 'item'
+
+ItemPresenter.prototype.attributes = function() {
+  var attrs = Presenter.prototype.attributes.apply(this, arguments);
+
+  attrs.start = moment.utc(attrs.start).toDate();
+  return attrs;
+}
+
+ItemPresenter.prototype.serialize = function() {
+  return {
+    event: EventPresenter
+  }
+}
+
+var presenter = new ItemPresenter()
+var json = presenter.toJSON({id: 1})
 ```
 
 
