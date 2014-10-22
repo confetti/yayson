@@ -8,6 +8,8 @@ A library for serializing and reading JSON API standardized data in JavaScript.
 A basic `Presenter` can look like this:
 
 ```coffee
+  Presenter = require('yayson').presenter()
+
   class ItemPresenter extends Presenter
     name: 'item'
 
@@ -26,6 +28,9 @@ A basic `Presenter` can look like this:
 In JavaScript this would be done as:
 
 ```javascript
+
+var Presenter = require('yayson').presenter()
+
 var ItemPresenter = function () { Presenter.call(this); }
 ItemPresenter.prototype = new Presenter()
 
@@ -49,9 +54,10 @@ var json = presenter.toJSON(item)
 ```
 
 By default it is set up to handle standard JS objects. You can also make
-it handle Sequalize models like this:
+it handle Sequalize.js models like this:
 
-```
+```coffee
+Presenter = require('yayson').presenter(adapter: 'sequelize')
 
 ```
 
