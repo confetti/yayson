@@ -45,7 +45,7 @@ ItemPresenter.prototype.serialize = function() {
 }
 
 var presenter = new ItemPresenter()
-var json = presenter.toJSON({id: 1})
+var json = presenter.toJSON(item)
 ```
 
 
