@@ -1,5 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var Q, tryRequire, utils, _;
+var Adapter, Q, adapters, lookupAdapter, presenter, presenterFactory, tryRequire, utils, yayson, _;
 
 tryRequire = function(dep) {
   try {
@@ -23,17 +23,80 @@ _ || (_ = tryRequire('underscore'));
 
 utils = require('./yayson/utils')(_, Q);
 
-module.exports = {
+Adapter = require('./yayson/adapter');
+
+adapters = require('./yayson/adapters');
+
+presenterFactory = require('./yayson/presenter');
+
+lookupAdapter = function(nameOrAdapter) {
+  return adapters[nameOrAdapter] || Adapter;
+};
+
+presenter = function(options) {
+  var adapter;
+  if (options == null) {
+    options = {};
+  }
+  adapter = lookupAdapter(options.adapter);
+  return presenterFactory(utils, adapter);
+};
+
+yayson = {
   Store: require('./yayson/store')(utils),
-  Presenter: require('./yayson/presenter')(utils)
+  presenter: presenter,
+  Adapter: Adapter,
+  Presenter: presenter({
+    adapter: 'sequelize'
+  })
+};
+
+module.exports = yayson;
+
+
+
+},{"./yayson/adapter":2,"./yayson/adapters":3,"./yayson/presenter":5,"./yayson/store":6,"./yayson/utils":7}],2:[function(require,module,exports){
+var Adapter;
+
+Adapter = {
+  get: function(model, key) {
+    if (key) {
+      return model[key];
+    }
+    return model;
+  }
+};
+
+module.exports = Adapter;
+
+
+
+},{}],3:[function(require,module,exports){
+module.exports = {
+  sequelize: require('./sequelize')
 };
 
 
 
-},{"./yayson/presenter":2,"./yayson/store":3,"./yayson/utils":4}],2:[function(require,module,exports){
-module.exports = function(utils) {
+},{"./sequelize":4}],4:[function(require,module,exports){
+var SequelizeAdapter;
+
+SequelizeAdapter = {
+  get: function(model, key) {
+    return model.get(key);
+  }
+};
+
+module.exports = SequelizeAdapter;
+
+
+
+},{}],5:[function(require,module,exports){
+module.exports = function(utils, adapter) {
   var Presenter;
   Presenter = (function() {
+    Presenter.adapter = adapter;
+
     Presenter.prototype.name = 'object';
 
     Presenter.prototype.serialize = {};
@@ -58,7 +121,7 @@ module.exports = function(utils) {
       if (!instance) {
         return null;
       }
-      attributes = utils.clone(instance.get());
+      attributes = utils.clone(adapter.get(instance));
       serialize = this.serialize();
       for (key in serialize) {
         data = attributes[key];
@@ -88,7 +151,7 @@ module.exports = function(utils) {
           throw new Error("Presenter for " + key + " in " + this.name + " is not defined");
         }).call(this);
         presenter = new factory(scope);
-        data = instance.get(key);
+        data = adapter.get(instance, key);
         if (data != null) {
           presenter.toJSON(data, {
             defaultPlural: true
@@ -181,20 +244,9 @@ module.exports = function(utils) {
 
 
 
-},{}],3:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 module.exports = function(utils) {
-  var Record, Store, TYPES;
-  TYPES = {
-    'events': 'event',
-    'ticketBatches': 'ticketBatch',
-    'images': 'image',
-    'tickets': 'ticket',
-    'sponsors': 'sponsor',
-    'sponsorLevels': 'sponsorLevel',
-    'speakers': 'speaker',
-    'organisers': 'organiser',
-    'payments': 'payment'
-  };
+  var Record, Store;
   Record = (function() {
     function Record(options) {
       this.type = options.type;
@@ -208,6 +260,7 @@ module.exports = function(utils) {
     function Store(options) {
       this.records = [];
       this.relations = {};
+      this.types = options.types || {};
     }
 
     Store.prototype.toModel = function(rec, type, models) {
@@ -232,9 +285,9 @@ module.exports = function(utils) {
       for (key in links) {
         value = links[key];
         _ref = key.split('.'), type = _ref[0], attribute = _ref[1];
-        type = TYPES[type] || type;
+        type = this.types[type] || type;
         (_base = this.relations)[type] || (_base[type] = {});
-        _results.push(this.relations[type][attribute] = TYPES[value.type] || value.type);
+        _results.push(this.relations[type][attribute] = this.types[value.type] || value.type);
       }
       return _results;
     };
@@ -307,7 +360,7 @@ module.exports = function(utils) {
         add = (function(_this) {
           return function(d) {
             var type;
-            type = TYPES[name] || name;
+            type = _this.types[name] || name;
             _this.remove(type, d.id);
             return _this.records.push(new Record({
               type: type,
@@ -331,7 +384,7 @@ module.exports = function(utils) {
 
 
 
-},{}],4:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 module.exports = function(_, Q) {
   var utils;
   if (_ == null) {
@@ -363,12 +416,18 @@ module.exports = function(_, Q) {
       return res;
     },
     values: _.values || function(obj) {
+      if (obj == null) {
+        obj = {};
+      }
       return Object.keys(obj).map(function(key) {
         return obj[key];
       });
     },
     clone: _.clone || function(obj) {
       var clone, key, val;
+      if (obj == null) {
+        obj = {};
+      }
       clone = {};
       for (key in obj) {
         val = obj[key];

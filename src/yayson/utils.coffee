@@ -12,10 +12,10 @@ module.exports = (_ = {}, Q = {}) ->
         res.push elem if callback(elem)
       res
 
-    values: _.values || (obj) ->
+    values: _.values || (obj = {}) ->
       Object.keys(obj).map (key) -> obj[key]
 
-    clone: _.clone || (obj) ->
+    clone: _.clone || (obj = {}) ->
       clone = {}
       for key, val of obj
         clone[key] = val
