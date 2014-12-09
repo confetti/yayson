@@ -83,7 +83,9 @@ var SequelizeAdapter;
 
 SequelizeAdapter = {
   get: function(model, key) {
-    return model.get(key);
+    if (model != null) {
+      return model.get(key);
+    }
   }
 };
 
