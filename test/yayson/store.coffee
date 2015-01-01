@@ -88,6 +88,25 @@ describe 'Store', ->
 
 
 
+  it 'should remove an event', ->
+    @store.sync events: [
+      {id: 1, name: 'Demo'}
+      {id: 2, name: 'Demo 2'}
+    ]
 
+    @store.remove 'event', 1
+    event = @store.find 'event', 1
+    expect(event).to.eq null
+
+
+  it 'should remove all events', ->
+    @store.sync events: [
+      {id: 1, name: 'Demo'}
+      {id: 2, name: 'Demo 2'}
+    ]
+
+    @store.remove 'event'
+    events = @store.findAll 'event'
+    expect(events).to.deep.eq []
 
 

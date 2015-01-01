@@ -345,19 +345,33 @@ module.exports = function(utils) {
     };
 
     Store.prototype.remove = function(type, id) {
-      var index;
-      index = this.records.indexOf(this.findRecord(type, id));
-      if (!(index < 0)) {
-        return this.records.splice(index, 1);
+      var records, remove;
+      type = this.types[type] || type;
+      remove = (function(_this) {
+        return function(record) {
+          var index;
+          index = _this.records.indexOf(record);
+          if (!(index < 0)) {
+            return _this.records.splice(index, 1);
+          }
+        };
+      })(this);
+      if (id != null) {
+        return remove(this.findRecord(type, id));
+      } else {
+        records = this.findRecords(type);
+        return records.forEach(remove);
       }
     };
 
     Store.prototype.sync = function(data) {
       var add, name, value, _results;
       this.setupRelations(data.links);
-      delete data.links;
       _results = [];
       for (name in data) {
+        if (name === 'meta' || name === 'links') {
+          break;
+        }
         value = data[name];
         add = (function(_this) {
           return function(d) {

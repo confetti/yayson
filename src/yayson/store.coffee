@@ -60,15 +60,27 @@ module.exports = (utils) ->
       utils.values models[type]
 
     remove: (type, id) ->
-      index = @records.indexOf(@findRecord(type, id))
-      @records.splice(index, 1) unless index < 0
+      type = @types[type] || type
+
+      remove = (record) =>
+        index = @records.indexOf record
+        @records.splice(index, 1) unless index < 0
+
+      if id?
+        remove @findRecord(type, id)
+      else
+        records = @findRecords type
+        records.forEach remove
+
 
     sync: (data) ->
       @setupRelations data.links
-      delete data.links
 
       for name of data
+        continue if name == 'meta' || name == 'links'
+
         value = data[name]
+
         add = (d) =>
           type = @types[name] || name
           @remove type, d.id
@@ -78,7 +90,6 @@ module.exports = (utils) ->
           value.forEach add
         else
           add value
-
 
 
 
