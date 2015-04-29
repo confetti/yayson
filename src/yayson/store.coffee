@@ -8,9 +8,12 @@ module.exports = (utils) ->
 
   class Store
     constructor: (options) ->
+      @types = options.types || {}
+      @reset()
+
+    reset: ->
       @records = []
       @relations = {}
-      @types = options.types || {}
 
     toModel: (rec, type, models) ->
       model = utils.clone rec.data

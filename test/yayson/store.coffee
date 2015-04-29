@@ -110,3 +110,19 @@ describe 'Store', ->
     expect(events).to.deep.eq []
 
 
+  it 'should reset', ->
+    @store.sync
+      events: [
+        {id: 1, name: 'Demo'}
+        {id: 2, name: 'Demo 2'}
+      ],
+      images: [
+        {id: 1, name: 'Image'}
+        {id: 2, name: 'Image 2'}
+      ]
+
+    @store.reset()
+    events = @store.findAll 'event'
+    images = @store.findAll 'image'
+    expect(events).to.deep.eq []
+    expect(images).to.deep.eq []
