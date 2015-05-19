@@ -260,10 +260,14 @@ module.exports = function(utils) {
   })();
   return Store = (function() {
     function Store(options) {
-      this.records = [];
-      this.relations = {};
       this.types = options.types || {};
+      this.reset();
     }
+
+    Store.prototype.reset = function() {
+      this.records = [];
+      return this.relations = {};
+    };
 
     Store.prototype.toModel = function(rec, type, models) {
       var attribute, model, relationType, relations, _base, _name;
@@ -370,7 +374,7 @@ module.exports = function(utils) {
       _results = [];
       for (name in data) {
         if (name === 'meta' || name === 'links') {
-          break;
+          continue;
         }
         value = data[name];
         add = (function(_this) {
