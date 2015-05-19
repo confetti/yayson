@@ -1,7 +1,7 @@
 
 expect = require('chai').expect
 
-Adapter = require('../../src/yayson.coffee').Adapter
+Adapter = require('../../src/yayson.coffee')().Adapter
 
 describe 'Adapter', ->
   it 'should get all object properties', ->

@@ -27,13 +27,8 @@ presenter = (options = {}) ->
   adapter = lookupAdapter options.adapter
   presenterFactory(utils, adapter)
 
-yayson =
+module.exports = ({adapter} = {}) ->
   Store: require('./yayson/store')(utils)
-  presenter: presenter
+  Presenter: presenter({adapter})
   Adapter: Adapter
 
-  # LEGACY: Remove in 2.0
-  Presenter: presenter(adapter: 'sequelize')
-
-
-module.exports = yayson

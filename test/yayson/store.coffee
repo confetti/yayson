@@ -1,6 +1,6 @@
 expect = require('chai').expect
 
-Store = require('../../src/yayson.coffee').Store
+Store = require('../../src/yayson.coffee')().Store
 
 describe 'Store', ->
 
