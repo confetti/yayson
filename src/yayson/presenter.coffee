@@ -14,18 +14,11 @@ module.exports = (utils, adapter) ->
     serialize: ->
 
     attributes: (instance) ->
-      return null unless instance
+      return null unless instance?
       attributes = utils.clone adapter.get instance
       serialize = @serialize()
       for key of serialize
-        data = attributes[key]
-        unless data?
-          id = attributes[key + 'Id']
-          attributes[key] = id if id?
-        else if data instanceof Array
-          attributes[key] = data.map (obj) -> obj.id
-        else
-          attributes[key] = data.id
+        delete attributes[key]
       attributes
 
     relations: (scope, instance) ->
@@ -35,13 +28,26 @@ module.exports = (utils, adapter) ->
         presenter = new factory(scope)
 
         data = adapter.get instance, key
-        presenter.toJSON data, defaultPlural: true if data?
+        presenter.toJSON data, include: true if data?
 
-        name = @type
-        keyName = presenter.type
-        scope.links ||= {}
-        scope.links["#{name}.#{key}"] =
-          type: keyName
+    relationships: (instance) ->
+      return null unless instance?
+      serialize = @serialize()
+      relationships = null
+      for key of serialize
+        data = adapter.get instance, key
+        presenter = serialize[key]
+        relationships ||= {}
+        relationships[key] ||= {}
+        relationships[key].linkage = if data instanceof Array
+          data.map (d) ->
+            id: adapter.id d
+            type: presenter::type
+        else
+          id: adapter.id data
+          type: presenter::type
+      relationships
+
 
     toJSON: (instanceOrCollection, options = {}) ->
       @scope.data ||= null
@@ -56,19 +62,26 @@ module.exports = (utils, adapter) ->
         instance = instanceOrCollection
         added = true
         model  =
-          id: @id instanc
+          id: @id instance
           type: @type
           attributes: @attributes instance
+        relationships = @relationships instance
+        model.relationships = relationships if relationships?
+
         links = @links()
         model.links = links if links?
 
-        if @scope.data?
+        if options.include
+          @scope.included ||= []
+          unless utils.any(@scope.included.concat(@scope.data), (i) -> i.id == model.id)
+            @scope.included.push model
+          else
+            added = false
+        else if @scope.data?
           unless utils.any(@scope.data, (i) -> i.id == model.id)
             @scope.data.push model
           else
             added = false
-        else if options.defaultPlural
-          @scope.data = [model]
         else
           @scope.data = model
 

@@ -48,7 +48,7 @@ describe 'Presenter', ->
           id: 1
       ]
 
-  it.only 'should serialize relations', ->
+  it 'should serialize relations', ->
     class MotorPresenter extends Presenter
       type: 'motors'
       serialize: ->
@@ -81,7 +81,17 @@ describe 'Presenter', ->
             linkage:
               type: 'motors'
               id: 2
-
+      included: [
+        type: 'motors'
+        id: 2
+        attributes:
+          id: 2
+        relationships:
+          car:
+            linkage:
+              type: 'cars'
+              id: 1
+      ]
 
   it 'should serialize in pure JS', ->
     `
@@ -93,12 +103,24 @@ describe 'Presenter', ->
     var presenter = new EventPresenter()
     var json = presenter.toJSON({id: 1})
     `
-    expect(json.object.hej).to.eq 'test'
+    expect(json.data.attributes.hej).to.eq 'test'
 
 
   it 'should use the sequelize adapter', ->
     {Presenter} = require('../../src/yayson.coffee')(adapter: 'sequelize')
-    obj = {get: -> {foo: 'bar'}}
+    obj = get: (attr) ->
+      attrs = {id: 5, foo: 'bar'}
+      if attr?
+        attrs[attr]
+      else
+        attrs
+
     json = Presenter.toJSON(obj)
-    expect(json).to.deep.equal {object: {foo: 'bar'}, links: {}}
+    expect(json).to.deep.equal
+      data:
+        type: 'objects'
+        id: 5
+        attributes:
+          id: 5
+          foo: 'bar'
 
