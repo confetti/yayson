@@ -1,15 +1,13 @@
 module.exports = (utils, adapter) ->
   class Presenter
     @adapter: adapter
-
-    name: 'object'
-    serialize: {}
+    type: 'objects'
 
     constructor: (scope = {}) ->
       @scope = scope
 
-    pluralName: ->
-      @plural || @name + 's'
+    id: (instance) ->
+      adapter.id instance
 
     links: ->
 
@@ -31,50 +29,48 @@ module.exports = (utils, adapter) ->
       attributes
 
     relations: (scope, instance) ->
-      scope.links ||= {}
       serialize = @serialize()
       for key of serialize
-        factory = serialize[key] || throw new Error("Presenter for #{key} in #{@name} is not defined")
+        factory = serialize[key] || throw new Error("Presenter for #{key} in #{@type} is not defined")
         presenter = new factory(scope)
 
         data = adapter.get instance, key
         presenter.toJSON data, defaultPlural: true if data?
 
-        name = if scope[@pluralName()]? then @pluralName() else @name
-        keyName = if scope[presenter.pluralName()]? then presenter.pluralName() else presenter.name
+        name = @type
+        keyName = presenter.type
+        scope.links ||= {}
         scope.links["#{name}.#{key}"] =
           type: keyName
 
     toJSON: (instanceOrCollection, options = {}) ->
+      @scope.data ||= null
+      return @scope unless instanceOrCollection?
+
       if instanceOrCollection instanceof Array
         collection = instanceOrCollection
-        @scope[@pluralName()] ||= []
+        @scope.data ||= []
         collection.forEach (instance) =>
           @toJSON instance
       else
         instance = instanceOrCollection
         added = true
-        attrs = @attributes instance
-        attrs.links = links if links = @links()
-        # If eg x.image already exists
-        if @scope[@name] && !@scope[@pluralName()]
-          if @scope[@name].id != attrs.id
-            @scope[@pluralName()] = [@scope[@name]]
-            delete @scope[@name]
-            @scope[@pluralName()].push attrs
-          else
-            added = false
+        model  =
+          id: @id instanc
+          type: @type
+          attributes: @attributes instance
+        links = @links()
+        model.links = links if links?
 
-        # If eg x.images already exists
-        else if @scope[@pluralName()]
-          unless utils.any(@scope[@pluralName()], (i) -> i.id == attrs.id)
-            @scope[@pluralName()].push attrs
+        if @scope.data?
+          unless utils.any(@scope.data, (i) -> i.id == model.id)
+            @scope.data.push model
           else
             added = false
         else if options.defaultPlural
-          @scope[@pluralName()] = [attrs]
+          @scope.data = [model]
         else
-          @scope[@name] = attrs
+          @scope.data = model
 
         @relations @scope, instance if added
       @scope

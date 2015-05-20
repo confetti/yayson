@@ -5,51 +5,83 @@ expect = require('chai').expect
 describe 'Presenter', ->
   it 'handles null', ->
     json = Presenter.toJSON(null)
-    expect(json).to.deep.equal {object: null, links: {}}
+    expect(json).to.deep.equal
+      data: null
 
   it 'create json structure of an object', ->
-    obj = {foo: 'bar'}
+    obj = {id: 5, foo: 'bar'}
     json = Presenter.toJSON(obj)
-    expect(json).to.deep.equal {object: {foo: 'bar'}, links: {}}
+    expect(json).to.deep.equal
+      data:
+        type: 'objects'
+        id: 5
+        attributes:
+          id: 5
+          foo: 'bar'
 
-  it 'create json structure of an object', ->
-    obj = [{id: 1, foo: 'bar'}, {id: 2, foo: 'bar'}]
+  it 'create json structure of an array of objects', ->
+    obj = [{id: 1, foo: 'bar'}, {id: 2, foo: 'baz'}]
     json = Presenter.toJSON(obj)
-    expect(json).to.deep.equal {objects: [{id: 1, foo: 'bar'}, {id: 2, foo: 'bar'}], links: {}}
+    expect(json).to.deep.equal
+      data: [{
+        type: 'objects'
+        id: 1
+        attributes:
+          id: 1
+          foo: 'bar'
+      },{
+        type: 'objects'
+        id: 2
+        attributes:
+          id: 2
+          foo: 'baz'
+      }]
 
   it 'should not dup object', ->
     obj = [{id: 1}, {id: 1}]
     json = Presenter.toJSON(obj)
-    expect(json).to.deep.equal {objects: [{id: 1}], links: {}}
+    expect(json).to.deep.equal
+      data: [
+        type: 'objects'
+        id: 1
+        attributes:
+          id: 1
+      ]
 
-  it 'should serialize relations', ->
-    class TirePresenter extends Presenter
-      name: 'tire'
+  it.only 'should serialize relations', ->
+    class MotorPresenter extends Presenter
+      type: 'motors'
       serialize: ->
         car: CarPresenter
 
     class CarPresenter extends Presenter
-      name: 'car'
+      type: 'cars'
       serialize: ->
-        tire: TirePresenter
+        motor: MotorPresenter
 
-    tire =
+    motor =
       id: 2
       car: null
 
     car =
       id: 1
-      tire: tire
+      motor: motor
 
-    tire.car = car
+    motor.car = car
 
     json = CarPresenter.toJSON(car)
     expect(json).to.deep.equal
-      car: {id: 1, tire: 2}
-      links:
-        'tires.car': type: 'car'
-        'car.tire': type: 'tires'
-      tires: [{id: 2, car: 1}]
+      data:
+        type: 'cars'
+        id: 1
+        attributes:
+          id: 1
+        relationships:
+          motor:
+            linkage:
+              type: 'motors'
+              id: 2
+
 
   it 'should serialize in pure JS', ->
     `

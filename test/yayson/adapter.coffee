@@ -11,3 +11,7 @@ describe 'Adapter', ->
   it 'should get object property', ->
     name = Adapter.get {name: 'Abraham'}, 'name'
     expect(name).to.eq 'Abraham'
+
+  it 'should get the id', ->
+    id = Adapter.id {id: 5}
+    expect(id).to.eq 5

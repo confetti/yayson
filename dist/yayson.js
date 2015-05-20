@@ -59,14 +59,23 @@ module.exports = function(_arg) {
 },{"./yayson/adapter":2,"./yayson/adapters":3,"./yayson/presenter":5,"./yayson/store":6,"./yayson/utils":7}],2:[function(require,module,exports){
 var Adapter;
 
-Adapter = {
-  get: function(model, key) {
+Adapter = (function() {
+  function Adapter() {}
+
+  Adapter.get = function(model, key) {
     if (key) {
       return model[key];
     }
     return model;
-  }
-};
+  };
+
+  Adapter.id = function(model) {
+    return this.get(model, 'id');
+  };
+
+  return Adapter;
+
+})();
 
 module.exports = Adapter;
 
@@ -80,29 +89,40 @@ module.exports = {
 
 
 },{"./sequelize":4}],4:[function(require,module,exports){
-var SequelizeAdapter;
+var Adapter, SequelizeAdapter,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-SequelizeAdapter = {
-  get: function(model, key) {
+Adapter = require('../adapter');
+
+SequelizeAdapter = (function(_super) {
+  __extends(SequelizeAdapter, _super);
+
+  function SequelizeAdapter() {
+    return SequelizeAdapter.__super__.constructor.apply(this, arguments);
+  }
+
+  SequelizeAdapter.get = function(model, key) {
     if (model != null) {
       return model.get(key);
     }
-  }
-};
+  };
+
+  return SequelizeAdapter;
+
+})(Adapter);
 
 module.exports = SequelizeAdapter;
 
 
 
-},{}],5:[function(require,module,exports){
+},{"../adapter":2}],5:[function(require,module,exports){
 module.exports = function(utils, adapter) {
   var Presenter;
   Presenter = (function() {
     Presenter.adapter = adapter;
 
-    Presenter.prototype.name = 'object';
-
-    Presenter.prototype.serialize = {};
+    Presenter.prototype.type = 'objects';
 
     function Presenter(scope) {
       if (scope == null) {
@@ -111,8 +131,8 @@ module.exports = function(utils, adapter) {
       this.scope = scope;
     }
 
-    Presenter.prototype.pluralName = function() {
-      return this.plural || this.name + 's';
+    Presenter.prototype.id = function(instance) {
+      return adapter.id(instance);
     };
 
     Presenter.prototype.links = function() {};
@@ -146,12 +166,11 @@ module.exports = function(utils, adapter) {
 
     Presenter.prototype.relations = function(scope, instance) {
       var data, factory, key, keyName, name, presenter, serialize, _results;
-      scope.links || (scope.links = {});
       serialize = this.serialize();
       _results = [];
       for (key in serialize) {
         factory = serialize[key] || (function() {
-          throw new Error("Presenter for " + key + " in " + this.name + " is not defined");
+          throw new Error("Presenter for " + key + " in " + this.type + " is not defined");
         }).call(this);
         presenter = new factory(scope);
         data = adapter.get(instance, key);
@@ -160,8 +179,9 @@ module.exports = function(utils, adapter) {
             defaultPlural: true
           });
         }
-        name = scope[this.pluralName()] != null ? this.pluralName() : this.name;
-        keyName = scope[presenter.pluralName()] != null ? presenter.pluralName() : presenter.name;
+        name = this.type;
+        keyName = presenter.type;
+        scope.links || (scope.links = {});
         _results.push(scope.links["" + name + "." + key] = {
           type: keyName
         });
@@ -170,13 +190,17 @@ module.exports = function(utils, adapter) {
     };
 
     Presenter.prototype.toJSON = function(instanceOrCollection, options) {
-      var added, attrs, collection, instance, links, _base, _name;
+      var added, collection, instance, links, model, _base, _base1;
       if (options == null) {
         options = {};
       }
+      (_base = this.scope).data || (_base.data = null);
+      if (instanceOrCollection == null) {
+        return this.scope;
+      }
       if (instanceOrCollection instanceof Array) {
         collection = instanceOrCollection;
-        (_base = this.scope)[_name = this.pluralName()] || (_base[_name] = []);
+        (_base1 = this.scope).data || (_base1.data = []);
         collection.forEach((function(_this) {
           return function(instance) {
             return _this.toJSON(instance);
@@ -185,30 +209,27 @@ module.exports = function(utils, adapter) {
       } else {
         instance = instanceOrCollection;
         added = true;
-        attrs = this.attributes(instance);
-        if (links = this.links()) {
-          attrs.links = links;
+        model = {
+          id: this.id(instanc),
+          type: this.type,
+          attributes: this.attributes(instance)
+        };
+        links = this.links();
+        if (links != null) {
+          model.links = links;
         }
-        if (this.scope[this.name] && !this.scope[this.pluralName()]) {
-          if (this.scope[this.name].id !== attrs.id) {
-            this.scope[this.pluralName()] = [this.scope[this.name]];
-            delete this.scope[this.name];
-            this.scope[this.pluralName()].push(attrs);
-          } else {
-            added = false;
-          }
-        } else if (this.scope[this.pluralName()]) {
-          if (!utils.any(this.scope[this.pluralName()], function(i) {
-            return i.id === attrs.id;
+        if (this.scope.data != null) {
+          if (!utils.any(this.scope.data, function(i) {
+            return i.id === model.id;
           })) {
-            this.scope[this.pluralName()].push(attrs);
+            this.scope.data.push(model);
           } else {
             added = false;
           }
         } else if (options.defaultPlural) {
-          this.scope[this.pluralName()] = [attrs];
+          this.scope.data = [model];
         } else {
-          this.scope[this.name] = attrs;
+          this.scope.data = model;
         }
         if (added) {
           this.relations(this.scope, instance);
