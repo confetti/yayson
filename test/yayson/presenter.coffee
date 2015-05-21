@@ -51,12 +51,12 @@ describe 'Presenter', ->
   it 'should serialize relations', ->
     class MotorPresenter extends Presenter
       type: 'motors'
-      serialize: ->
+      linkage: ->
         car: CarPresenter
 
     class CarPresenter extends Presenter
       type: 'cars'
-      serialize: ->
+      linkage: ->
         motor: MotorPresenter
 
     motor =

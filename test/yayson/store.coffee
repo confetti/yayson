@@ -5,123 +5,202 @@ Store = require('../../src/yayson.coffee')().Store
 describe 'Store', ->
 
   beforeEach ->
-    @store = new Store
-      types:
-        'events': 'event'
-        'ticketBatches': 'ticketBatch'
-        'images': 'image'
-        'tickets': 'ticket'
-        'sponsors': 'sponsor'
-        'sponsorLevels': 'sponsorLevel'
-        'speakers': 'speaker'
-        'organisers': 'organiser'
-        'payments': 'payment'
+    @store = new Store()
 
     @store.records = []
     @store.relations = {}
 
 
-  it 'should store an event', ->
-    @store.sync {'event': {id: 1, name: 'Demo'}}
-    event = @store.find 'event', 1
+  it 'should sync an event', ->
+    event = @store.sync data:
+      type: 'events'
+      id: 1
+      attributes:
+        name: 'Demo'
+
     expect(event.name).to.equal 'Demo'
 
+  it 'should find an event', ->
+    @store.sync data:
+      type: 'events'
+      id: 1
+      attributes:
+        name: 'Demo'
 
-  it 'should populate relations', ->
-    @store.sync
-      links:
-        "events.ticketBatches": type: "ticketBatches"
-        "events.images": type: "images"
-        "events.organisers": type: "organisers"
-        "organisers.image": type: "images"
-        "events.speakers": type: "speakers"
-        "speakers.image": type: "images"
+    event = @store.find 'events', 1
+    expect(event.name).to.equal 'Demo'
 
-    expect(@store.relations.event.images).to.equal 'image'
-    expect(@store.relations.event.organisers).to.equal 'organiser'
-    expect(@store.relations.event.speakers).to.equal 'speaker'
-    expect(@store.relations.organiser.image).to.equal 'image'
-    expect(@store.relations.speaker.image).to.equal 'image'
 
   it 'should handle circular relations', ->
     @store.sync
-      links:
-        "event.images": type: "images"
-        "images.event": type: "event"
-      event: {id: 1, name: 'Demo', images: [2]}
-      images: [
-        {id: 2, event: 1}
+      data:
+        type: 'events'
+        id: 1
+        attributes:
+          name: 'Demo'
+        relationships:
+          linkage:
+            images: [
+              type: 'images'
+              id: 2
+            ]
+      included: [
+          type: 'images'
+          id: 2
+          attributes:
+            name: 'Header'
+          relationships:
+            linkage:
+              event:
+                type: 'events'
+                id: 1
       ]
-    event = @store.find 'event', 1
+
+    event = @store.find 'events', 1
     expect(event.name).to.equal 'Demo'
+    expect(event.images[0].name).to.equal 'Header'
+    expect(event.images[0].event.id).to.equal 1
 
   it 'should return a event with all associated objects', ->
     @store.sync
-      links:
-        "events.ticketBatches": type: "ticketBatches"
-        "events.images": type: "images"
-        "events.organisers": type: "organisers"
-        "organisers.image": type: "images"
-        "events.speakers": type: "speakers"
-        "speakers.image": type: "images"
-      ticketBatches: [ { id: 1, name: "Early bird", event: 1 }, { id: 2, name: "Regular", event: 1 } ]
-      images: [
-        { id: 1, type: "logo", event: 1 }
-        { id: 2, type: "organise", event: 1 }
-        { id: 3, type: "organise", event: 1 }
-        { id: 4, type: "organiser", event: 1 }
-        { id: 5, type: "speaker", event: 1 }
-      ]
-      organisers: [
-        { id: 3, firstName: "Jonny", event: 1, image: 2 }
-        { id: 2, firstName: "Johannes", event: 1, image: 3 }
-        { id: 1, firstName: "Martina", event: 1, image: 4 }
-      ]
-      speakers: [ { id: 1, firstName: "Ellen", event: 1, image: 5 } ]
-      event: { id: 1, name: "Nordic.js", slug: "nordicjs", ticketBatches: [1, 2], images: [1], organisers: [3,2,1], speakers: [1] }
+      data:
+        type: 'events'
+        id: 1
+        attributes:
+          name: "Nordic.js"
+          slug: "nordicjs"
+        relationships:
+          linkage:
+            images: [
+              {type: 'images', id: 1}
+              {type: 'images', id: 2}
+              {type: 'images', id: 3}
+            ]
+            organisers: [
+              {type: 'organisers', id: 1}
+              {type: 'organisers', id: 2}
+            ]
+      included: [{
+        type: 'organisers'
+        id: 1
+        attributes:
+          firstName: 'Jonny'
+        relationships:
+          linkage:
+            event: {type: 'events', id: 1}
+            image: {type: 'images', id: 2}
+      },{
+        type: 'organisers'
+        id: 2
+        attributes:
+          firstName: 'Martina'
+        relationships:
+          linkage:
+            event: {type: 'events', id: 1}
+            image: {type: 'images', id: 3}
+      },{
+        type: 'images'
+        id: 1
+        attributes:
+          name: 'Header'
+        relationships:
+          linkage:
+            event:
+              type: 'events'
+              id: 1
+      },{
+        type: 'images'
+        id: 2
+        attributes:
+          name: 'Organiser Johannes'
+        relationships:
+          linkage:
+            event:
+              type: 'events'
+              id: 1
+      },{
+        type: 'images'
+        id: 3
+        attributes:
+          name: 'Organiser Martina'
+        relationships:
+          linkage:
+            event:
+              type: 'events'
+              id: 1
+      }]
 
-    event = @store.find 'event', 1
-    expect(event.ticketBatches.length).to.equal 2
-    expect(event.organisers.length).to.equal 3
-    expect(event.speakers.length).to.equal 1
-    expect(event.speakers[0].image.id).to.equal 5
+    event = @store.find 'events', 1
+    expect(event.organisers.length).to.equal 2
+    expect(event.images.length).to.equal 3
+    expect(event.organisers[0].image.id).to.equal 2
 
 
 
   it 'should remove an event', ->
-    @store.sync events: [
-      {id: 1, name: 'Demo'}
-      {id: 2, name: 'Demo 2'}
+    @store.sync data: [
+      {id: 1, type: 'events'}
+      {id: 2, type: 'events'}
     ]
 
-    @store.remove 'event', 1
-    event = @store.find 'event', 1
+    event = @store.find 'events', 1
+    expect(event.id).to.eq 1
+    @store.remove 'events', 1
+    event = @store.find 'events', 1
     expect(event).to.eq null
 
 
   it 'should remove all events', ->
-    @store.sync events: [
-      {id: 1, name: 'Demo'}
-      {id: 2, name: 'Demo 2'}
+    @store.sync data: [
+      {id: 1, type: 'events'}
+      {id: 2, type: 'events'}
     ]
 
-    @store.remove 'event'
-    events = @store.findAll 'event'
+    events = @store.findAll 'events'
+    expect(events.length).to.eq 2
+    @store.remove 'events'
+    events = @store.findAll 'events'
     expect(events).to.deep.eq []
 
 
   it 'should reset', ->
     @store.sync
-      events: [
-        {id: 1, name: 'Demo'}
-        {id: 2, name: 'Demo 2'}
-      ],
-      images: [
-        {id: 1, name: 'Image'}
-        {id: 2, name: 'Image 2'}
+      data: [{
+        type: 'events'
+        id: 1
+        attributes:
+          name: 'Demo'
+        relationships:
+          linkage:
+            images: [
+              type: 'images'
+              id: 2
+            ]
+      },{
+        type: 'events'
+        id: 2
+        attributes:
+          name: 'Demo 2'
+      }]
+      included: [
+          type: 'images'
+          id: 2
+          attributes:
+            name: 'Header'
+          relationships:
+            linkage:
+              event:
+                type: 'events'
+                id: 1
       ]
 
+    events = @store.findAll 'events'
+    images = @store.findAll 'images'
+    expect(events.length).to.eq 2
+    expect(images.length).to.eq 1
+
     @store.reset()
+
     events = @store.findAll 'event'
     images = @store.findAll 'image'
     expect(events).to.deep.eq []

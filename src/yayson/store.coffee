@@ -3,12 +3,10 @@ module.exports = (utils) ->
 
   class Record
     constructor: (options) ->
-      @type = options.type
-      @data = options.data
+      {@id, @type, @attributes, @relationships} = options
 
   class Store
     constructor: (options) ->
-      @types = options.types || {}
       @reset()
 
     reset: ->
@@ -16,28 +14,24 @@ module.exports = (utils) ->
       @relations = {}
 
     toModel: (rec, type, models) ->
-      model = utils.clone rec.data
-      models[type][model.id] ||= model
-
-      relations = @relations[type]
-      for attribute, relationType of relations
-        model[attribute] = if model[attribute] instanceof Array
-          model[attribute].map (id) => @find relationType, id, models
-        else
-          @find relationType, model[attribute], models
-
+      model = utils.clone(rec.attributes) || {}
+      model.id = rec.id
+      models[type] ||= {}
+      models[type][rec.id] ||= model
+      if rec.relationships?
+        for key, links of rec.relationships.linkage
+          resolve = ({type, id}) =>
+            @find type, id, models
+          model[key] = if links instanceof Array
+            links.map resolve
+          else
+            resolve links
       model
 
-    setupRelations: (links) ->
-      for key, value of links
-        [type, attribute] = key.split '.'
-        type = @types[type] || type
-        @relations[type] ||= {}
-        @relations[type][attribute] = @types[value.type] || value.type
 
     findRecord: (type, id) ->
       utils.find @records, (r) ->
-        r.type == type && r.data.id == id
+        r.type == type && r.id == id
 
     findRecords: (type) ->
       utils.filter @records, (r) ->
@@ -63,8 +57,6 @@ module.exports = (utils) ->
       utils.values models[type]
 
     remove: (type, id) ->
-      type = @types[type] || type
-
       remove = (record) =>
         index = @records.indexOf record
         @records.splice(index, 1) unless index < 0
@@ -73,26 +65,37 @@ module.exports = (utils) ->
         remove @findRecord(type, id)
       else
         records = @findRecords type
-        records.forEach remove
+        records.map remove
 
 
-    sync: (data) ->
-      @setupRelations data.links
+    sync: (body) ->
+      sync = (data) =>
+        return null unless data?
+        add = (obj) =>
+          {type, id} = obj
+          #@remove type, id
+          rec = new Record(obj)
+          @records.push rec
+          rec
 
-      for name of data
-        continue if name == 'meta' || name == 'links'
-
-        value = data[name]
-
-        add = (d) =>
-          type = @types[name] || name
-          @remove type, d.id
-          @records.push new Record(type: type, data: d)
-
-        if value instanceof Array
-          value.forEach add
+        if data instanceof Array
+          data.map add
         else
-          add value
+          add data
+
+      sync body.included
+      recs = sync body.data
+
+      return null unless recs?
+
+      models = {}
+      if recs instanceof Array
+        recs.map (rec) =>
+          @toModel rec, rec.type, models
+      else
+        @toModel recs, recs.type, models
+
+
 
 
 

@@ -11,20 +11,20 @@ module.exports = (utils, adapter) ->
 
     links: ->
 
-    serialize: ->
+    linkage: ->
 
     attributes: (instance) ->
       return null unless instance?
       attributes = utils.clone adapter.get instance
-      serialize = @serialize()
-      for key of serialize
+      linkage = @linkage()
+      for key of linkage
         delete attributes[key]
       attributes
 
     relations: (scope, instance) ->
-      serialize = @serialize()
-      for key of serialize
-        factory = serialize[key] || throw new Error("Presenter for #{key} in #{@type} is not defined")
+      linkage = @linkage()
+      for key of linkage
+        factory = linkage[key] || throw new Error("Presenter for #{key} in #{@type} is not defined")
         presenter = new factory(scope)
 
         data = adapter.get instance, key
@@ -32,11 +32,11 @@ module.exports = (utils, adapter) ->
 
     relationships: (instance) ->
       return null unless instance?
-      serialize = @serialize()
+      linkage = @linkage()
       relationships = null
-      for key of serialize
+      for key of linkage
         data = adapter.get instance, key
-        presenter = serialize[key]
+        presenter = linkage[key]
         relationships ||= {}
         relationships[key] ||= {}
         relationships[key].linkage = if data instanceof Array
