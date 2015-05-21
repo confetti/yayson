@@ -137,60 +137,67 @@ module.exports = function(utils, adapter) {
 
     Presenter.prototype.links = function() {};
 
-    Presenter.prototype.serialize = function() {};
+    Presenter.prototype.relationships = function() {};
 
     Presenter.prototype.attributes = function(instance) {
-      var attributes, data, id, key, serialize;
-      if (!instance) {
+      var attributes, key, relationships;
+      if (instance == null) {
         return null;
       }
       attributes = utils.clone(adapter.get(instance));
-      serialize = this.serialize();
-      for (key in serialize) {
-        data = attributes[key];
-        if (data == null) {
-          id = attributes[key + 'Id'];
-          if (id != null) {
-            attributes[key] = id;
-          }
-        } else if (data instanceof Array) {
-          attributes[key] = data.map(function(obj) {
-            return obj.id;
-          });
-        } else {
-          attributes[key] = data.id;
-        }
+      relationships = this.relationships();
+      for (key in relationships) {
+        delete attributes[key];
       }
       return attributes;
     };
 
-    Presenter.prototype.relations = function(scope, instance) {
-      var data, factory, key, keyName, name, presenter, serialize, _results;
-      serialize = this.serialize();
+    Presenter.prototype.includeRelationships = function(scope, instance) {
+      var data, factory, key, presenter, relationships, _results;
+      relationships = this.relationships();
       _results = [];
-      for (key in serialize) {
-        factory = serialize[key] || (function() {
+      for (key in relationships) {
+        factory = relationships[key] || (function() {
           throw new Error("Presenter for " + key + " in " + this.type + " is not defined");
         }).call(this);
         presenter = new factory(scope);
         data = adapter.get(instance, key);
         if (data != null) {
-          presenter.toJSON(data, {
-            defaultPlural: true
-          });
+          _results.push(presenter.toJSON(data, {
+            include: true
+          }));
+        } else {
+          _results.push(void 0);
         }
-        name = this.type;
-        keyName = presenter.type;
-        scope.links || (scope.links = {});
-        _results.push(scope.links["" + name + "." + key] = {
-          type: keyName
-        });
       }
       return _results;
     };
 
+    Presenter.prototype.buildRelationships = function(instance) {
+      var build, data, key, presenter, relationships, rels;
+      if (instance == null) {
+        return null;
+      }
+      rels = this.relationships();
+      relationships = null;
+      for (key in rels) {
+        data = adapter.get(instance, key);
+        presenter = rels[key];
+        build = function(d) {
+          return {
+            id: adapter.id(d),
+            type: presenter.prototype.type
+          };
+        };
+        relationships || (relationships = {});
+        relationships[key] || (relationships[key] = {});
+        relationships[key].data = data instanceof Array ? data.map(build) : build(data);
+      }
+      return relationships;
+    };
+
     Presenter.prototype.toJSON = function(instanceOrCollection, options) {
-      var added, collection, instance, links, model, _base, _base1;
+      var added, collection, instance, links, model, relationships, _base, _base1, _base2;
       if (options == null) {
         options = {};
       }
@@ -210,15 +217,28 @@ module.exports = function(utils, adapter) {
         instance = instanceOrCollection;
         added = true;
         model = {
-          id: this.id(instanc),
+          id: this.id(instance),
           type: this.type,
           attributes: this.attributes(instance)
         };
+        relationships = this.buildRelationships(instance);
+        if (relationships != null) {
+          model.relationships = relationships;
+        }
         links = this.links();
         if (links != null) {
           model.links = links;
         }
-        if (this.scope.data != null) {
+        if (options.include) {
+          (_base2 = this.scope).included || (_base2.included = []);
+          if (!utils.any(this.scope.included.concat(this.scope.data), function(i) {
+            return i.id === model.id;
+          })) {
+            this.scope.included.push(model);
+          } else {
+            added = false;
+          }
+        } else if (this.scope.data != null) {
           if (!utils.any(this.scope.data, function(i) {
             return i.id === model.id;
           })) {
@@ -226,13 +246,11 @@ module.exports = function(utils, adapter) {
           } else {
             added = false;
           }
-        } else if (options.defaultPlural) {
-          this.scope.data = [model];
         } else {
           this.scope.data = model;
         }
         if (added) {
-          this.relations(this.scope, instance);
+          this.includeRelationships(this.scope, instance);
         }
       }
       return this.scope;
@@ -273,8 +291,7 @@ module.exports = function(utils) {
   var Record, Store;
   Record = (function() {
     function Record(options) {
-      this.type = options.type;
-      this.data = options.data;
+      this.id = options.id, this.type = options.type, this.attributes = options.attributes, this.relationships = options.relationships;
     }
 
     return Record;
@@ -282,7 +299,6 @@ module.exports = function(utils) {
   })();
   return Store = (function() {
     function Store(options) {
-      this.types = options.types || {};
       this.reset();
     }
 
@@ -292,37 +308,32 @@ module.exports = function(utils) {
     };
 
     Store.prototype.toModel = function(rec, type, models) {
-      var attribute, model, relationType, relations, _base, _name;
-      model = utils.clone(rec.data);
-      (_base = models[type])[_name = model.id] || (_base[_name] = model);
-      relations = this.relations[type];
-      for (attribute in relations) {
-        relationType = relations[attribute];
-        model[attribute] = model[attribute] instanceof Array ? model[attribute].map((function(_this) {
-          return function(id) {
-            return _this.find(relationType, id, models);
-          };
-        })(this)) : this.find(relationType, model[attribute], models);
+      var data, key, model, rel, resolve, _base, _name, _ref;
+      model = utils.clone(rec.attributes) || {};
+      model.id = rec.id;
+      models[type] || (models[type] = {});
+      (_base = models[type])[_name = rec.id] || (_base[_name] = model);
+      if (rec.relationships != null) {
+        _ref = rec.relationships;
+        for (key in _ref) {
+          rel = _ref[key];
+          data = rel.data;
+          resolve = (function(_this) {
+            return function(_arg) {
+              var id, type;
+              type = _arg.type, id = _arg.id;
+              return _this.find(type, id, models);
+            };
+          })(this);
+          model[key] = data instanceof Array ? data.map(resolve) : resolve(data);
+        }
       }
       return model;
     };
 
-    Store.prototype.setupRelations = function(links) {
-      var attribute, key, type, value, _base, _ref, _results;
-      _results = [];
-      for (key in links) {
-        value = links[key];
-        _ref = key.split('.'), type = _ref[0], attribute = _ref[1];
-        type = this.types[type] || type;
-        (_base = this.relations)[type] || (_base[type] = {});
-        _results.push(this.relations[type][attribute] = this.types[value.type] || value.type);
-      }
-      return _results;
-    };
-
     Store.prototype.findRecord = function(type, id) {
       return utils.find(this.records, function(r) {
-        return r.type === type && r.data.id === id;
+        return r.type === type && r.id === id;
       });
     };
 
@@ -330,13 +341,6 @@ module.exports = function(utils) {
       return utils.filter(this.records, function(r) {
         return r.type === type;
       });
-    };
-
-    Store.prototype.retrive = function(type, data) {
-      var id;
-      this.sync(data);
-      id = data[type].id;
-      return this.find(type, id);
     };
 
     Store.prototype.find = function(type, id, models) {
@@ -372,7 +376,6 @@ module.exports = function(utils) {
 
     Store.prototype.remove = function(type, id) {
       var records, remove;
-      type = this.types[type] || type;
       remove = (function(_this) {
         return function(record) {
           var index;
@@ -386,37 +389,47 @@ module.exports = function(utils) {
         return remove(this.findRecord(type, id));
       } else {
         records = this.findRecords(type);
-        return records.forEach(remove);
+        return records.map(remove);
       }
     };
 
-    Store.prototype.sync = function(data) {
-      var add, name, value, _results;
-      this.setupRelations(data.links);
-      _results = [];
-      for (name in data) {
-        if (name === 'meta' || name === 'links') {
-          continue;
-        }
-        value = data[name];
-        add = (function(_this) {
-          return function(d) {
-            var type;
-            type = _this.types[name] || name;
-            _this.remove(type, d.id);
-            return _this.records.push(new Record({
-              type: type,
-              data: d
-            }));
+    Store.prototype.sync = function(body) {
+      var models, recs, sync;
+      sync = (function(_this) {
+        return function(data) {
+          var add;
+          if (data == null) {
+            return null;
+          }
+          add = function(obj) {
+            var id, rec, type;
+            type = obj.type, id = obj.id;
+            rec = new Record(obj);
+            _this.records.push(rec);
+            return rec;
           };
-        })(this);
-        if (value instanceof Array) {
-          _results.push(value.forEach(add));
-        } else {
-          _results.push(add(value));
-        }
+          if (data instanceof Array) {
+            return data.map(add);
+          } else {
+            return add(data);
+          }
+        };
+      })(this);
+      sync(body.included);
+      recs = sync(body.data);
+      if (recs == null) {
+        return null;
       }
-      return _results;
+      models = {};
+      if (recs instanceof Array) {
+        return recs.map((function(_this) {
+          return function(rec) {
+            return _this.toModel(rec, rec.type, models);
+          };
+        })(this));
+      } else {
+        return this.toModel(recs, recs.type, models);
+      }
     };
 
     return Store;
