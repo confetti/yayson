@@ -9,6 +9,8 @@ module.exports = (utils, adapter) ->
     id: (instance) ->
       adapter.id instance
 
+    selfLink: (instance) ->
+
     links: ->
 
     relationships: ->
@@ -48,6 +50,13 @@ module.exports = (utils, adapter) ->
           build data
       relationships
 
+    buildLinks: (instance) ->
+      link = @selfLink(instance)
+      return unless link?
+      if link.self? || link.related?
+        link
+      else
+        self: link
 
     toJSON: (instanceOrCollection, options = {}) ->
       @scope.data ||= null
@@ -67,6 +76,8 @@ module.exports = (utils, adapter) ->
           attributes: @attributes instance
         relationships = @buildRelationships instance
         model.relationships = relationships if relationships?
+        links = @buildLinks instance
+        model.links = links if links?
 
         links = @links()
         model.links = links if links?

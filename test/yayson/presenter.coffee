@@ -93,6 +93,26 @@ describe 'Presenter', ->
               id: 1
       ]
 
+  it 'should include self link', ->
+    class CarPresenter extends Presenter
+      type: 'cars'
+      selfLink: (instance) ->
+        '/cars/' + @id(instance)
+
+    json = CarPresenter.render(id: 3)
+    expect(json.data.links.self).to.eq '/cars/3'
+
+  it 'should include self and related link', ->
+    class CarPresenter extends Presenter
+      type: 'cars'
+      selfLink: (instance) ->
+        self: '/cars/linkage/' + @id(instance)
+        related: '/cars/' + @id(instance)
+
+    json = CarPresenter.render(id: 3)
+    expect(json.data.links.self).to.eq '/cars/linkage/3'
+    expect(json.data.links.related).to.eq '/cars/3'
+
   it 'should serialize in pure JS', ->
     `
     var EventPresenter = function () { Presenter.call(this); }
