@@ -51,12 +51,12 @@ describe 'Presenter', ->
   it 'should serialize relations', ->
     class MotorPresenter extends Presenter
       type: 'motors'
-      linkage: ->
+      relationships: ->
         car: CarPresenter
 
     class CarPresenter extends Presenter
       type: 'cars'
-      linkage: ->
+      relationships: ->
         motor: MotorPresenter
 
     motor =
@@ -78,7 +78,7 @@ describe 'Presenter', ->
           id: 1
         relationships:
           motor:
-            linkage:
+            data:
               type: 'motors'
               id: 2
       included: [
@@ -88,7 +88,7 @@ describe 'Presenter', ->
           id: 2
         relationships:
           car:
-            linkage:
+            data:
               type: 'cars'
               id: 1
       ]

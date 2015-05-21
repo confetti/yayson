@@ -39,8 +39,8 @@ describe 'Store', ->
         attributes:
           name: 'Demo'
         relationships:
-          linkage:
-            images: [
+          images:
+            data: [
               type: 'images'
               id: 2
             ]
@@ -50,8 +50,8 @@ describe 'Store', ->
           attributes:
             name: 'Header'
           relationships:
-            linkage:
-              event:
+            event:
+              data:
                 type: 'events'
                 id: 1
       ]
@@ -70,13 +70,14 @@ describe 'Store', ->
           name: "Nordic.js"
           slug: "nordicjs"
         relationships:
-          linkage:
-            images: [
+          images:
+            data: [
               {type: 'images', id: 1}
               {type: 'images', id: 2}
               {type: 'images', id: 3}
             ]
-            organisers: [
+          organisers:
+            data: [
               {type: 'organisers', id: 1}
               {type: 'organisers', id: 2}
             ]
@@ -86,48 +87,44 @@ describe 'Store', ->
         attributes:
           firstName: 'Jonny'
         relationships:
-          linkage:
-            event: {type: 'events', id: 1}
-            image: {type: 'images', id: 2}
+          event:
+            data: {type: 'events', id: 1}
+          image:
+            data: {type: 'images', id: 2}
       },{
         type: 'organisers'
         id: 2
         attributes:
           firstName: 'Martina'
         relationships:
-          linkage:
-            event: {type: 'events', id: 1}
-            image: {type: 'images', id: 3}
+          event:
+            data: {type: 'events', id: 1}
+          image:
+            data: {type: 'images', id: 3}
       },{
         type: 'images'
         id: 1
         attributes:
           name: 'Header'
         relationships:
-          linkage:
-            event:
-              type: 'events'
-              id: 1
+          event:
+            data: {type: 'events', id: 1}
       },{
         type: 'images'
         id: 2
         attributes:
           name: 'Organiser Johannes'
         relationships:
-          linkage:
-            event:
-              type: 'events'
-              id: 1
+          event:
+            data: {type: 'events', id: 1}
       },{
         type: 'images'
         id: 3
         attributes:
           name: 'Organiser Martina'
         relationships:
-          linkage:
-            event:
-              type: 'events'
-              id: 1
+          event:
+            data: {type: 'events', id: 1}
       }]
 
     event = @store.find 'events', 1
@@ -171,11 +168,8 @@ describe 'Store', ->
         attributes:
           name: 'Demo'
         relationships:
-          linkage:
-            images: [
-              type: 'images'
-              id: 2
-            ]
+          images:
+            data: [ type: 'images', id: 2 ]
       },{
         type: 'events'
         id: 2
@@ -188,10 +182,8 @@ describe 'Store', ->
           attributes:
             name: 'Header'
           relationships:
-            linkage:
-              event:
-                type: 'events'
-                id: 1
+            event:
+              data: {type: 'events', id: 1}
       ]
 
     events = @store.findAll 'events'

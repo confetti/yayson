@@ -11,41 +11,41 @@ module.exports = (utils, adapter) ->
 
     links: ->
 
-    linkage: ->
+    relationships: ->
 
     attributes: (instance) ->
       return null unless instance?
       attributes = utils.clone adapter.get instance
-      linkage = @linkage()
-      for key of linkage
+      relationships = @relationships()
+      for key of relationships
         delete attributes[key]
       attributes
 
-    relations: (scope, instance) ->
-      linkage = @linkage()
-      for key of linkage
-        factory = linkage[key] || throw new Error("Presenter for #{key} in #{@type} is not defined")
+    includeRelationships: (scope, instance) ->
+      relationships = @relationships()
+      for key of relationships
+        factory = relationships[key] || throw new Error("Presenter for #{key} in #{@type} is not defined")
         presenter = new factory(scope)
 
         data = adapter.get instance, key
         presenter.toJSON data, include: true if data?
 
-    relationships: (instance) ->
+    buildRelationships: (instance) ->
       return null unless instance?
-      linkage = @linkage()
+      rels = @relationships()
       relationships = null
-      for key of linkage
+      for key of rels
         data = adapter.get instance, key
-        presenter = linkage[key]
+        presenter = rels[key]
+        build = (d) ->
+          id: adapter.id d
+          type: presenter::type
         relationships ||= {}
         relationships[key] ||= {}
-        relationships[key].linkage = if data instanceof Array
-          data.map (d) ->
-            id: adapter.id d
-            type: presenter::type
+        relationships[key].data = if data instanceof Array
+          data.map build
         else
-          id: adapter.id data
-          type: presenter::type
+          build data
       relationships
 
 
@@ -65,7 +65,7 @@ module.exports = (utils, adapter) ->
           id: @id instance
           type: @type
           attributes: @attributes instance
-        relationships = @relationships instance
+        relationships = @buildRelationships instance
         model.relationships = relationships if relationships?
 
         links = @links()
@@ -85,7 +85,7 @@ module.exports = (utils, adapter) ->
         else
           @scope.data = model
 
-        @relations @scope, instance if added
+        @includeRelationships @scope, instance if added
       @scope
 
     render: (instanceOrCollection) ->

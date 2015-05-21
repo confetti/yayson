@@ -19,13 +19,14 @@ module.exports = (utils) ->
       models[type] ||= {}
       models[type][rec.id] ||= model
       if rec.relationships?
-        for key, links of rec.relationships.linkage
+        for key, rel of rec.relationships
+          data = rel.data
           resolve = ({type, id}) =>
             @find type, id, models
-          model[key] = if links instanceof Array
-            links.map resolve
+          model[key] = if data instanceof Array
+            data.map resolve
           else
-            resolve links
+            resolve data
       model
 
 
@@ -36,11 +37,6 @@ module.exports = (utils) ->
     findRecords: (type) ->
       utils.filter @records, (r) ->
         r.type == type
-
-    retrive: (type, data) ->
-      @sync data
-      id = data[type].id
-      @find(type, id)
 
     find: (type, id, models = {}) ->
       rec = @findRecord(type, id)
@@ -66,7 +62,6 @@ module.exports = (utils) ->
       else
         records = @findRecords type
         records.map remove
-
 
     sync: (body) ->
       sync = (data) =>
