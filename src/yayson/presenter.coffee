@@ -1,5 +1,12 @@
 module.exports = (utils, adapter) ->
   class Presenter
+    buildLinks = (link) ->
+      return unless link?
+      if link.self? || link.related?
+        link
+      else
+        self: link
+
     @adapter: adapter
     type: 'objects'
 
@@ -9,7 +16,7 @@ module.exports = (utils, adapter) ->
     id: (instance) ->
       adapter.id instance
 
-    selfLink: (instance) ->
+    selfLinks: (instance) ->
 
     links: ->
 
@@ -35,28 +42,31 @@ module.exports = (utils, adapter) ->
     buildRelationships: (instance) ->
       return null unless instance?
       rels = @relationships()
+      links = @links(instance) || {}
       relationships = null
       for key of rels
         data = adapter.get instance, key
         presenter = rels[key]
         build = (d) ->
-          id: adapter.id d
-          type: presenter::type
+          rel =
+            data:
+              id: adapter.id d
+              type: presenter::type
+          if links[key]?
+            rel.links = buildLinks links[key]
+          rel
         relationships ||= {}
         relationships[key] ||= {}
-        relationships[key].data = if data instanceof Array
+        relationships[key]= if data instanceof Array
           data.map build
-        else
+        else if data?
           build data
+        else
+          null
       relationships
 
-    buildLinks: (instance) ->
-      link = @selfLink(instance)
-      return unless link?
-      if link.self? || link.related?
-        link
-      else
-        self: link
+    buildSelfLink: (instance) ->
+      buildLinks @selfLinks(instance)
 
     toJSON: (instanceOrCollection, options = {}) ->
       @scope.data ||= null
@@ -76,10 +86,7 @@ module.exports = (utils, adapter) ->
           attributes: @attributes instance
         relationships = @buildRelationships instance
         model.relationships = relationships if relationships?
-        links = @buildLinks instance
-        model.links = links if links?
-
-        links = @links()
+        links = @buildSelfLink instance
         model.links = links if links?
 
         if options.include

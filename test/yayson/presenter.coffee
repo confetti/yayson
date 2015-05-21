@@ -96,7 +96,7 @@ describe 'Presenter', ->
   it 'should include self link', ->
     class CarPresenter extends Presenter
       type: 'cars'
-      selfLink: (instance) ->
+      selfLinks: (instance) ->
         '/cars/' + @id(instance)
 
     json = CarPresenter.render(id: 3)
@@ -105,13 +105,33 @@ describe 'Presenter', ->
   it 'should include self and related link', ->
     class CarPresenter extends Presenter
       type: 'cars'
-      selfLink: (instance) ->
+      selfLinks: (instance) ->
         self: '/cars/linkage/' + @id(instance)
         related: '/cars/' + @id(instance)
 
     json = CarPresenter.render(id: 3)
     expect(json.data.links.self).to.eq '/cars/linkage/3'
     expect(json.data.links.related).to.eq '/cars/3'
+
+  it 'should handle links in relationships', ->
+    class CarPresenter extends Presenter
+      type: 'cars'
+
+      relationships: ->
+        car: CarPresenter
+
+      selfLinks: (instance) ->
+        '/cars/' + @id(instance)
+
+      links: (instance) ->
+        car:
+          self: @selfLinks(instance) + '/linkage/car'
+          related: @selfLinks(instance) + '/car'
+
+    json = CarPresenter.render(id: 3, car: id: 5)
+    expect(json.data.links.self).to.eq '/cars/3'
+    expect(json.data.relationships.car.links.self).to.eq '/cars/3/linkage/car'
+    expect(json.data.relationships.car.links.related).to.eq '/cars/3/car'
 
   it 'should serialize in pure JS', ->
     `
