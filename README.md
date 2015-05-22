@@ -1,6 +1,15 @@
 # YAYSON
 
-A library for serializing and reading JSON API standardized data in JavaScript. As of 2.0.0-rc4 YAYSON respects JSON API Release candidate 4.
+A library for serializing and reading JSON API standardized data in JavaScript. As of 2.0.0-beta.1 YAYSON respects JSON API Release candidate 4.
+
+## Installing
+
+Install yayson by running:
+
+```
+$ npm install yayson --pre --save
+
+```
 
 ## Presenting data
 
@@ -21,7 +30,7 @@ A basic `Presenter` can look like this:
 
 This would produce:
 
-```json
+```javascript
 {
   data: {
     id: 5,
@@ -89,6 +98,32 @@ it handle Sequalize.js models like this:
 ```coffee
 {Presenter} = require('yayson')(adapter: 'sequelize')
 
+```
+
+### Metadata
+
+You can add metadata to the top level object.
+
+``` coffee
+  ItemsPresenter.render(items, meta: count: 10)
+```
+
+This would produce:
+
+```javascript
+{
+  meta: {
+    count: 10
+  }
+  data: {
+    id: 5,
+    type: 'items',
+    attributes: {
+      id: 5,
+      name: 'First'
+    }
+  }
+}
 ```
 
 ## Parsing data
