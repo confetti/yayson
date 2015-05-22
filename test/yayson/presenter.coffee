@@ -147,7 +147,7 @@ describe 'Presenter', ->
 
 
   it 'should use the sequelize adapter', ->
-    {Presenter} = require('../../src/yayson.coffee')(adapter: 'sequelize')
+    PresenterSequalize = require('../../src/yayson.coffee')(adapter: 'sequelize').Presenter
     obj = get: (attr) ->
       attrs = {id: 5, foo: 'bar'}
       if attr?
@@ -155,7 +155,7 @@ describe 'Presenter', ->
       else
         attrs
 
-    json = Presenter.toJSON(obj)
+    json = PresenterSequalize.toJSON(obj)
     expect(json).to.deep.equal
       data:
         type: 'objects'
@@ -164,3 +164,8 @@ describe 'Presenter', ->
           id: 5
           foo: 'bar'
 
+  it 'should add meta', ->
+    obj = {id: 1}
+    json = Presenter.render(obj, meta: count: 1)
+
+    expect(json.meta.count).to.eq 1

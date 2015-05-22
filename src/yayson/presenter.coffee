@@ -69,7 +69,9 @@ module.exports = (utils, adapter) ->
       buildLinks @selfLinks(instance)
 
     toJSON: (instanceOrCollection, options = {}) ->
+      @scope.meta = options.meta if options.meta?
       @scope.data ||= null
+
       return @scope unless instanceOrCollection?
 
       if instanceOrCollection instanceof Array
@@ -106,11 +108,11 @@ module.exports = (utils, adapter) ->
         @includeRelationships @scope, instance if added
       @scope
 
-    render: (instanceOrCollection) ->
+    render: (instanceOrCollection, options) ->
       if utils.isPromise(instanceOrCollection)
-        instanceOrCollection.then (data) => @toJSON data
+        instanceOrCollection.then (data) => @toJSON data, options
       else
-        @toJSON instanceOrCollection
+        @toJSON instanceOrCollection, options
 
     @toJSON: ->
       (new this).toJSON arguments...

@@ -230,6 +230,9 @@ module.exports = function(utils, adapter) {
       if (options == null) {
         options = {};
       }
+      if (options.meta != null) {
+        this.scope.meta = options.meta;
+      }
       (_base = this.scope).data || (_base.data = null);
       if (instanceOrCollection == null) {
         return this.scope;
@@ -285,15 +288,15 @@ module.exports = function(utils, adapter) {
       return this.scope;
     };
 
-    Presenter.prototype.render = function(instanceOrCollection) {
+    Presenter.prototype.render = function(instanceOrCollection, options) {
       if (utils.isPromise(instanceOrCollection)) {
         return instanceOrCollection.then((function(_this) {
           return function(data) {
-            return _this.toJSON(data);
+            return _this.toJSON(data, options);
           };
         })(this));
       } else {
-        return this.toJSON(instanceOrCollection);
+        return this.toJSON(instanceOrCollection, options);
       }
     };
 
