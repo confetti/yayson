@@ -1,11 +1,43 @@
 # YAYSON
 
-A library for serializing and reading JSON API standardized data in JavaScript.
-
+A library for serializing and reading JSON API standardized data in JavaScript. As of 2.0.0-rc4 YAYSON respects JSON API Release candidate 4.
 
 ## Presenting data
 
 A basic `Presenter` can look like this:
+
+```coffee
+  {Presenter} = require('yayson')(adapter: 'default')
+
+  class ItemsPresenter extends Presenter
+    type: 'items'
+
+  item =
+    id: 5
+    name: 'First'
+
+  ItemsPresenter.render(item)
+```
+
+This would produce:
+
+```json
+{
+  data: {
+    id: 5,
+    type: 'items',
+    attributes: {
+      id: 5,
+      name: 'First'
+    }
+  }
+}
+```
+
+It also works with arrays, so if you send an array to render, "data" will
+be an array.
+
+A bit more advanced example:
 
 ```coffee
   {Presenter} = require('yayson')(adapter: 'default')
@@ -19,10 +51,9 @@ A basic `Presenter` can look like this:
       attrs
 
     relationships: ->
-      event: EventPresenter
+      event: EventsPresenter
 
-  presenter = new ItemPresenter()
-  presenter.render(item)
+  ItemsPresenter.render(item)
 ```
 
 In JavaScript this would be done as:
@@ -31,26 +62,25 @@ In JavaScript this would be done as:
 
 var Presenter = require('yayson')().Presenter;
 
-var ItemPresenter = function () { Presenter.call(this); }
-ItemPresenter.prototype = new Presenter();
+var ItemsPresenter = function () { Presenter.call(this); }
+ItemsPresenter.prototype = new Presenter();
 
-ItemPresenter.prototype.type = 'item'
+ItemsPresenter.prototype.type = 'items'
 
-ItemPresenter.prototype.attributes = function() {
+ItemsPresenter.prototype.attributes = function() {
   var attrs = Presenter.prototype.attributes.apply(this, arguments);
 
   attrs.start = moment.utc(attrs.start).toDate();
   return attrs;
 }
 
-ItemPresenter.prototype.relationships = function() {
+ItemsPresenter.prototype.relationships = function() {
   return {
-    event: EventPresenter
+    event: EventsPresenter
   }
 }
 
-var presenter = new ItemPresenter()
-presenter.render(item)
+ItemsPresenter.render(item)
 ```
 
 By default it is set up to handle standard JS objects. You can also make

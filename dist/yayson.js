@@ -120,6 +120,21 @@ module.exports = SequelizeAdapter;
 module.exports = function(utils, adapter) {
   var Presenter;
   Presenter = (function() {
+    var buildLinks;
+
+    buildLinks = function(link) {
+      if (link == null) {
+        return;
+      }
+      if ((link.self != null) || (link.related != null)) {
+        return link;
+      } else {
+        return {
+          self: link
+        };
+      }
+    };
+
     Presenter.adapter = adapter;
 
     Presenter.prototype.type = 'objects';
@@ -134,6 +149,8 @@ module.exports = function(utils, adapter) {
     Presenter.prototype.id = function(instance) {
       return adapter.id(instance);
     };
+
+    Presenter.prototype.selfLinks = function(instance) {};
 
     Presenter.prototype.links = function() {};
 
@@ -174,26 +191,38 @@ module.exports = function(utils, adapter) {
     };
 
     Presenter.prototype.buildRelationships = function(instance) {
-      var build, data, key, presenter, relationships, rels;
+      var build, data, key, links, presenter, relationships, rels;
       if (instance == null) {
         return null;
       }
       rels = this.relationships();
+      links = this.links(instance) || {};
       relationships = null;
       for (key in rels) {
         data = adapter.get(instance, key);
         presenter = rels[key];
         build = function(d) {
-          return {
-            id: adapter.id(d),
-            type: presenter.prototype.type
+          var rel;
+          rel = {
+            data: {
+              id: adapter.id(d),
+              type: presenter.prototype.type
+            }
           };
+          if (links[key] != null) {
+            rel.links = buildLinks(links[key]);
+          }
+          return rel;
         };
         relationships || (relationships = {});
         relationships[key] || (relationships[key] = {});
-        relationships[key].data = data instanceof Array ? data.map(build) : build(data);
+        relationships[key] = data instanceof Array ? data.map(build) : data != null ? build(data) : null;
       }
       return relationships;
+    };
+
+    Presenter.prototype.buildSelfLink = function(instance) {
+      return buildLinks(this.selfLinks(instance));
     };
 
     Presenter.prototype.toJSON = function(instanceOrCollection, options) {
@@ -225,7 +254,7 @@ module.exports = function(utils, adapter) {
         if (relationships != null) {
           model.relationships = relationships;
         }
-        links = this.links();
+        links = this.buildSelfLink(instance);
         if (links != null) {
           model.links = links;
         }
