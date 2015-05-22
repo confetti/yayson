@@ -152,13 +152,13 @@ Then you can `var yayson = require('yayson')()` use the `yayson.Presenter` and `
 ### Browser support
 
 #### Tested
-Chrome
-Firefox
-Safari
-Safari iOS
+- Chrome
+- Firefox
+- Safari
+- Safari iOS
 
 #### Untested, but should work
-IE 9+
-Android
+- IE 9+
+- Android
 
 
