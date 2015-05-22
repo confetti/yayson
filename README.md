@@ -1,6 +1,6 @@
 # YAYSON
 
-A library for serializing and reading JSON API standardized data in JavaScript. As of 2.0.0-beta.1 YAYSON respects JSON API Release candidate 4.
+A library for serializing and reading [JSON API](http://jsonapi.org) data in JavaScript. As of 2.0.0-beta.1 YAYSON respects JSON API Release candidate 4.
 
 ## Installing
 
@@ -91,6 +91,8 @@ ItemsPresenter.prototype.relationships = function() {
 ItemsPresenter.render(item)
 ```
 
+### Sequalize support
+
 By default it is set up to handle standard JS objects. You can also make
 it handle Sequalize.js models like this:
 
@@ -98,6 +100,8 @@ it handle Sequalize.js models like this:
 {Presenter} = require('yayson')(adapter: 'sequelize')
 
 ```
+
+Take a look at the SequalizeAdapter if you want to extend YAYSON to your ORM. Pull requests are welccome :)
 
 ### Metadata
 
