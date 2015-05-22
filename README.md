@@ -8,7 +8,6 @@ Install yayson by running:
 
 ```
 $ npm install yayson --pre --save
-
 ```
 
 ## Presenting data
