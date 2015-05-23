@@ -25,6 +25,8 @@ module.exports = (utils, adapter) ->
     attributes: (instance) ->
       return null unless instance?
       attributes = utils.clone adapter.get instance
+      if 'id' of attributes
+        delete attributes['id']
       relationships = @relationships()
       for key of relationships
         delete attributes[key]

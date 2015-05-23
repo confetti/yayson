@@ -5,6 +5,6 @@ class Adapter
     model
 
   @id: (model) ->
-    @get model, 'id'
+    "#{@get model, 'id'}"
 
 module.exports = Adapter
