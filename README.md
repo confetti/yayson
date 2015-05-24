@@ -7,7 +7,7 @@ A library for serializing and reading [JSON API](http://jsonapi.org) data in Jav
 Install yayson by running:
 
 ```
-$ npm install yayson --pre --save
+$ npm install yayson --save
 ```
 
 ## Presenting data
