@@ -162,3 +162,13 @@ describe 'Presenter', ->
     json = Presenter.render(obj, meta: count: 1)
 
     expect(json.meta.count).to.eq 1
+
+  it 'should exclude id and type from attributes', ->
+    obj = {id: 5, foo: 'bar', type: 'some'}
+    json = Presenter.toJSON(obj)
+    expect(json).to.deep.equal
+      data:
+        type: 'objects'
+        id: '5'
+        attributes:
+          foo: 'bar'
