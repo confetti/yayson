@@ -14,7 +14,7 @@ module.exports = (utils, adapter) ->
       @scope = scope
 
     id: (instance) ->
-      adapter.id instance
+      @constructor.adapter.id instance
 
     selfLinks: (instance) ->
 
@@ -24,7 +24,7 @@ module.exports = (utils, adapter) ->
 
     attributes: (instance) ->
       return null unless instance?
-      attributes = utils.clone adapter.get instance
+      attributes = utils.clone @constructor.adapter.get instance
       if 'id' of attributes
         delete attributes['id']
       relationships = @relationships()
@@ -38,7 +38,7 @@ module.exports = (utils, adapter) ->
         factory = relationships[key] || throw new Error("Presenter for #{key} in #{@type} is not defined")
         presenter = new factory(scope)
 
-        data = adapter.get instance, key
+        data = @constructor.adapter.get instance, key
         presenter.toJSON data, include: true if data?
 
     buildRelationships: (instance) ->
@@ -47,12 +47,12 @@ module.exports = (utils, adapter) ->
       links = @links(instance) || {}
       relationships = null
       for key of rels
-        data = adapter.get instance, key
+        data = @constructor.adapter.get instance, key
         presenter = rels[key]
-        build = (d) ->
+        build = (d) =>
           rel =
             data:
-              id: adapter.id d
+              id: @constructor.adapter.id d
               type: presenter::type
           if links[key]?
             rel.links = buildLinks links[key]
