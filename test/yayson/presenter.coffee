@@ -14,9 +14,8 @@ describe 'Presenter', ->
     expect(json).to.deep.equal
       data:
         type: 'objects'
-        id: 5
+        id: '5'
         attributes:
-          id: 5
           foo: 'bar'
 
   it 'create json structure of an array of objects', ->
@@ -25,15 +24,13 @@ describe 'Presenter', ->
     expect(json).to.deep.equal
       data: [{
         type: 'objects'
-        id: 1
+        id: '1'
         attributes:
-          id: 1
           foo: 'bar'
       },{
         type: 'objects'
-        id: 2
+        id: '2'
         attributes:
-          id: 2
           foo: 'baz'
       }]
 
@@ -43,9 +40,8 @@ describe 'Presenter', ->
     expect(json).to.deep.equal
       data: [
         type: 'objects'
-        id: 1
-        attributes:
-          id: 1
+        id: '1'
+        attributes: {}
       ]
 
   it 'should serialize relations', ->
@@ -73,24 +69,22 @@ describe 'Presenter', ->
     expect(json).to.deep.equal
       data:
         type: 'cars'
-        id: 1
-        attributes:
-          id: 1
+        id: '1'
+        attributes: {}
         relationships:
           motor:
             data:
               type: 'motors'
-              id: 2
+              id: '2'
       included: [
         type: 'motors'
-        id: 2
-        attributes:
-          id: 2
+        id: '2'
+        attributes: {}
         relationships:
           car:
             data:
               type: 'cars'
-              id: 1
+              id: '1'
       ]
 
   it 'should include self link', ->
@@ -159,9 +153,8 @@ describe 'Presenter', ->
     expect(json).to.deep.equal
       data:
         type: 'objects'
-        id: 5
+        id: '5'
         attributes:
-          id: 5
           foo: 'bar'
 
   it 'should add meta', ->

@@ -31,4 +31,4 @@ describe 'SequelizeAdapter', ->
         5
 
     id = SequelizeAdapter.id model
-    expect(id).to.eq 5
+    expect(id).to.eq '5'

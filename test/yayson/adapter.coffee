@@ -14,4 +14,4 @@ describe 'Adapter', ->
 
   it 'should get the id', ->
     id = Adapter.id {id: 5}
-    expect(id).to.eq 5
+    expect(id).to.eq '5'
