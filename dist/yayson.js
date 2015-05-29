@@ -163,6 +163,7 @@ module.exports = function(utils, adapter) {
       }
       attributes = utils.clone(this.constructor.adapter.get(instance));
       delete attributes['id'];
+      delete attributes['type'];
       relationships = this.relationships();
       for (key in relationships) {
         delete attributes[key];
@@ -353,6 +354,10 @@ module.exports = function(utils) {
         for (key in _ref) {
           rel = _ref[key];
           data = rel.data;
+          model[key] = null;
+          if (data == null) {
+            continue;
+          }
           resolve = (function(_this) {
             return function(_arg) {
               var id, type;
@@ -439,6 +444,7 @@ module.exports = function(utils) {
           add = function(obj) {
             var id, rec, type;
             type = obj.type, id = obj.id;
+            _this.remove(type, id);
             rec = new Record(obj);
             _this.records.push(rec);
             return rec;
