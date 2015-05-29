@@ -21,6 +21,8 @@ module.exports = (utils) ->
       if rec.relationships?
         for key, rel of rec.relationships
           data = rel.data
+          model[key] = null
+          continue unless data?
           resolve = ({type, id}) =>
             @find type, id, models
           model[key] = if data instanceof Array

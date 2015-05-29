@@ -197,3 +197,20 @@ describe 'Store', ->
     images = @store.findAll 'image'
     expect(events).to.deep.eq []
     expect(images).to.deep.eq []
+
+
+  it 'should handle circular relations', ->
+    @store.sync
+      data:
+        type: 'events'
+        id: 1
+        attributes:
+          name: 'Demo'
+        relationships:
+          images:
+            links:
+              self: 'http://example.com/events/1/relationships/images'
+
+    event = @store.find 'events', 1
+    expect(event.name).to.equal 'Demo'
+    expect(event.images).to.equal null
