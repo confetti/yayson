@@ -18,15 +18,15 @@ module.exports = (utils) ->
       model.id = rec.id
       models[type] ||= {}
       models[type][rec.id] ||= model
-      if rec.relationships?
-        for key, rel of rec.relationships
-          data = rel.data
-          resolve = ({type, id}) =>
-            @find type, id, models
-          model[key] = if data instanceof Array
-            data.map resolve
-          else
-            resolve data
+#      if rec.relationships?
+#        for key, rel of rec.relationships
+#          data = rel.data
+#          resolve = ({type, id}) =>
+#            @find type, id, models
+#          model[key] = if data instanceof Array
+#            data.map resolve
+#          else
+#            resolve data
       model
 
 
