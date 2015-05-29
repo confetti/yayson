@@ -70,7 +70,7 @@ module.exports = (utils) ->
         return null unless data?
         add = (obj) =>
           {type, id} = obj
-          #@remove type, id
+          @remove type, id
           rec = new Record(obj)
           @records.push rec
           rec

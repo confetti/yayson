@@ -30,6 +30,37 @@ describe 'Store', ->
     event = @store.find 'events', 1
     expect(event.name).to.equal 'Demo'
 
+  it 'should handle relations with duplicates', ->
+    @store.sync
+      data:
+        type: 'events'
+        id: 1
+        attributes:
+          name: 'Demo'
+        relationships:
+          images:
+            data: [{
+              type: 'images'
+              id: 2
+            }]
+      included: [{
+        type: 'images'
+        id: 2
+        attributes:
+          name: 'Header'
+      }, {
+        type: 'images'
+        id: 2
+        attributes:
+          name: 'Header'
+      }]
+
+    event = @store.find 'events', 1
+    expect(event.name).to.equal 'Demo'
+    expect(event.images.length).to.equal 1
+
+    images = @store.findAll 'images'
+    expect(images.length).to.eq 1
 
   it 'should handle circular relations', ->
     @store.sync
