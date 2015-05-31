@@ -101,7 +101,7 @@ it handle Sequalize.js models like this:
 
 ```
 
-Take a look at the SequalizeAdapter if you want to extend YAYSON to your ORM. Pull requests are welccome :)
+Take a look at the SequalizeAdapter if you want to extend YAYSON to your ORM. Pull requests are welcome. :)
 
 ### Metadata
 
