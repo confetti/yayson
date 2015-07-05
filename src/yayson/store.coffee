@@ -21,14 +21,26 @@ module.exports = (utils) ->
       if rec.relationships?
         for key, rel of rec.relationships
           data = rel.data
+          links = rel.links
           model[key] = null
-          continue unless data?
+          continue unless data? or links?
           resolve = ({type, id}) =>
             @find type, id, models
           model[key] = if data instanceof Array
             data.map resolve
-          else
+          else if data?
             resolve data
+          else
+            {}
+
+          currentModel = model[key]
+          linksAttr = currentModel.links
+          # Getter allows accessing a model attribute called 'links',
+          # which would otherwise be overwritten by resource links.
+          currentModel.get = (attrName) ->
+              if attrName == 'links' then linksAttr else currentModel[attrName]
+
+          currentModel.links = links || {}
       model
 
 
