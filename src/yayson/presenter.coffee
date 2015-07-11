@@ -101,7 +101,7 @@ module.exports = (utils, adapter) ->
           else
             added = false
         else if @scope.data?
-          unless utils.any(@scope.data, (i) -> i.id == model.id)
+          unless @scope.data instanceof Array and utils.any(@scope.data, (i) -> i.id == model.id)
             @scope.data.push model
           else
             added = false
