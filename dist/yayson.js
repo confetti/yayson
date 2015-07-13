@@ -1,5 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var Adapter, Q, adapters, lookupAdapter, presenter, presenterFactory, tryRequire, utils, _;
+var Adapter, Q, _, adapters, lookupAdapter, presenter, presenterFactory, tryRequire, utils;
 
 tryRequire = function(dep) {
   try {
@@ -42,9 +42,9 @@ presenter = function(options) {
   return presenterFactory(utils, adapter);
 };
 
-module.exports = function(_arg) {
+module.exports = function(arg) {
   var adapter;
-  adapter = (_arg != null ? _arg : {}).adapter;
+  adapter = (arg != null ? arg : {}).adapter;
   return {
     Store: require('./yayson/store')(utils),
     Presenter: presenter({
@@ -90,13 +90,13 @@ module.exports = {
 
 },{"./sequelize":4}],4:[function(require,module,exports){
 var Adapter, SequelizeAdapter,
-  __hasProp = {}.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+  extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+  hasProp = {}.hasOwnProperty;
 
 Adapter = require('../adapter');
 
-SequelizeAdapter = (function(_super) {
-  __extends(SequelizeAdapter, _super);
+SequelizeAdapter = (function(superClass) {
+  extend(SequelizeAdapter, superClass);
 
   function SequelizeAdapter() {
     return SequelizeAdapter.__super__.constructor.apply(this, arguments);
@@ -172,9 +172,9 @@ module.exports = function(utils, adapter) {
     };
 
     Presenter.prototype.includeRelationships = function(scope, instance) {
-      var data, factory, key, presenter, relationships, _results;
+      var data, factory, key, presenter, relationships, results;
       relationships = this.relationships();
-      _results = [];
+      results = [];
       for (key in relationships) {
         factory = relationships[key] || (function() {
           throw new Error("Presenter for " + key + " in " + this.type + " is not defined");
@@ -182,14 +182,14 @@ module.exports = function(utils, adapter) {
         presenter = new factory(scope);
         data = this.constructor.adapter.get(instance, key);
         if (data != null) {
-          _results.push(presenter.toJSON(data, {
+          results.push(presenter.toJSON(data, {
             include: true
           }));
         } else {
-          _results.push(void 0);
+          results.push(void 0);
         }
       }
-      return _results;
+      return results;
     };
 
     Presenter.prototype.buildRelationships = function(instance) {
@@ -230,20 +230,20 @@ module.exports = function(utils, adapter) {
     };
 
     Presenter.prototype.toJSON = function(instanceOrCollection, options) {
-      var added, collection, instance, links, model, relationships, _base, _base1, _base2;
+      var added, base, base1, base2, collection, instance, links, model, relationships;
       if (options == null) {
         options = {};
       }
       if (options.meta != null) {
         this.scope.meta = options.meta;
       }
-      (_base = this.scope).data || (_base.data = null);
+      (base = this.scope).data || (base.data = null);
       if (instanceOrCollection == null) {
         return this.scope;
       }
       if (instanceOrCollection instanceof Array) {
         collection = instanceOrCollection;
-        (_base1 = this.scope).data || (_base1.data = []);
+        (base1 = this.scope).data || (base1.data = []);
         collection.forEach((function(_this) {
           return function(instance) {
             return _this.toJSON(instance);
@@ -266,7 +266,7 @@ module.exports = function(utils, adapter) {
           model.links = links;
         }
         if (options.include) {
-          (_base2 = this.scope).included || (_base2.included = []);
+          (base2 = this.scope).included || (base2.included = []);
           if (!utils.any(this.scope.included.concat(this.scope.data), function(i) {
             return i.id === model.id;
           })) {
@@ -305,13 +305,13 @@ module.exports = function(utils, adapter) {
     };
 
     Presenter.toJSON = function() {
-      var _ref;
-      return (_ref = new this).toJSON.apply(_ref, arguments);
+      var ref;
+      return (ref = new this).toJSON.apply(ref, arguments);
     };
 
     Presenter.render = function() {
-      var _ref;
-      return (_ref = new this).render.apply(_ref, arguments);
+      var ref;
+      return (ref = new this).render.apply(ref, arguments);
     };
 
     return Presenter;
@@ -344,28 +344,35 @@ module.exports = function(utils) {
     };
 
     Store.prototype.toModel = function(rec, type, models) {
-      var data, key, model, rel, resolve, _base, _name, _ref;
+      var base, currentModel, data, key, links, linksAttr, model, name, ref, rel, resolve;
       model = utils.clone(rec.attributes) || {};
       model.id = rec.id;
       models[type] || (models[type] = {});
-      (_base = models[type])[_name = rec.id] || (_base[_name] = model);
+      (base = models[type])[name = rec.id] || (base[name] = model);
       if (rec.relationships != null) {
-        _ref = rec.relationships;
-        for (key in _ref) {
-          rel = _ref[key];
+        ref = rec.relationships;
+        for (key in ref) {
+          rel = ref[key];
           data = rel.data;
-          model[key] = null;
-          if (data == null) {
-            continue;
-          }
+          links = rel.links || {};
           resolve = (function(_this) {
-            return function(_arg) {
+            return function(arg) {
               var id, type;
-              type = _arg.type, id = _arg.id;
+              type = arg.type, id = arg.id;
               return _this.find(type, id, models);
             };
           })(this);
-          model[key] = data instanceof Array ? data.map(resolve) : resolve(data);
+          model[key] = data instanceof Array ? data.map(resolve) : data != null ? resolve(data) : null;
+          currentModel = model[key];
+          linksAttr = currentModel.links;
+          currentModel.get = function(attrName) {
+            if (attrName === 'links') {
+              return linksAttr;
+            } else {
+              return currentModel[attrName];
+            }
+          };
+          currentModel.links = links;
         }
       }
       return model;
@@ -491,9 +498,9 @@ module.exports = function(_, Q) {
   }
   return utils = {
     find: _.find || function(arr, callback) {
-      var elem, _i, _len;
-      for (_i = 0, _len = arr.length; _i < _len; _i++) {
-        elem = arr[_i];
+      var elem, i, len;
+      for (i = 0, len = arr.length; i < len; i++) {
+        elem = arr[i];
         if (callback(elem)) {
           return elem;
         }
@@ -501,10 +508,10 @@ module.exports = function(_, Q) {
       return void 0;
     },
     filter: _.filter || function(arr, callback) {
-      var elem, res, _i, _len;
+      var elem, i, len, res;
       res = [];
-      for (_i = 0, _len = arr.length; _i < _len; _i++) {
-        elem = arr[_i];
+      for (i = 0, len = arr.length; i < len; i++) {
+        elem = arr[i];
         if (callback(elem)) {
           res.push(elem);
         }
