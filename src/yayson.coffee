@@ -1,18 +1,11 @@
-
-tryRequire = (dep) ->
-  try
-    require dep
-  catch
-    undefined
-
 @window ||= {}
 
 Q = @window.Q
 _ = @window._
 
-Q ||= tryRequire 'q'
-_ ||= tryRequire 'lodash/dist/lodash.underscore'
-_ ||= tryRequire 'underscore'
+Q ||= (try require? 'q')
+_ ||= (try require? 'lodash/dist/lodash.underscore')
+_ ||= (try require? 'underscore')
 
 utils = require('./yayson/utils')(_, Q)
 
@@ -31,4 +24,6 @@ module.exports = ({adapter} = {}) ->
   Store: require('./yayson/store')(utils)
   Presenter: presenter({adapter})
   Adapter: Adapter
+
+
 
