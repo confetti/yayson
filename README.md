@@ -91,17 +91,17 @@ ItemsPresenter.prototype.relationships = function() {
 ItemsPresenter.render(item)
 ```
 
-### Sequalize support
+### Sequelize support
 
 By default it is set up to handle standard JS objects. You can also make
-it handle Sequalize.js models like this:
+it handle Sequelize.js models like this:
 
 ```coffee
 {Presenter} = require('yayson')(adapter: 'sequelize')
 
 ```
 
-Take a look at the SequalizeAdapter if you want to extend YAYSON to your ORM. Pull requests are welcome. :)
+Take a look at the SequelizeAdapter if you want to extend YAYSON to your ORM. Pull requests are welcome. :)
 
 ### Metadata
 
