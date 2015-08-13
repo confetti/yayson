@@ -87,6 +87,77 @@ describe 'Presenter', ->
               id: '1'
       ]
 
+  it 'should serialize relations array', ->
+    class WheelPresenter extends Presenter
+      type: 'wheels'
+      relationships: ->
+        bike: BikePresenter
+
+    class BikePresenter extends Presenter
+      type: 'bikes'
+      relationships: ->
+        wheel: WheelPresenter
+
+    wheel =[
+      {
+        id: 2
+        bike: null
+      },
+      {
+        id: 3
+        bike: null
+      }
+    ]
+
+
+    bike =
+      id: 1
+      wheel: wheel
+
+    for w in wheel
+      w.bike = bike
+
+    json = BikePresenter.toJSON(bike)
+    expect(json).to.deep.equal
+      data:
+        type: 'bikes'
+        id: '1'
+        attributes: {}
+        relationships:
+          wheel:
+            data:[
+              {
+                type: 'wheels'
+                id: '2'
+              },
+              {
+                type: 'wheels'
+                id: '3'
+              }
+            ]
+      included: [
+        {
+          type: 'wheels'
+          id: '2'
+          attributes: {}
+          relationships:
+            bike:
+              data:
+                type: 'bikes'
+              id: '1'
+        },
+        {
+          type: 'wheels'
+          id: '3'
+          attributes: {}
+          relationships:
+            bike:
+              data:
+                type: 'bikes'
+                id: '1'
+        }
+      ]
+
   it 'should include self link', ->
     class CarPresenter extends Presenter
       type: 'cars'
