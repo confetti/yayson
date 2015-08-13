@@ -109,8 +109,7 @@ describe 'Presenter', ->
       }
     ]
 
-
-    bike =
+    bike = 
       id: 1
       wheel: wheel
 
@@ -144,7 +143,7 @@ describe 'Presenter', ->
             bike:
               data:
                 type: 'bikes'
-              id: '1'
+                id: '1'
         },
         {
           type: 'wheels'

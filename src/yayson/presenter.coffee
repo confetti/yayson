@@ -50,18 +50,22 @@ module.exports = (utils, adapter) ->
       for key of rels
         data = @constructor.adapter.get instance, key
         presenter = rels[key]
+        buildData = (d) =>
+          data = 
+            id: @constructor.adapter.id d
+            type: presenter::type
         build = (d) =>
           rel =
             data:
-              id: @constructor.adapter.id d
-              type: presenter::type
+              buildData(d)
           if links[key]?
             rel.links = buildLinks links[key]
           rel
         relationships ||= {}
         relationships[key] ||= {}
         relationships[key]= if data instanceof Array
-          data.map build
+          console.log data
+          data: data.map buildData
         else if data?
           build data
         else
@@ -81,7 +85,7 @@ module.exports = (utils, adapter) ->
         collection = instanceOrCollection
         @scope.data ||= []
         collection.forEach (instance) =>
-          @toJSON instance
+          @toJSON instance, options
       else
         instance = instanceOrCollection
         added = true
