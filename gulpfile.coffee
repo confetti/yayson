@@ -10,7 +10,7 @@ ecstatic = require 'ecstatic'
 serverport = 5005
 
 gulp.task 'browserify', ->
-  browserify('./src/yayson.coffee', {extensions: ['.coffee']})
+  browserify('./src/yayson.coffee', {extensions: ['.coffee'], ignoreMissing: true})
     .transform(coffeeify)
     .bundle()
     .pipe(source('yayson.js'))
