@@ -64,7 +64,6 @@ module.exports = (utils, adapter) ->
         relationships ||= {}
         relationships[key] ||= {}
         relationships[key]= if data instanceof Array
-          console.log data
           data: data.map buildData
         else if data?
           build data
