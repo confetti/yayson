@@ -55,9 +55,9 @@ module.exports = (utils, adapter) ->
             id: @constructor.adapter.id d
             type: presenter::type
         build = (d) =>
-          rel =
-            data:
-              buildData(d)
+          rel = {}
+          if d?
+            rel.data = buildData(d)
           if links[key]?
             rel.links = buildLinks links[key]
           rel
@@ -65,10 +65,8 @@ module.exports = (utils, adapter) ->
         relationships[key] ||= {}
         relationships[key]= if data instanceof Array
           data: data.map buildData
-        else if data?
-          build data
         else
-          null
+          build data
       relationships
 
     buildSelfLink: (instance) ->
@@ -128,4 +126,3 @@ module.exports = (utils, adapter) ->
 
 
   module.exports = Presenter
-
