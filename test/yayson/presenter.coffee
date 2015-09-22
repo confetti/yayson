@@ -197,6 +197,27 @@ describe 'Presenter', ->
     expect(json.data.relationships.car.links.self).to.eq '/cars/3/linkage/car'
     expect(json.data.relationships.car.links.related).to.eq '/cars/3/car'
 
+  it 'should handle links in relationships without data', ->
+    class CarPresenter extends Presenter
+      type: 'cars'
+
+      relationships: ->
+        car: CarPresenter
+
+      selfLinks: (instance) ->
+        '/cars/' + @id(instance)
+
+      links: (instance) ->
+        car:
+          self: @selfLinks(instance) + '/linkage/car'
+          related: @selfLinks(instance) + '/car'
+
+    json = CarPresenter.render(id: 3)
+    expect(json.data.links.self).to.eq '/cars/3'
+    expect(json.data.relationships.car.links.self).to.eq '/cars/3/linkage/car'
+    expect(json.data.relationships.car.links.related).to.eq '/cars/3/car'
+    expect(json.data.relationships.car.data).to.eq undefined
+
   it 'should serialize in pure JS', ->
     `
     var EventPresenter = function () { Presenter.call(this); }
