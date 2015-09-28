@@ -1,6 +1,6 @@
 # YAYSON
 
-A library for serializing and reading [JSON API](http://jsonapi.org) data in JavaScript. As of 2.0.0-beta.1 YAYSON respects JSON API Release candidate 4.
+A library for serializing and reading [JSON API](http://jsonapi.org) data in JavaScript. As of 2.0.0 YAYSON aims to support JSON API version 1.
 
 ## Installing
 
