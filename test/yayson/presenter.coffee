@@ -96,9 +96,9 @@ describe 'Presenter', ->
     class BikePresenter extends Presenter
       type: 'bikes'
       relationships: ->
-        wheel: WheelPresenter
+        wheels: WheelPresenter
 
-    wheel =[
+    wheels =[
       {
         id: 2
         bike: null
@@ -111,9 +111,9 @@ describe 'Presenter', ->
 
     bike = 
       id: 1
-      wheel: wheel
+      wheels: wheels
 
-    for w in wheel
+    for w in wheels
       w.bike = bike
 
     json = BikePresenter.toJSON(bike)
@@ -123,7 +123,7 @@ describe 'Presenter', ->
         id: '1'
         attributes: {}
         relationships:
-          wheel:
+          wheels:
             data:[
               {
                 type: 'wheels'
@@ -196,6 +196,49 @@ describe 'Presenter', ->
     expect(json.data.links.self).to.eq '/cars/3'
     expect(json.data.relationships.car.links.self).to.eq '/cars/3/linkage/car'
     expect(json.data.relationships.car.links.related).to.eq '/cars/3/car'
+
+  it 'should handle links in relationships array', ->
+
+    class CarPresenter extends Presenter
+      type: 'cars'
+
+      relationships: ->
+        cars: CarPresenter
+
+      selfLinks: (instance) ->
+        '/cars/' + @id(instance)
+
+      links: (instance) ->
+        cars:
+          self: @selfLinks(instance) + '/linkage/cars'
+          related: @selfLinks(instance) + '/cars'
+
+
+
+    cars =[
+      {
+        id: 2
+        car: null
+      },
+      {
+        id: 3
+        car: null
+      }
+    ]
+
+    car = 
+      id: 1
+      cars: cars
+
+    for c in cars
+      c.car = car
+
+    json = CarPresenter.render(car)
+    expect(json.data.links.self).to.eq '/cars/1'
+    expect(json.data.relationships.cars.links).to.not.eq undefined
+    expect(json.data.relationships.cars.links.self).to.eq '/cars/1/linkage/cars'
+    expect(json.data.relationships.cars.links.related).to.eq '/cars/1/cars'
+    expect(json.data.relationships.cars.data).to.be.an 'array'
 
   it 'should handle links in relationships without data', ->
     class CarPresenter extends Presenter

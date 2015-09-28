@@ -63,10 +63,12 @@ module.exports = (utils, adapter) ->
           rel
         relationships ||= {}
         relationships[key] ||= {}
-        relationships[key]= if data instanceof Array
-          data: data.map buildData
+        if data instanceof Array
+          relationships[key].data =  data.map buildData
+          if links[key]?
+            relationships[key].links = buildLinks links[key]
         else
-          build data
+          relationships[key]= build data
       relationships
 
     buildSelfLink: (instance) ->
