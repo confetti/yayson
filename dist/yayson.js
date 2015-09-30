@@ -5215,9 +5215,14 @@ module.exports = function(utils, adapter) {
         })(this);
         relationships || (relationships = {});
         relationships[key] || (relationships[key] = {});
-        relationships[key] = data instanceof Array ? {
-          data: data.map(buildData)
-        } : build(data);
+        if (data instanceof Array) {
+          relationships[key].data = data.map(buildData);
+          if (links[key] != null) {
+            relationships[key].links = buildLinks(links[key]);
+          }
+        } else {
+          relationships[key] = build(data);
+        }
       }
       return relationships;
     };
