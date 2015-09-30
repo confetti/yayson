@@ -62,6 +62,24 @@ describe 'Store', ->
     images = @store.findAll 'images'
     expect(images.length).to.eq 1
 
+  it 'should handle relationship elements without links attribute', ->
+      @store.sync
+        data:
+            type: 'events'
+            id: 1
+            attributes:
+                name: 'Demo'
+            relationships:
+                image:
+                    data: {
+                        type: 'images',
+                        id: 2
+                    }
+       event = @store.find 'events', 1
+       console.log event
+       expect(event.name).to.equal 'Demo'
+       expect(event.image).to.be.null
+
   it 'should handle circular relations', ->
     @store.sync
       data:
