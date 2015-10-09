@@ -33,16 +33,19 @@ module.exports = (utils) ->
           else
             {}
 
+          # Model of the relation
           currentModel = model[key]
-          linksAttr = currentModel.links
-          # Getter allows accessing a model attribute called 'links',
-          # which would otherwise be overwritten by resource links.
-          currentModel.get = (attrName) ->
-              if attrName == 'links' then linksAttr else currentModel[attrName]
 
-          currentModel.links = links || {}
+          if currentModel?
+              linksAttr = currentModel.links
+
+              # Getter allows accessing a model attribute called 'links',
+              # which would otherwise be overwritten by resource links.
+              currentModel.get = (attrName) ->
+                  if attrName == 'links' then linksAttr else currentModel[attrName]
+
+              currentModel.links = links || {}
       model
-
 
     findRecord: (type, id) ->
       utils.find @records, (r) ->
