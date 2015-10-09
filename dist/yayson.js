@@ -5370,15 +5370,17 @@ module.exports = function(utils) {
           })(this);
           model[key] = data instanceof Array ? data.map(resolve) : data != null ? resolve(data) : {};
           currentModel = model[key];
-          linksAttr = currentModel.links;
-          currentModel.get = function(attrName) {
-            if (attrName === 'links') {
-              return linksAttr;
-            } else {
-              return currentModel[attrName];
-            }
-          };
-          currentModel.links = links || {};
+          if (currentModel != null) {
+            linksAttr = currentModel.links;
+            currentModel.get = function(attrName) {
+              if (attrName === 'links') {
+                return linksAttr;
+              } else {
+                return currentModel[attrName];
+              }
+            };
+            currentModel.links = links || {};
+          }
         }
       }
       return model;
