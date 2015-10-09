@@ -34,7 +34,7 @@ module.exports = (utils) ->
             {}
 
           # Model of the relation
-          currentModel = model[key] 
+          currentModel = model[key]
 
           if currentModel?
               linksAttr = currentModel.links

@@ -76,7 +76,7 @@ describe 'Store', ->
                         id: 2
                     }
        event = @store.find 'events', 1
-       console.log event
+
        expect(event.name).to.equal 'Demo'
        expect(event.image).to.be.null
 
