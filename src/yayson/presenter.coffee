@@ -99,7 +99,9 @@ module.exports = (utils, adapter) ->
 
         if options.include
           @scope.included ||= []
-          unless utils.any(@scope.included.concat(@scope.data), (i) -> i.id == model.id)
+          unless utils.any(@scope.included.concat(@scope.data), (i) ->
+            i.id == model.id && i.type == model.type
+          )
             @scope.included.push model
           else
             added = false
