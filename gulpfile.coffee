@@ -15,6 +15,11 @@ gulp.task 'browserify', ->
     .bundle()
     .pipe(source('yayson.js'))
     .pipe(gulp.dest('./dist/'))
+  browserify('./src/yayson.coffee', {extensions: ['.coffee'], ignoreMissing: true, standalone: 'yayson'})
+    .transform(coffeeify)
+    .bundle()
+    .pipe(source('yayson-standalone.js'))
+    .pipe(gulp.dest('./dist/'))
 
 gulp.task 'build', ->
   gulp.src('./src/**/*.coffee')
