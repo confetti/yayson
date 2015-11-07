@@ -99,6 +99,13 @@ describe 'Presenter', ->
         wheels: WheelPresenter
 
     wheels =[
+      # Intentionally adding a relation that uses the same ID as the base data
+      # to prevent a regression where data of different types but of the same id
+      # would not get included
+      {
+        id: 1
+        bike: null
+      },
       {
         id: 2
         bike: null
@@ -109,7 +116,7 @@ describe 'Presenter', ->
       }
     ]
 
-    bike = 
+    bike =
       id: 1
       wheels: wheels
 
@@ -127,6 +134,10 @@ describe 'Presenter', ->
             data:[
               {
                 type: 'wheels'
+                id: '1'
+              },
+              {
+                type: 'wheels'
                 id: '2'
               },
               {
@@ -135,6 +146,16 @@ describe 'Presenter', ->
               }
             ]
       included: [
+        {
+          type: 'wheels'
+          id: '1'
+          attributes: {}
+          relationships:
+            bike:
+              data:
+                type: 'bikes'
+                id: '1'
+        },
         {
           type: 'wheels'
           id: '2'
