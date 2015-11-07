@@ -5270,7 +5270,7 @@ module.exports = function(utils, adapter) {
         if (options.include) {
           (base2 = this.scope).included || (base2.included = []);
           if (!utils.any(this.scope.included.concat(this.scope.data), function(i) {
-            return i.id === model.id;
+            return i.id === model.id && i.type === model.type;
           })) {
             this.scope.included.push(model);
           } else {
