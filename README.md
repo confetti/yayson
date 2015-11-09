@@ -148,11 +148,11 @@ This will give you the parsed event with all its relationships.
 
 Recommended way is to use it via [webpack](https://github.com/webpack/webpack) or similar build system wich lets you just require the package as usual.
 
-If you just want to try it out, copy the file `dist/yayson-standalone.js` to your project. Then simply include it:
+If you just want to try it out, copy the file `dist/yayson.js` to your project. Then simply include it:
 ```html
-    <script src="./lib/yayson-standalone.js"></script>
+    <script src="./lib/yayson.js"></script>
 ```
-Then you can `var yayson = yayson()` use the `yayson.Presenter` and `yayson.Store` as usual. 
+Then you can `var yayson = window.yayson()` use the `yayson.Presenter` and `yayson.Store` as usual.
 
 ### Browser support
 
