@@ -152,7 +152,7 @@ If you just want to try it out, copy the file `dist/yayson.js` to your project. 
 ```html
     <script src="./lib/yayson.js"></script>
 ```
-Then you can `var yayson = require('yayson')()` use the `yayson.Presenter` and `yayson.Store` as usual. 
+Then you can `var yayson = window.yayson()` use the `yayson.Presenter` and `yayson.Store` as usual.
 
 ### Browser support
 
@@ -165,5 +165,3 @@ Then you can `var yayson = require('yayson')()` use the `yayson.Presenter` and `
 #### Untested, but should work
 - IE 9+
 - Android
-
-
