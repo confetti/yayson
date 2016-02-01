@@ -8,7 +8,8 @@ module.exports = (utils, adapter) ->
         self: link
 
     @adapter: adapter
-    type: 'objects'
+    type: (instance) ->
+      @constructor.adapter.type instance
 
     constructor: (scope = {}) ->
       @scope = scope
@@ -90,7 +91,7 @@ module.exports = (utils, adapter) ->
         added = true
         model  =
           id: @id instance
-          type: @type
+          type: @type instance
           attributes: @attributes instance
         relationships = @buildRelationships instance
         model.relationships = relationships if relationships?
