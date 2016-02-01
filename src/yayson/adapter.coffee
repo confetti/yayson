@@ -6,5 +6,6 @@ class Adapter
 
   @id: (model) ->
     "#{@get model, 'id'}"
-
+  @type: (model) ->
+    return model.type || "objects"
 module.exports = Adapter
