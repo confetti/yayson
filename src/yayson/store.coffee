@@ -16,6 +16,7 @@ module.exports = (utils) ->
     toModel: (rec, type, models) ->
       model = utils.clone(rec.attributes) || {}
       model.id = rec.id
+      model.type = rec.type
       models[type] ||= {}
       models[type][rec.id] ||= model
       if rec.relationships?

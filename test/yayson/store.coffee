@@ -28,6 +28,8 @@ describe 'Store', ->
         name: 'Demo'
 
     event = @store.find 'events', 1
+    expect(event.id).to.equal 1
+    expect(event.type).to.equal 'events'
     expect(event.name).to.equal 'Demo'
 
   it 'should handle relations with duplicates', ->
