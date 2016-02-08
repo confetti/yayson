@@ -110,38 +110,6 @@ describe 'Store', ->
     expect(event.images[0].name).to.equal 'Header'
     expect(event.images[0].event.id).to.equal 1
 
-  it 'should handle relations with links', ->
-    @store.sync
-      data:
-        type: 'events'
-        id: 1
-        attributes:
-          name: 'Demo'
-        relationships:
-          image:
-            data: {
-              type: 'images'
-              id: 2
-            }
-            links:
-              next: 'url-to-next',
-              prev: 'url-to-prev'
-      included: [{
-        type: 'images'
-        id: 2
-        attributes:
-          name: 'Header'
-          links: 'Links attribute'
-      }]
-
-    event = @store.find 'events', 1
-    expect(event.image.name).to.equal 'Header'
-    expect(event.image.get('name')).to.equal 'Header'
-    expect(event.image.links).to.deep.equal {
-      next: 'url-to-next'
-      prev: 'url-to-prev'
-    }
-    expect(event.image.get('links')).to.equal 'Links attribute'
 
   it 'should return a event with all associated objects', ->
     @store.sync

@@ -37,14 +37,9 @@ module.exports = (utils) ->
           currentModel = model[key]
 
           if currentModel?
-              linksAttr = currentModel.links
+            # We overwrite the links attribute here since its reserved in the spec anyway
+            currentModel.links = links || {}
 
-              # Getter allows accessing a model attribute called 'links',
-              # which would otherwise be overwritten by resource links.
-              currentModel.get = (attrName) ->
-                  if attrName == 'links' then linksAttr else currentModel[attrName]
-
-              currentModel.links = links || {}
       model
 
     findRecord: (type, id) ->
