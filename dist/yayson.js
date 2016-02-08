@@ -10,19 +10,19 @@ _ = this.window._;
 Q || (Q = ((function() {
   try {
     return typeof require === "function" ? require('q') : void 0;
-  } catch (undefined) {}
+  } catch (_error) {}
 })()));
 
 _ || (_ = ((function() {
   try {
     return typeof require === "function" ? require('lodash/dist/lodash.underscore') : void 0;
-  } catch (undefined) {}
+  } catch (_error) {}
 })()));
 
 _ || (_ = ((function() {
   try {
     return typeof require === "function" ? require('underscore') : void 0;
-  } catch (undefined) {}
+  } catch (_error) {}
 })()));
 
 utils = require('./yayson/utils')(_, Q);
@@ -5346,9 +5346,10 @@ module.exports = function(utils) {
     };
 
     Store.prototype.toModel = function(rec, type, models) {
-      var base, currentModel, data, key, links, linksAttr, model, name, ref, rel, resolve;
+      var base, currentModel, data, key, links, model, name, ref, rel, resolve;
       model = utils.clone(rec.attributes) || {};
       model.id = rec.id;
+      model.type = rec.type;
       models[type] || (models[type] = {});
       (base = models[type])[name = rec.id] || (base[name] = model);
       if (rec.relationships != null) {
@@ -5371,14 +5372,6 @@ module.exports = function(utils) {
           model[key] = data instanceof Array ? data.map(resolve) : data != null ? resolve(data) : {};
           currentModel = model[key];
           if (currentModel != null) {
-            linksAttr = currentModel.links;
-            currentModel.get = function(attrName) {
-              if (attrName === 'links') {
-                return linksAttr;
-              } else {
-                return currentModel[attrName];
-              }
-            };
             currentModel.links = links || {};
           }
         }
