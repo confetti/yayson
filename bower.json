@@ -1,0 +1,31 @@
+{
+  "name": "yayson",
+  "description": "A library for serializing and reading JSON API standardized data in JavaScript.",
+  "main": "dist/yayson.js",
+  "authors": [
+    "Johannes Edelstam <johannes@edelst.am>",
+    "Jonny Strömberg <jonny.stromberg@gmail.com>"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "json-api",
+    "json",
+    "api",
+    "response",
+    "format",
+    "serialization",
+    "deserialization",
+    "yay",
+    "wow",
+    "omg"
+  ],
+  "homepage": "https://github.com/confetti/yayson",
+  "moduleType": [],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

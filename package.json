@@ -29,6 +29,7 @@
   },
   "homepage": "https://github.com/confetti/yayson",
   "devDependencies": {
+    "bower": "^1.7.7",
     "browserify": "^5.12.1",
     "chai": "^1.9.2",
     "coffee-script": ">= 1.3",
