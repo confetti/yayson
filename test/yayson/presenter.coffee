@@ -282,7 +282,7 @@ describe 'Presenter', ->
     expect(json.data.relationships.car.links.related).to.eq '/cars/3/car'
     expect(json.data.relationships.car.data).to.eq undefined
 
-  it.only 'should not include relationships with nothing in them', ->
+  it 'should not include relationships with nothing in them', ->
     class CarPresenter extends Presenter
       type: 'cars'
 
