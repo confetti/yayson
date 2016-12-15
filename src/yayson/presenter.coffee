@@ -60,6 +60,8 @@ module.exports = (utils, adapter) ->
             rel.data = buildData(d)
           if links[key]?
             rel.links = buildLinks links[key]
+          else unless d?
+            rel.data = null
           rel
         relationships ||= {}
         relationships[key] ||= {}
@@ -69,7 +71,6 @@ module.exports = (utils, adapter) ->
             relationships[key].links = buildLinks links[key]
         else
           relationships[key]= build data
-        delete relationships[key] unless Object.keys(relationships[key]).length > 0
       relationships
 
     buildSelfLink: (instance) ->
