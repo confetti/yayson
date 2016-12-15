@@ -5059,7 +5059,12 @@ Adapter = (function() {
   };
 
   Adapter.id = function(model) {
-    return "" + (this.get(model, 'id'));
+    var id;
+    id = this.get(model, 'id');
+    if (id === void 0) {
+      return id;
+    }
+    return "" + id;
   };
 
   return Adapter;
@@ -5261,6 +5266,9 @@ module.exports = function(utils, adapter) {
           type: this.type,
           attributes: this.attributes(instance)
         };
+        if (model.id === void 0) {
+          delete model.id;
+        }
         relationships = this.buildRelationships(instance);
         if (relationships != null) {
           model.relationships = relationships;
