@@ -5209,6 +5209,8 @@ module.exports = function(utils, adapter) {
             }
             if (links[key] != null) {
               rel.links = buildLinks(links[key]);
+            } else if (d == null) {
+              rel.data = null;
             }
             return rel;
           };
