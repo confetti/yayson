@@ -92,6 +92,7 @@ module.exports = (utils, adapter) ->
           id: @id instance
           type: @type
           attributes: @attributes instance
+        delete model.id if model.id == undefined
         relationships = @buildRelationships instance
         model.relationships = relationships if relationships?
         links = @buildSelfLink instance

@@ -5,6 +5,9 @@ class Adapter
     model
 
   @id: (model) ->
-    "#{@get model, 'id'}"
+    id = @get model, 'id'
+    if id == undefined
+      return id
+    return "#{id}"
 
 module.exports = Adapter

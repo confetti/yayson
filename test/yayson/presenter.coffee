@@ -34,6 +34,15 @@ describe 'Presenter', ->
           foo: 'baz'
       }]
 
+  it 'should not include id if not specified', ->
+    obj = {foo: 'bar'}
+    json = Presenter.toJSON(obj)
+    expect(json).to.deep.equal
+      data:
+        type: 'objects'
+        attributes:
+          foo: 'bar'
+
   it 'should not dup object', ->
     obj = [{id: 1}, {id: 1}]
     json = Presenter.toJSON(obj)
