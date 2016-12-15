@@ -90,8 +90,6 @@ In JavaScript this would be done as:
 var Presenter = require('yayson')().Presenter;
 
 class ItemsPresenter extends Presenter {};
-ItemsPresenter.prototype = new Presenter();
-
 ItemsPresenter.prototype.type = 'items'
 
 ItemsPresenter.prototype.attributes = function() {
