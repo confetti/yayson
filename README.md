@@ -12,7 +12,7 @@ $ npm install yayson --save
 
 ## Presenting data
 
-A basic `Presenter` can look like this:
+A basic `Presenter` can look like this in Coffeescript:
 
 ```coffee
   {Presenter} = require('yayson')(adapter: 'default')
@@ -26,6 +26,25 @@ A basic `Presenter` can look like this:
 
   ItemsPresenter.render(item)
 ```
+
+Or in plain JavaScript:
+
+```javascript
+  const Presenter = require('yayson')({
+    adapter: 'default'
+  }).Presenter;
+
+  class ItemsPresenter extends Presenter {};
+  ItemsPresenter.prototype.type = 'items';
+
+  var item = {
+    id: 5,
+    name: 'First'
+  };
+
+  ItemsPresenter.render(item);
+```
+
 
 This would produce:
 
@@ -70,7 +89,7 @@ In JavaScript this would be done as:
 
 var Presenter = require('yayson')().Presenter;
 
-var ItemsPresenter = function () { Presenter.call(this); }
+class ItemsPresenter extends Presenter {};
 ItemsPresenter.prototype = new Presenter();
 
 ItemsPresenter.prototype.type = 'items'
