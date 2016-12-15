@@ -10,19 +10,19 @@ _ = this.window._;
 Q || (Q = ((function() {
   try {
     return typeof require === "function" ? require('q') : void 0;
-  } catch (error) {}
+  } catch (_error) {}
 })()));
 
 _ || (_ = ((function() {
   try {
     return typeof require === "function" ? require('lodash/dist/lodash.underscore') : void 0;
-  } catch (error) {}
+  } catch (_error) {}
 })()));
 
 _ || (_ = ((function() {
   try {
     return typeof require === "function" ? require('underscore') : void 0;
-  } catch (error) {}
+  } catch (_error) {}
 })()));
 
 utils = require('./yayson/utils')(_, Q);
@@ -5222,9 +5222,6 @@ module.exports = function(utils, adapter) {
           }
         } else {
           relationships[key] = build(data);
-        }
-        if (!(relationships[key].length > 0)) {
-          delete relationships[key];
         }
       }
       return relationships;
