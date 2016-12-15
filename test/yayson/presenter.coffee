@@ -282,6 +282,18 @@ describe 'Presenter', ->
     expect(json.data.relationships.car.links.related).to.eq '/cars/3/car'
     expect(json.data.relationships.car.data).to.eq undefined
 
+  it 'should render data: null for unspecified relationships', ->
+    class CarPresenter extends Presenter
+      type: 'cars'
+
+      relationships: ->
+        car: CarPresenter
+
+    json = CarPresenter.render(id: 3)
+    expect(json.data.relationships).to.deep.equal
+      car:
+        data: null
+
   it 'should serialize in pure JS', ->
     `
     var EventPresenter = function () { Presenter.call(this); }

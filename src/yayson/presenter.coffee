@@ -60,6 +60,8 @@ module.exports = (utils, adapter) ->
             rel.data = buildData(d)
           if links[key]?
             rel.links = buildLinks links[key]
+          else unless d?
+            rel.data = null
           rel
         relationships ||= {}
         relationships[key] ||= {}
