@@ -314,6 +314,7 @@ describe 'Presenter', ->
 
     json = CarPresenter.render car
     expect(json.data.relationships.wheels.data[0].id).to.eq 123
+    expect(json.included[0].id).to.eq 123
 
   it 'should render data: null for unspecified relationships', ->
     class CarPresenter extends Presenter
