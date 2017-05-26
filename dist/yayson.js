@@ -10,19 +10,19 @@ _ = this.window._;
 Q || (Q = ((function() {
   try {
     return typeof require === "function" ? require('q') : void 0;
-  } catch (_error) {}
+  } catch (error) {}
 })()));
 
 _ || (_ = ((function() {
   try {
     return typeof require === "function" ? require('lodash/dist/lodash.underscore') : void 0;
-  } catch (_error) {}
+  } catch (error) {}
 })()));
 
 _ || (_ = ((function() {
   try {
     return typeof require === "function" ? require('underscore') : void 0;
-  } catch (_error) {}
+  } catch (error) {}
 })()));
 
 utils = require('./yayson/utils')(_, Q);
@@ -5339,7 +5339,7 @@ module.exports = function(utils) {
   var Record, Store;
   Record = (function() {
     function Record(options) {
-      this.id = options.id, this.type = options.type, this.attributes = options.attributes, this.relationships = options.relationships;
+      this.id = options.id, this.type = options.type, this.attributes = options.attributes, this.relationships = options.relationships, this.links = options.links, this.meta = options.meta;
     }
 
     return Record;
@@ -5356,18 +5356,31 @@ module.exports = function(utils) {
     };
 
     Store.prototype.toModel = function(rec, type, models) {
-      var base, currentModel, data, key, links, model, name, ref, rel, resolve;
+      var base, currentModel, data, key, links, meta, model, name, ref, rel, resolve;
       model = utils.clone(rec.attributes) || {};
       model.id = rec.id;
       model.type = rec.type;
       models[type] || (models[type] = {});
       (base = models[type])[name = rec.id] || (base[name] = model);
+      if (model.hasOwnProperty('meta')) {
+        model.attributes = {
+          meta: model.meta
+        };
+        delete model.meta;
+      }
+      if (rec.meta != null) {
+        model.meta = rec.meta;
+      }
+      if (rec.links != null) {
+        model.links = rec.links;
+      }
       if (rec.relationships != null) {
         ref = rec.relationships;
         for (key in ref) {
           rel = ref[key];
           data = rel.data;
           links = rel.links;
+          meta = rel.meta;
           model[key] = null;
           if (!((data != null) || (links != null))) {
             continue;
@@ -5382,7 +5395,8 @@ module.exports = function(utils) {
           model[key] = data instanceof Array ? data.map(resolve) : data != null ? resolve(data) : {};
           currentModel = model[key];
           if (currentModel != null) {
-            currentModel.links = links || {};
+            currentModel._links = links || {};
+            currentModel._meta = meta || {};
           }
         }
       }
@@ -5452,7 +5466,7 @@ module.exports = function(utils) {
     };
 
     Store.prototype.sync = function(body) {
-      var models, recs, sync;
+      var models, recs, result, sync;
       sync = (function(_this) {
         return function(data) {
           var add;
@@ -5480,15 +5494,23 @@ module.exports = function(utils) {
         return null;
       }
       models = {};
+      result = null;
       if (recs instanceof Array) {
-        return recs.map((function(_this) {
+        result = recs.map((function(_this) {
           return function(rec) {
             return _this.toModel(rec, rec.type, models);
           };
         })(this));
       } else {
-        return this.toModel(recs, recs.type, models);
+        result = this.toModel(recs, recs.type, models);
       }
+      if (body.hasOwnProperty('links')) {
+        result.links = body.links;
+      }
+      if (body.hasOwnProperty('meta')) {
+        result.meta = body.meta;
+      }
+      return result;
     };
 
     return Store;
