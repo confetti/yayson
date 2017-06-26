@@ -1,5 +1,4 @@
 expect = require('chai').expect
-
 Store = require('../../src/yayson.coffee')().Store
 
 describe 'Store', ->
@@ -264,6 +263,62 @@ describe 'Store', ->
               self: 'http://example.com/events/1/relationships/images'
 
     event = @store.find 'events', 1
+
     expect(event.name).to.equal 'Demo'
-    expect(event.images.links).to.deep.equal
+    expect(event.images._links).to.deep.equal
         self: 'http://example.com/events/1/relationships/images'
+
+  it 'should retain links and meta', ->
+    result = @store.sync
+      links:
+        self: 'http://example.com/events'
+        next: 'http://example.com/events?page[offset]=2'
+      meta:
+        name: 'top level meta data'
+        value: 1
+      data: [
+        type: 'events'
+        id: 1
+        meta:
+          name: 'second level meta'
+          value: 2
+        attributes:
+          name: 'Demo'
+          article:
+            name: 'An Article test'
+            teaser: 'this is a teaser...'
+            body: 'this is an article body'
+            meta:
+              author: 'John Doe'
+              date: '2017-06-26'
+          meta:
+            name: 'attribute nested meta'
+            value: 3
+        relationships:
+          comment:
+            links:
+              self: 'http://example.com/events/1/relationships/comment'
+              related: 'http://example.com/events/1/comment'
+            data:
+              type: 'comment',
+              id: 2
+      ]
+      included: [
+        type: 'comment'
+        id: 2
+        attributes:
+          name: 'Comment'
+          details:
+            user: 'micha3ldavid'
+            body: 'this is a comment...'
+        links:
+          self: 'http://example.com/comment/2'
+        meta:
+          author: 'John Doe'
+          date: '2017-06-26'
+      ]
+
+    expect(result.meta).to.deep.equal {name: 'top level meta data', value: 1}
+    expect(result[0].article.meta).to.deep.equal {author: 'John Doe', date: '2017-06-26'}
+    expect(result[0].comment.meta).to.deep.equal {author: 'John Doe', date: '2017-06-26'}
+    expect(result[0].comment._links).to.deep.equal {self: 'http://example.com/events/1/relationships/comment', related: 'http://example.com/events/1/comment'}

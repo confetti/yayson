@@ -3,7 +3,7 @@ module.exports = (utils) ->
 
   class Record
     constructor: (options) ->
-      {@id, @type, @attributes, @relationships} = options
+      {@id, @type, @attributes, @relationships, @links, @meta} = options
 
   class Store
     constructor: (options) ->
@@ -14,15 +14,31 @@ module.exports = (utils) ->
       @relations = {}
 
     toModel: (rec, type, models) ->
+
       model = utils.clone(rec.attributes) || {}
+
       model.id = rec.id
       model.type = rec.type
       models[type] ||= {}
       models[type][rec.id] ||= model
+
+      if model.hasOwnProperty 'meta'
+        model.attributes = {meta: model.meta};
+        delete model.meta;
+
+      if rec.meta?
+        model.meta = rec.meta
+
+      if rec.links?
+        model.links = rec.links
+
       if rec.relationships?
         for key, rel of rec.relationships
+
           data = rel.data
           links = rel.links
+          meta = rel.meta
+
           model[key] = null
           continue unless data? or links?
           resolve = ({type, id}) =>
@@ -38,8 +54,10 @@ module.exports = (utils) ->
           currentModel = model[key]
 
           if currentModel?
-            # We overwrite the links attribute here since its reserved in the spec anyway
-            currentModel.links = links || {}
+            # retain the links and meta from the relationship entry
+            # use as underscore property name because the currentModel may also have a link and meta reference
+            currentModel._links = links || {}
+            currentModel._meta = meta || {}
 
       model
 
@@ -97,13 +115,18 @@ module.exports = (utils) ->
       return null unless recs?
 
       models = {}
+      result = null;
+
       if recs instanceof Array
-        recs.map (rec) =>
+        result = recs.map (rec) =>
           @toModel rec, rec.type, models
       else
-        @toModel recs, recs.type, models
+        result = @toModel recs, recs.type, models
 
+      if body.hasOwnProperty 'links'
+        result.links = body.links;
 
+      if body.hasOwnProperty 'meta'
+        result.meta = body.meta;
 
-
-
+      result
