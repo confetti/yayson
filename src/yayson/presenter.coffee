@@ -51,8 +51,9 @@ module.exports = (utils, adapter) ->
         data = @constructor.adapter.get instance, key
         presenter = rels[key]
         buildData = (d) =>
+          presenterInstance = new presenter 
           data = 
-            id: @constructor.adapter.id d
+            id: presenterInstance.id d
             type: presenter::type
         build = (d) =>
           rel = {}

@@ -259,7 +259,7 @@ describe 'Presenter', ->
       }
     ]
 
-    car = 
+    car =
       id: 1
       cars: cars
 
@@ -293,6 +293,31 @@ describe 'Presenter', ->
     expect(json.data.relationships.car.links.self).to.eq '/cars/3/linkage/car'
     expect(json.data.relationships.car.links.related).to.eq '/cars/3/car'
     expect(json.data.relationships.car.data).to.eq undefined
+
+  it 'should use id function on the relationship presenter', ->
+    class CarPresenter extends Presenter
+      type: 'cars'
+      relationships: ->
+        wheels: WheelPresenter
+
+    class WheelPresenter extends Presenter
+      type: 'wheels'
+      id: (instance) ->
+        return instance.fakeId
+
+    car = {
+      id: 2
+      wheels: [
+        {
+          fakeId: 123,
+          id: 456
+        }
+      ]
+    }
+
+    json = CarPresenter.render car
+    expect(json.data.relationships.wheels.data[0].id).to.eq 123
+    expect(json.included[0].id).to.eq 123
 
   it 'should render data: null for unspecified relationships', ->
     class CarPresenter extends Presenter
