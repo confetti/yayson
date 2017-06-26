@@ -34,7 +34,7 @@ adapters = require('./yayson/adapters');
 presenterFactory = require('./yayson/presenter');
 
 lookupAdapter = function(nameOrAdapter) {
-  return adapters[nameOrAdapter] || Adapter;
+  return adapters[nameOrAdapter] || nameOrAdapter || Adapter;
 };
 
 presenter = function(options) {

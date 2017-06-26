@@ -1,6 +1,9 @@
+sinon = require('sinon')
 expect = require('chai').expect
+assert = require('chai').assert
 
-{Presenter} = require('../../src/yayson.coffee')()
+presenterFactory = require('../../src/yayson.coffee')
+{Presenter} = presenterFactory()
 
 describe 'Presenter', ->
   it 'handles null', ->
@@ -348,3 +351,14 @@ describe 'Presenter', ->
         id: '5'
         attributes:
           foo: 'bar'
+
+  it 'can use custom adapters', ->
+    obj = {id: 5, foo: 'bar'}
+    adapter = {
+      id: sinon.spy -> 1
+      get: sinon.spy -> 'bar'
+    }
+    PresenterWithMockAdapter = presenterFactory({adapter}).Presenter
+    json = PresenterWithMockAdapter.toJSON(obj)
+    expect(adapter.id).to.have.been.calledOnce
+    expect(adapter.get).to.have.been.calledOnce
