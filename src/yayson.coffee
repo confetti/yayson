@@ -14,6 +14,7 @@ adapters = require('./yayson/adapters')
 presenterFactory = require('./yayson/presenter')
 
 lookupAdapter = (nameOrAdapter) ->
+  return Adapter if nameOrAdapter == 'default'
   adapters[nameOrAdapter] || nameOrAdapter || Adapter
 
 presenter = (options = {}) ->

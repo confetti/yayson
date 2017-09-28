@@ -10,19 +10,19 @@ _ = this.window._;
 Q || (Q = ((function() {
   try {
     return typeof require === "function" ? require('q') : void 0;
-  } catch (error) {}
+  } catch (_error) {}
 })()));
 
 _ || (_ = ((function() {
   try {
     return typeof require === "function" ? require('lodash/dist/lodash.underscore') : void 0;
-  } catch (error) {}
+  } catch (_error) {}
 })()));
 
 _ || (_ = ((function() {
   try {
     return typeof require === "function" ? require('underscore') : void 0;
-  } catch (error) {}
+  } catch (_error) {}
 })()));
 
 utils = require('./yayson/utils')(_, Q);
@@ -34,6 +34,9 @@ adapters = require('./yayson/adapters');
 presenterFactory = require('./yayson/presenter');
 
 lookupAdapter = function(nameOrAdapter) {
+  if (nameOrAdapter === 'default') {
+    return Adapter;
+  }
   return adapters[nameOrAdapter] || nameOrAdapter || Adapter;
 };
 

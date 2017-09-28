@@ -113,9 +113,28 @@ ItemsPresenter.render(item)
 By default it is set up to handle standard JS objects. You can also make
 it handle Sequelize.js models like this:
 
-```coffee
-{Presenter} = require('yayson')(adapter: 'sequelize')
+```javascript
+{Presenter} = require('yayson')({adapter: 'sequelize'})
 
+```
+
+You can also define your own adapter globally:
+
+```javascript
+{Presenter} = require('yayson')(adapter: {
+  id: function(model){ return 'omg' + model.id},
+  get: function(model, key){ return model[key] }
+})
+
+```
+
+Or at Presenter level:
+
+```javascript
+ItemPresenter.adapter = {
+  id: function(model){ return 'omg' + model.id},
+  get: function(model, key){ return model[key] }
+}
 ```
 
 Take a look at the SequelizeAdapter if you want to extend YAYSON to your ORM. Pull requests are welcome. :)
