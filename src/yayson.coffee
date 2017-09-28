@@ -4,7 +4,7 @@ Q = @window.Q
 _ = @window._
 
 Q ||= (try require? 'q')
-_ ||= (try require? 'lodash/dist/lodash.underscore')
+_ ||= (try require? 'lodash')
 _ ||= (try require? 'underscore')
 
 utils = require('./yayson/utils')(_, Q)

@@ -44,7 +44,7 @@
     "vinyl-source-stream": "^1.0.0"
   },
   "optionalDependencies": {
-    "lodash": "^2.4.1",
+    "lodash": "^4.17.4",
     "q": "^1.0.1",
     "underscore": "^1.8.3"
   },
