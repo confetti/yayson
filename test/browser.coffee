@@ -6,6 +6,5 @@ require('./yayson/utils')
 require('./yayson/adapter')
 require('./yayson/adapters/sequelize')
 
-
 mocha.checkLeaks()
 mocha.run()

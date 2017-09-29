@@ -1,7 +1,7 @@
-@window ||= {}
 
-Q = @window.Q
-_ = @window._
+if window?
+  Q = window.Q
+  _ = window._
 
 Q ||= (try require? 'q')
 _ ||= (try require? 'lodash')
