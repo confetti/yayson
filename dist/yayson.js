@@ -24,8 +24,6 @@ _ || (_ = ((function() {
   } catch (_error) {}
 })()));
 
-console.log(Q, _);
-
 utils = require('./yayson/utils')(_, Q);
 
 Adapter = require('./yayson/adapter');
