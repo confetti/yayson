@@ -15,7 +15,7 @@ Q || (Q = ((function() {
 
 _ || (_ = ((function() {
   try {
-    return typeof require === "function" ? require('lodash/dist/lodash.underscore') : void 0;
+    return typeof require === "function" ? require('lodash') : void 0;
   } catch (_error) {}
 })()));
 
@@ -63,7 +63,7 @@ module.exports = function(arg) {
 
 
 
-},{"./yayson/adapter":4,"./yayson/adapters":5,"./yayson/presenter":7,"./yayson/store":8,"./yayson/utils":9,"lodash/dist/lodash.underscore":3,"q":2,"underscore":2}],2:[function(require,module,exports){
+},{"./yayson/adapter":4,"./yayson/adapters":5,"./yayson/presenter":7,"./yayson/store":8,"./yayson/utils":9,"lodash":3,"q":2,"underscore":2}],2:[function(require,module,exports){
 
 },{}],3:[function(require,module,exports){
 (function (global){
