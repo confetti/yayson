@@ -32,8 +32,7 @@
     "bower": "^1.7.7",
     "browserify": "^16.2.3",
     "chai": "^4.2.0",
-    "coffee-script": "^1.12.7",
-    "coffeeify": "^2.1.0",
+    "coffeeify": "^3.0.1",
     "ecstatic": "^4.0.0",
     "gulp": "^4.0.0",
     "gulp-coffee": "^3.0.3",
@@ -52,5 +51,8 @@
     "lodash": false,
     "q": false,
     "underscore": false
+  },
+  "dependencies": {
+    "coffeescript": "^2.4.1"
   }
 }
