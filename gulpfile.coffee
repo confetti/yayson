@@ -21,7 +21,7 @@ gulp.task 'build', ->
     .pipe(coffee({bare: true}).on('error', gutil.log))
     .pipe(gulp.dest('./lib/'))
 
-gulp.task 'default', ['browserify', 'build']
+gulp.task 'default', gulp.series('browserify', 'build')
 
 gulp.task 'test-serve', ->
   http.createServer(ecstatic  root: __dirname + '/' ).listen(serverport)
@@ -40,4 +40,4 @@ gulp.task 'test-watch', ->
   gulp.watch('./test/**/*.coffee', ['test-coffee'])
 
 
-gulp.task 'test-browser', ['test-watch', 'test-serve']
+gulp.task 'test-browser', gulp.series('test-watch', 'test-serve')

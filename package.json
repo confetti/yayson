@@ -30,18 +30,18 @@
   "homepage": "https://github.com/confetti/yayson",
   "devDependencies": {
     "bower": "^1.7.7",
-    "browserify": "^5.12.1",
+    "browserify": "^16.2.3",
     "chai": "^1.9.2",
-    "coffee-script": ">= 1.3",
+    "coffee-script": "^1.12.7",
     "coffeeify": "^0.7.0",
-    "ecstatic": "^0.5.5",
-    "gulp": "^3.8.8",
+    "ecstatic": "^4.0.0",
+    "gulp": "^4.0.0",
     "gulp-coffee": "^2.2.0",
     "gulp-util": "^3.0.1",
     "mocha": "*",
     "sinon": "^2.3.5",
     "sinon-chai": "^2.11.0",
-    "vinyl-source-stream": "^1.0.0"
+    "vinyl-source-stream": "^2.0.0"
   },
   "optionalDependencies": {
     "lodash": "^4.17.4",

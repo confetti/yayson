@@ -259,7 +259,7 @@ describe 'Presenter', ->
       }
     ]
 
-    car = 
+    car =
       id: 1
       cars: cars
 
