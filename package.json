@@ -36,7 +36,7 @@
     "coffeeify": "^0.7.0",
     "ecstatic": "^0.5.5",
     "gulp": "^3.8.8",
-    "gulp-coffee": "^2.2.0",
+    "gulp-coffee": "^3.0.3",
     "gulp-util": "^3.0.1",
     "mocha": "*",
     "sinon": "^2.3.5",
