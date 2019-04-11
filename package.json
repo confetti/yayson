@@ -41,7 +41,7 @@
     "mocha": "*",
     "sinon": "^2.3.5",
     "sinon-chai": "^2.11.0",
-    "vinyl-source-stream": "^1.0.0"
+    "vinyl-source-stream": "^2.0.0"
   },
   "optionalDependencies": {
     "lodash": "^4.17.4",
