@@ -39,7 +39,7 @@
     "gulp-coffee": "^2.2.0",
     "gulp-util": "^3.0.1",
     "mocha": "*",
-    "sinon": "^2.3.5",
+    "sinon": "^4.5.0",
     "sinon-chai": "^2.11.0",
     "vinyl-source-stream": "^1.0.0"
   },
