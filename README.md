@@ -90,23 +90,24 @@ In JavaScript this would be done as:
 
 ```javascript
 
+
 var Presenter = require('yayson')().Presenter;
 
-class ItemsPresenter extends Presenter {};
+class ItemsPresenter extends Presenter {
+  attributes() {
+    var attrs = super.attributes(...arguments);
+    attrs.start = moment.utc(attrs.start).toDate();
+    return attrs;
+  }
+
+  relationships() {
+    return {
+      event: EventsPresenter
+    }
+  }
+};
 ItemsPresenter.prototype.type = 'items'
 
-ItemsPresenter.prototype.attributes = function() {
-  var attrs = Presenter.prototype.attributes.apply(this, arguments);
-
-  attrs.start = moment.utc(attrs.start).toDate();
-  return attrs;
-}
-
-ItemsPresenter.prototype.relationships = function() {
-  return {
-    event: EventsPresenter
-  }
-}
 
 ItemsPresenter.render(item)
 ```

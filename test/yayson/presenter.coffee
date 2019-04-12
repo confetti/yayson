@@ -308,11 +308,13 @@ describe 'Presenter', ->
 
   it 'should serialize in pure JS', ->
     `
-    var EventPresenter = function () { Presenter.call(this); }
-    EventPresenter.prototype = new Presenter()
-    EventPresenter.prototype.attributes = function() {
-      return {hej: 'test'}
+    class EventPresenter extends Presenter {
+      attributes () {
+        super.attributes(...arguments)
+        return {hej: 'test'}
+      }
     }
+    EventPresenter.prototype.type = 'events'
     var presenter = new EventPresenter()
     var json = presenter.toJSON({id: 1})
     `
