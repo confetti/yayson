@@ -1,12 +1,5 @@
-// TODO: This file was created by bulk-decaffeinate.
-// Sanity-check the conversion and remove this comment.
-/*
- * decaffeinate suggestions:
- * DS102: Remove unnecessary code created because of implicit returns
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
- */
 const { expect } = require('chai')
-const { Store } = require('../../src/yayson.coffee')()
+const { Store } = require('../../src/yayson.js')()
 
 describe('Store', function() {
   beforeEach(function() {
@@ -27,7 +20,7 @@ describe('Store', function() {
       }
     })
 
-    return expect(event.name).to.equal('Demo')
+    expect(event.name).to.equal('Demo')
   })
 
   it('should find an event', function() {
@@ -44,7 +37,7 @@ describe('Store', function() {
     const event = this.store.find('events', 1)
     expect(event.id).to.equal(1)
     expect(event.type).to.equal('events')
-    return expect(event.name).to.equal('Demo')
+    expect(event.name).to.equal('Demo')
   })
 
   it('should handle relations with duplicates', function() {
@@ -89,7 +82,7 @@ describe('Store', function() {
     expect(event.images.length).to.equal(1)
 
     const images = this.store.findAll('images')
-    return expect(images.length).to.eq(1)
+    expect(images.length).to.eq(1)
   })
 
   it('should handle relationship elements without links attribute', function() {
@@ -113,7 +106,7 @@ describe('Store', function() {
     const event = this.store.find('events', 1)
 
     expect(event.name).to.equal('Demo')
-    return expect(event.image).to.be.null
+    expect(event.image).to.be.null
   })
 
   it('should handle circular relations', function() {
@@ -157,7 +150,7 @@ describe('Store', function() {
     const event = this.store.find('events', 1)
     expect(event.name).to.equal('Demo')
     expect(event.images[0].name).to.equal('Header')
-    return expect(event.images[0].event.id).to.equal(1)
+    expect(event.images[0].event.id).to.equal(1)
   })
 
   it('should return a event with all associated objects', function() {
@@ -255,7 +248,7 @@ describe('Store', function() {
     const event = this.store.find('events', 1)
     expect(event.organisers.length).to.equal(2)
     expect(event.images.length).to.equal(3)
-    return expect(event.organisers[0].image.id).to.equal(2)
+    expect(event.organisers[0].image.id).to.equal(2)
   })
 
   it('should remove an event', function() {
@@ -267,7 +260,7 @@ describe('Store', function() {
     expect(event.id).to.eq(1)
     this.store.remove('events', 1)
     event = this.store.find('events', 1)
-    return expect(event).to.eq(null)
+    expect(event).to.eq(null)
   })
 
   it('should remove all events', function() {
@@ -279,7 +272,7 @@ describe('Store', function() {
     expect(events.length).to.eq(2)
     this.store.remove('events')
     events = this.store.findAll('events')
-    return expect(events).to.deep.eq([])
+    expect(events).to.deep.eq([])
   })
 
   it('should reset', function() {
@@ -331,7 +324,7 @@ describe('Store', function() {
     events = this.store.findAll('event')
     images = this.store.findAll('image')
     expect(events).to.deep.eq([])
-    return expect(images).to.deep.eq([])
+    expect(images).to.deep.eq([])
   })
 
   it('should handle circular relations', function() {
@@ -355,7 +348,7 @@ describe('Store', function() {
     const event = this.store.find('events', 1)
 
     expect(event.name).to.equal('Demo')
-    return expect(event.images._links).to.deep.equal({
+    expect(event.images._links).to.deep.equal({
       self: 'http://example.com/events/1/relationships/images'
     })
   })
@@ -439,7 +432,7 @@ describe('Store', function() {
       author: 'John Doe',
       date: '2017-06-26'
     })
-    return expect(result[0].comment._links).to.deep.equal({
+    expect(result[0].comment._links).to.deep.equal({
       self: 'http://example.com/events/1/relationships/comment',
       related: 'http://example.com/events/1/comment'
     })

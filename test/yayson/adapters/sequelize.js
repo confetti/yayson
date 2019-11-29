@@ -1,14 +1,6 @@
-// TODO: This file was created by bulk-decaffeinate.
-// Sanity-check the conversion and remove this comment.
-/*
- * decaffeinate suggestions:
- * DS102: Remove unnecessary code created because of implicit returns
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
- */
-
 const { expect } = require('chai')
 
-const SequelizeAdapter = require('../../../src/yayson/adapters/sequelize.coffee')
+const SequelizeAdapter = require('../../../src/yayson/adapters/sequelize.js')
 
 describe('SequelizeAdapter', function() {
   beforeEach(function() {})
@@ -21,7 +13,7 @@ describe('SequelizeAdapter', function() {
     }
 
     const attributes = SequelizeAdapter.get(model)
-    return expect(attributes.name).to.eq('Abraham')
+    expect(attributes.name).to.eq('Abraham')
   })
 
   it('should get object property', function() {
@@ -36,7 +28,7 @@ describe('SequelizeAdapter', function() {
     const name = SequelizeAdapter.get(model, 'name')
 
     expect(name).to.eq('Abraham')
-    return expect(args[0]).to.eq('name')
+    expect(args[0]).to.eq('name')
   })
 
   return it('should get the id', function() {
@@ -48,6 +40,6 @@ describe('SequelizeAdapter', function() {
     }
 
     const id = SequelizeAdapter.id(model)
-    return expect(id).to.eq('5')
+    expect(id).to.eq('5')
   })
 })

@@ -1,35 +1,28 @@
-// TODO: This file was created by bulk-decaffeinate.
-// Sanity-check the conversion and remove this comment.
-/*
- * decaffeinate suggestions:
- * DS102: Remove unnecessary code created because of implicit returns
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
- */
 const { expect } = require('chai')
 
 const testUtils = function(utils) {
   it('should find element', function() {
     const num = utils.find([1, 2, 3], n => n === 2)
 
-    return expect(num).to.equal(2)
+    expect(num).to.equal(2)
   })
 
   it('should not find element', function() {
     const num = utils.find([1, 2, 3], n => n === 8)
 
-    return expect(num).to.equal(undefined)
+    expect(num).to.equal(undefined)
   })
 
   it('should filter values', function() {
     const evens = utils.filter([1, 2, 3, 4], n => n % 2 === 0)
 
-    return expect(evens).to.deep.equal([2, 4])
+    expect(evens).to.deep.equal([2, 4])
   })
 
   it('should evaluate if any element', function() {
     const anyEvens = utils.any([1, 2, 3, 4], n => n % 2 === 0)
 
-    return expect(anyEvens).to.be.true
+    expect(anyEvens).to.be.true
   })
 
   it('should clone an object', function() {
@@ -37,14 +30,14 @@ const testUtils = function(utils) {
     const obj2 = utils.clone(obj)
 
     expect(obj).not.to.equal(obj2)
-    return expect(obj.a).to.equal(obj2.a)
+    expect(obj.a).to.equal(obj2.a)
   })
 
   return it('should parse object values', function() {
     const obj = { a: 1, b: 2 }
     const values = utils.values(obj)
 
-    return expect(values).to.deep.equal([1, 2])
+    expect(values).to.deep.equal([1, 2])
   })
 }
 

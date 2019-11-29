@@ -12,13 +12,13 @@ const sinon = require('sinon')
 const { expect } = require('chai')
 const { assert } = require('chai')
 
-const presenterFactory = require('../../src/yayson.coffee')
+const presenterFactory = require('../../src/yayson.js')
 const { Presenter } = presenterFactory()
 
 describe('Presenter', function() {
   it('handles null', function() {
     const json = Presenter.toJSON(null)
-    return expect(json).to.deep.equal({
+    expect(json).to.deep.equal({
       data: null
     })
   })
@@ -26,7 +26,7 @@ describe('Presenter', function() {
   it('create json structure of an object', function() {
     const obj = { id: 5, foo: 'bar' }
     const json = Presenter.toJSON(obj)
-    return expect(json).to.deep.equal({
+    expect(json).to.deep.equal({
       data: {
         type: 'objects',
         id: '5',
@@ -40,7 +40,7 @@ describe('Presenter', function() {
   it('create json structure of an array of objects', function() {
     const obj = [{ id: 1, foo: 'bar' }, { id: 2, foo: 'baz' }]
     const json = Presenter.toJSON(obj)
-    return expect(json).to.deep.equal({
+    expect(json).to.deep.equal({
       data: [
         {
           type: 'objects',
@@ -63,7 +63,7 @@ describe('Presenter', function() {
   it('should not include id if not specified', function() {
     const obj = { foo: 'bar' }
     const json = Presenter.toJSON(obj)
-    return expect(json).to.deep.equal({
+    expect(json).to.deep.equal({
       data: {
         type: 'objects',
         attributes: {
@@ -76,7 +76,7 @@ describe('Presenter', function() {
   it('should not dup object', function() {
     const obj = [{ id: 1 }, { id: 1 }]
     const json = Presenter.toJSON(obj)
-    return expect(json).to.deep.equal({
+    expect(json).to.deep.equal({
       data: [
         {
           type: 'objects',
@@ -121,7 +121,7 @@ describe('Presenter', function() {
     motor.car = car
 
     const json = CarPresenter.toJSON(car)
-    return expect(json).to.deep.equal({
+    expect(json).to.deep.equal({
       data: {
         type: 'cars',
         id: '1',
@@ -202,7 +202,7 @@ describe('Presenter', function() {
     }
 
     const json = BikePresenter.toJSON(bike)
-    return expect(json).to.deep.equal({
+    expect(json).to.deep.equal({
       data: {
         type: 'bikes',
         id: '1',
@@ -282,7 +282,7 @@ describe('Presenter', function() {
     CarPresenter.initClass()
 
     const json = CarPresenter.render({ id: 3 })
-    return expect(json.data.links.self).to.eq('/cars/3')
+    expect(json.data.links.self).to.eq('/cars/3')
   })
 
   it('should include self and related link', function() {
@@ -301,7 +301,7 @@ describe('Presenter', function() {
 
     const json = CarPresenter.render({ id: 3 })
     expect(json.data.links.self).to.eq('/cars/linkage/3')
-    return expect(json.data.links.related).to.eq('/cars/3')
+    expect(json.data.links.related).to.eq('/cars/3')
   })
 
   it('should handle links in relationships', function() {
@@ -332,9 +332,7 @@ describe('Presenter', function() {
     const json = CarPresenter.render({ id: 3, car: { id: 5 } })
     expect(json.data.links.self).to.eq('/cars/3')
     expect(json.data.relationships.car.links.self).to.eq('/cars/3/linkage/car')
-    return expect(json.data.relationships.car.links.related).to.eq(
-      '/cars/3/car'
-    )
+    expect(json.data.relationships.car.links.related).to.eq('/cars/3/car')
   })
 
   it('should handle links in relationships array', function() {
@@ -389,7 +387,7 @@ describe('Presenter', function() {
       '/cars/1/linkage/cars'
     )
     expect(json.data.relationships.cars.links.related).to.eq('/cars/1/cars')
-    return expect(json.data.relationships.cars.data).to.be.an('array')
+    expect(json.data.relationships.cars.data).to.be.an('array')
   })
 
   it('should handle links in relationships without data', function() {
@@ -421,7 +419,7 @@ describe('Presenter', function() {
     expect(json.data.links.self).to.eq('/cars/3')
     expect(json.data.relationships.car.links.self).to.eq('/cars/3/linkage/car')
     expect(json.data.relationships.car.links.related).to.eq('/cars/3/car')
-    return expect(json.data.relationships.car.data).to.eq(undefined)
+    expect(json.data.relationships.car.data).to.eq(undefined)
   })
 
   it('should render data: null for unspecified relationships', function() {
@@ -437,7 +435,7 @@ describe('Presenter', function() {
     CarPresenter.initClass()
 
     const json = CarPresenter.render({ id: 3 })
-    return expect(json.data.relationships).to.deep.equal({
+    expect(json.data.relationships).to.deep.equal({
       car: {
         data: null
       }
@@ -454,11 +452,11 @@ describe('Presenter', function() {
     EventPresenter.prototype.type = 'events'
     const presenter = new EventPresenter()
     const json = presenter.toJSON({ id: 1 })
-    return expect(json.data.attributes.hej).to.eq('test')
+    expect(json.data.attributes.hej).to.eq('test')
   })
 
   it('should use the sequelize adapter', function() {
-    const PresenterSequalize = require('../../src/yayson.coffee')({
+    const PresenterSequalize = require('../../src/yayson.js')({
       adapter: 'sequelize'
     }).Presenter
     const obj = {
@@ -473,7 +471,7 @@ describe('Presenter', function() {
     }
 
     const json = PresenterSequalize.toJSON(obj)
-    return expect(json).to.deep.equal({
+    expect(json).to.deep.equal({
       data: {
         type: 'objects',
         id: '5',
@@ -488,13 +486,13 @@ describe('Presenter', function() {
     const obj = { id: 1 }
     const json = Presenter.render(obj, { meta: { count: 1 } })
 
-    return expect(json.meta.count).to.eq(1)
+    expect(json.meta.count).to.eq(1)
   })
 
   it('should exclude id and type from attributes', function() {
     const obj = { id: 5, foo: 'bar', type: 'some' }
     const json = Presenter.toJSON(obj)
-    return expect(json).to.deep.equal({
+    expect(json).to.deep.equal({
       data: {
         type: 'objects',
         id: '5',
@@ -514,6 +512,6 @@ describe('Presenter', function() {
     const PresenterWithMockAdapter = presenterFactory({ adapter }).Presenter
     const json = PresenterWithMockAdapter.toJSON(obj)
     expect(adapter.id).to.have.been.calledOnce
-    return expect(adapter.get).to.have.been.calledOnce
+    expect(adapter.get).to.have.been.calledOnce
   })
 })

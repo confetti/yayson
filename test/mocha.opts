@@ -1,5 +1,4 @@
---require coffeescript/register
---require test/common.coffee
---watch-extensions js,coffee
+--require test/common.js
+--watch-extensions js
 --timeout 5000
-test/yayson/**/*.coffee
+test/yayson/**/*.js
