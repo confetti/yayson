@@ -1,324 +1,424 @@
-expect = require('chai').expect
-Store = require('../../src/yayson.coffee')().Store
+/*
+ * decaffeinate suggestions:
+ * DS102: Remove unnecessary code created because of implicit returns
+ * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
+ */
+const {
+  expect
+} = require('chai');
+const {
+  Store
+} = require('../../src/yayson.coffee')();
 
-describe 'Store', ->
+describe('Store', function() {
 
-  beforeEach ->
-    @store = new Store()
+  beforeEach(function() {
+    this.store = new Store();
 
-    @store.records = []
-    @store.relations = {}
+    this.store.records = [];
+    return this.store.relations = {};});
 
 
-  it 'should sync an event', ->
-    event = @store.sync data:
-      type: 'events'
-      id: 1
-      attributes:
+  it('should sync an event', function() {
+    const event = this.store.sync({data: {
+      type: 'events',
+      id: 1,
+      attributes: {
         name: 'Demo'
+      }
+    }
+    });
 
-    expect(event.name).to.equal 'Demo'
+    return expect(event.name).to.equal('Demo');
+  });
 
-  it 'should find an event', ->
-    @store.sync data:
-      type: 'events'
-      id: 1
-      attributes:
+  it('should find an event', function() {
+    this.store.sync({data: {
+      type: 'events',
+      id: 1,
+      attributes: {
         name: 'Demo'
+      }
+    }
+    });
 
-    event = @store.find 'events', 1
-    expect(event.id).to.equal 1
-    expect(event.type).to.equal 'events'
-    expect(event.name).to.equal 'Demo'
+    const event = this.store.find('events', 1);
+    expect(event.id).to.equal(1);
+    expect(event.type).to.equal('events');
+    return expect(event.name).to.equal('Demo');
+  });
 
-  it 'should handle relations with duplicates', ->
-    @store.sync
-      data:
-        type: 'events'
-        id: 1
-        attributes:
+  it('should handle relations with duplicates', function() {
+    this.store.sync({
+      data: {
+        type: 'events',
+        id: 1,
+        attributes: {
           name: 'Demo'
-        relationships:
-          images:
+        },
+        relationships: {
+          images: {
             data: [{
-              type: 'images'
+              type: 'images',
               id: 2
             }]
+          }
+        }
+      },
       included: [{
-        type: 'images'
-        id: 2
-        attributes:
+        type: 'images',
+        id: 2,
+        attributes: {
           name: 'Header'
+        }
       }, {
-        type: 'images'
-        id: 2
-        attributes:
+        type: 'images',
+        id: 2,
+        attributes: {
           name: 'Header'
-      }]
+        }
+      }]});
 
-    event = @store.find 'events', 1
-    expect(event.name).to.equal 'Demo'
-    expect(event.images.length).to.equal 1
+    const event = this.store.find('events', 1);
+    expect(event.name).to.equal('Demo');
+    expect(event.images.length).to.equal(1);
 
-    images = @store.findAll 'images'
-    expect(images.length).to.eq 1
+    const images = this.store.findAll('images');
+    return expect(images.length).to.eq(1);
+  });
 
-  it 'should handle relationship elements without links attribute', ->
-      @store.sync
-        data:
-            type: 'events'
-            id: 1
-            attributes:
+  it('should handle relationship elements without links attribute', function() {
+      this.store.sync({
+        data: {
+            type: 'events',
+            id: 1,
+            attributes: {
                 name: 'Demo'
-            relationships:
-                image:
+              },
+            relationships: {
+                image: {
                     data: {
                         type: 'images',
                         id: 2
                     }
-       event = @store.find 'events', 1
+                  }
+              }
+          }});
+      const event = this.store.find('events', 1);
 
-       expect(event.name).to.equal 'Demo'
-       expect(event.image).to.be.null
+      expect(event.name).to.equal('Demo');
+      return expect(event.image).to.be.null;
+  });
 
-  it 'should handle circular relations', ->
-    @store.sync
-      data:
-        type: 'events'
-        id: 1
-        attributes:
+  it('should handle circular relations', function() {
+    this.store.sync({
+      data: {
+        type: 'events',
+        id: 1,
+        attributes: {
           name: 'Demo'
-        relationships:
-          images:
-            data: [
-              type: 'images'
+        },
+        relationships: {
+          images: {
+            data: [{
+              type: 'images',
               id: 2
+            }
             ]
-      included: [
-          type: 'images'
-          id: 2
-          attributes:
+          }
+        }
+      },
+      included: [{
+          type: 'images',
+          id: 2,
+          attributes: {
             name: 'Header'
-          relationships:
-            event:
-              data:
-                type: 'events'
+          },
+          relationships: {
+            event: {
+              data: {
+                type: 'events',
                 id: 1
-      ]
+              }
+            }
+          }
+        }
+      ]});
 
-    event = @store.find 'events', 1
-    expect(event.name).to.equal 'Demo'
-    expect(event.images[0].name).to.equal 'Header'
-    expect(event.images[0].event.id).to.equal 1
+    const event = this.store.find('events', 1);
+    expect(event.name).to.equal('Demo');
+    expect(event.images[0].name).to.equal('Header');
+    return expect(event.images[0].event.id).to.equal(1);
+  });
 
 
-  it 'should return a event with all associated objects', ->
-    @store.sync
-      data:
-        type: 'events'
-        id: 1
-        attributes:
-          name: "Nordic.js"
+  it('should return a event with all associated objects', function() {
+    this.store.sync({
+      data: {
+        type: 'events',
+        id: 1,
+        attributes: {
+          name: "Nordic.js",
           slug: "nordicjs"
-        relationships:
-          images:
+        },
+        relationships: {
+          images: {
             data: [
-              {type: 'images', id: 1}
-              {type: 'images', id: 2}
+              {type: 'images', id: 1},
+              {type: 'images', id: 2},
               {type: 'images', id: 3}
             ]
-          organisers:
+          },
+          organisers: {
             data: [
-              {type: 'organisers', id: 1}
+              {type: 'organisers', id: 1},
               {type: 'organisers', id: 2}
             ]
+          }
+        }
+      },
       included: [{
-        type: 'organisers'
-        id: 1
-        attributes:
+        type: 'organisers',
+        id: 1,
+        attributes: {
           firstName: 'Jonny'
-        relationships:
-          event:
+        },
+        relationships: {
+          event: {
             data: {type: 'events', id: 1}
-          image:
+          },
+          image: {
             data: {type: 'images', id: 2}
+          }
+        }
       },{
-        type: 'organisers'
-        id: 2
-        attributes:
+        type: 'organisers',
+        id: 2,
+        attributes: {
           firstName: 'Martina'
-        relationships:
-          event:
+        },
+        relationships: {
+          event: {
             data: {type: 'events', id: 1}
-          image:
+          },
+          image: {
             data: {type: 'images', id: 3}
+          }
+        }
       },{
-        type: 'images'
-        id: 1
-        attributes:
+        type: 'images',
+        id: 1,
+        attributes: {
           name: 'Header'
-        relationships:
-          event:
+        },
+        relationships: {
+          event: {
             data: {type: 'events', id: 1}
+          }
+        }
       },{
-        type: 'images'
-        id: 2
-        attributes:
+        type: 'images',
+        id: 2,
+        attributes: {
           name: 'Organiser Johannes'
-        relationships:
-          event:
+        },
+        relationships: {
+          event: {
             data: {type: 'events', id: 1}
+          }
+        }
       },{
-        type: 'images'
-        id: 3
-        attributes:
+        type: 'images',
+        id: 3,
+        attributes: {
           name: 'Organiser Martina'
-        relationships:
-          event:
+        },
+        relationships: {
+          event: {
             data: {type: 'events', id: 1}
-      }]
+          }
+        }
+      }]});
 
-    event = @store.find 'events', 1
-    expect(event.organisers.length).to.equal 2
-    expect(event.images.length).to.equal 3
-    expect(event.organisers[0].image.id).to.equal 2
+    const event = this.store.find('events', 1);
+    expect(event.organisers.length).to.equal(2);
+    expect(event.images.length).to.equal(3);
+    return expect(event.organisers[0].image.id).to.equal(2);
+  });
 
 
 
-  it 'should remove an event', ->
-    @store.sync data: [
-      {id: 1, type: 'events'}
+  it('should remove an event', function() {
+    this.store.sync({data: [
+      {id: 1, type: 'events'},
       {id: 2, type: 'events'}
-    ]
+    ]});
 
-    event = @store.find 'events', 1
-    expect(event.id).to.eq 1
-    @store.remove 'events', 1
-    event = @store.find 'events', 1
-    expect(event).to.eq null
+    let event = this.store.find('events', 1);
+    expect(event.id).to.eq(1);
+    this.store.remove('events', 1);
+    event = this.store.find('events', 1);
+    return expect(event).to.eq(null);
+  });
 
 
-  it 'should remove all events', ->
-    @store.sync data: [
-      {id: 1, type: 'events'}
+  it('should remove all events', function() {
+    this.store.sync({data: [
+      {id: 1, type: 'events'},
       {id: 2, type: 'events'}
-    ]
+    ]});
 
-    events = @store.findAll 'events'
-    expect(events.length).to.eq 2
-    @store.remove 'events'
-    events = @store.findAll 'events'
-    expect(events).to.deep.eq []
+    let events = this.store.findAll('events');
+    expect(events.length).to.eq(2);
+    this.store.remove('events');
+    events = this.store.findAll('events');
+    return expect(events).to.deep.eq([]);
+});
 
 
-  it 'should reset', ->
-    @store.sync
+  it('should reset', function() {
+    this.store.sync({
       data: [{
-        type: 'events'
-        id: 1
-        attributes:
+        type: 'events',
+        id: 1,
+        attributes: {
           name: 'Demo'
-        relationships:
-          images:
-            data: [ type: 'images', id: 2 ]
+        },
+        relationships: {
+          images: {
+            data: [ {type: 'images', id: 2} ]
+          }
+        }
       },{
-        type: 'events'
-        id: 2
-        attributes:
+        type: 'events',
+        id: 2,
+        attributes: {
           name: 'Demo 2'
-      }]
-      included: [
-          type: 'images'
-          id: 2
-          attributes:
+        }
+      }],
+      included: [{
+          type: 'images',
+          id: 2,
+          attributes: {
             name: 'Header'
-          relationships:
-            event:
+          },
+          relationships: {
+            event: {
               data: {type: 'events', id: 1}
-      ]
+            }
+          }
+        }
+      ]});
 
-    events = @store.findAll 'events'
-    images = @store.findAll 'images'
-    expect(events.length).to.eq 2
-    expect(images.length).to.eq 1
+    let events = this.store.findAll('events');
+    let images = this.store.findAll('images');
+    expect(events.length).to.eq(2);
+    expect(images.length).to.eq(1);
 
-    @store.reset()
+    this.store.reset();
 
-    events = @store.findAll 'event'
-    images = @store.findAll 'image'
-    expect(events).to.deep.eq []
-    expect(images).to.deep.eq []
+    events = this.store.findAll('event');
+    images = this.store.findAll('image');
+    expect(events).to.deep.eq([]);
+    return expect(images).to.deep.eq([]);
+});
 
 
-  it 'should handle circular relations', ->
-    @store.sync
-      data:
-        type: 'events'
-        id: 1
-        attributes:
+  it('should handle circular relations', function() {
+    this.store.sync({
+      data: {
+        type: 'events',
+        id: 1,
+        attributes: {
           name: 'Demo'
-        relationships:
-          images:
-            links:
+        },
+        relationships: {
+          images: {
+            links: {
               self: 'http://example.com/events/1/relationships/images'
+            }
+          }
+        }
+      }
+    });
 
-    event = @store.find 'events', 1
+    const event = this.store.find('events', 1);
 
-    expect(event.name).to.equal 'Demo'
-    expect(event.images._links).to.deep.equal
-        self: 'http://example.com/events/1/relationships/images'
+    expect(event.name).to.equal('Demo');
+    return expect(event.images._links).to.deep.equal({
+        self: 'http://example.com/events/1/relationships/images'});
+  });
 
-  it 'should retain links and meta', ->
-    result = @store.sync
-      links:
-        self: 'http://example.com/events'
+  return it('should retain links and meta', function() {
+    const result = this.store.sync({
+      links: {
+        self: 'http://example.com/events',
         next: 'http://example.com/events?page[offset]=2'
-      meta:
-        name: 'top level meta data'
+      },
+      meta: {
+        name: 'top level meta data',
         value: 1
-      data: [
-        type: 'events'
-        id: 1
-        meta:
-          name: 'second level meta'
+      },
+      data: [{
+        type: 'events',
+        id: 1,
+        meta: {
+          name: 'second level meta',
           value: 2
-        attributes:
-          name: 'Demo'
-          article:
-            name: 'An Article test'
-            teaser: 'this is a teaser...'
-            body: 'this is an article body'
-            meta:
-              author: 'John Doe'
+        },
+        attributes: {
+          name: 'Demo',
+          article: {
+            name: 'An Article test',
+            teaser: 'this is a teaser...',
+            body: 'this is an article body',
+            meta: {
+              author: 'John Doe',
               date: '2017-06-26'
-          meta:
-            name: 'attribute nested meta'
+            }
+          },
+          meta: {
+            name: 'attribute nested meta',
             value: 3
-        relationships:
-          comment:
-            links:
-              self: 'http://example.com/events/1/relationships/comment'
+          }
+        },
+        relationships: {
+          comment: {
+            links: {
+              self: 'http://example.com/events/1/relationships/comment',
               related: 'http://example.com/events/1/comment'
-            data:
+            },
+            data: {
               type: 'comment',
               id: 2
-      ]
-      included: [
-        type: 'comment'
-        id: 2
-        attributes:
-          name: 'Comment'
-          details:
-            user: 'micha3ldavid'
+            }
+          }
+        }
+      }
+      ],
+      included: [{
+        type: 'comment',
+        id: 2,
+        attributes: {
+          name: 'Comment',
+          details: {
+            user: 'micha3ldavid',
             body: 'this is a comment...'
-        links:
+          }
+        },
+        links: {
           self: 'http://example.com/comment/2'
-        meta:
-          author: 'John Doe'
+        },
+        meta: {
+          author: 'John Doe',
           date: '2017-06-26'
-      ]
+        }
+      }
+      ]});
 
-    expect(result.meta).to.deep.equal {name: 'top level meta data', value: 1}
-    expect(result[0].article.meta).to.deep.equal {author: 'John Doe', date: '2017-06-26'}
-    expect(result[0].comment.meta).to.deep.equal {author: 'John Doe', date: '2017-06-26'}
-    expect(result[0].comment._links).to.deep.equal {self: 'http://example.com/events/1/relationships/comment', related: 'http://example.com/events/1/comment'}
+    expect(result.meta).to.deep.equal({name: 'top level meta data', value: 1});
+    expect(result[0].article.meta).to.deep.equal({author: 'John Doe', date: '2017-06-26'});
+    expect(result[0].comment.meta).to.deep.equal({author: 'John Doe', date: '2017-06-26'});
+    return expect(result[0].comment._links).to.deep.equal({self: 'http://example.com/events/1/relationships/comment', related: 'http://example.com/events/1/comment'});
+});
+});

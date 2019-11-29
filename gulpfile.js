@@ -1,43 +1,47 @@
-gulp = require 'gulp'
-source = require 'vinyl-source-stream'
-coffeeify = require 'coffeeify'
-browserify = require 'browserify'
-gutil = require 'gulp-util'
-coffee = require 'gulp-coffee'
-http = require 'http'
-ecstatic = require 'ecstatic'
+/*
+ * decaffeinate suggestions:
+ * DS102: Remove unnecessary code created because of implicit returns
+ * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
+ */
+const gulp = require('gulp');
+const source = require('vinyl-source-stream');
+const coffeeify = require('coffeeify');
+const browserify = require('browserify');
+const gutil = require('gulp-util');
+const coffee = require('gulp-coffee');
+const http = require('http');
+const ecstatic = require('ecstatic');
 
-serverport = 5005
+const serverport = 5005;
 
-gulp.task 'browserify', ->
-  browserify('./src/yayson.coffee', {extensions: ['.coffee'], ignoreMissing: true, standalone: 'yayson'})
-    .transform(coffeeify)
-    .bundle()
-    .pipe(source('yayson.js'))
-    .pipe(gulp.dest('./dist/'))
+gulp.task('browserify', () => browserify('./src/yayson.coffee', {extensions: ['.coffee'], ignoreMissing: true, standalone: 'yayson'})
+  .transform(coffeeify)
+  .bundle()
+  .pipe(source('yayson.js'))
+  .pipe(gulp.dest('./dist/')));
 
-gulp.task 'build', ->
-  gulp.src('./src/**/*.coffee')
-    .pipe(coffee({bare: true}).on('error', gutil.log))
-    .pipe(gulp.dest('./lib/'))
+gulp.task('build', () => gulp.src('./src/**/*.coffee')
+  .pipe(coffee({bare: true}).on('error', gutil.log))
+  .pipe(gulp.dest('./lib/')));
 
-gulp.task 'default', gulp.series('browserify', 'build')
+gulp.task('default', gulp.series('browserify', 'build'));
 
-gulp.task 'test-serve', ->
-  http.createServer(ecstatic  root: __dirname + '/' ).listen(serverport)
+gulp.task('test-serve', function() {
+  http.createServer(ecstatic({root: __dirname + '/'}) ).listen(serverport);
 
-  console.log "Listening on #{serverport}"
+  return console.log(`Listening on ${serverport}`);
+});
 
-gulp.task 'test-coffee', ->
-  browserify('./test/browser.coffee', {extensions: ['.coffee']})
-    .transform(coffeeify)
-    .bundle()
-    .pipe(source('browser.js'))
-    .pipe(gulp.dest('./test/.tmp/'))
+gulp.task('test-coffee', () => browserify('./test/browser.coffee', {extensions: ['.coffee']})
+  .transform(coffeeify)
+  .bundle()
+  .pipe(source('browser.js'))
+  .pipe(gulp.dest('./test/.tmp/')));
 
-gulp.task 'test-watch', ->
-  gulp.watch('./src/**/*.coffee', ['test-coffee'])
-  gulp.watch('./test/**/*.coffee', ['test-coffee'])
+gulp.task('test-watch', function() {
+  gulp.watch('./src/**/*.coffee', ['test-coffee']);
+  return gulp.watch('./test/**/*.coffee', ['test-coffee']);
+});
 
 
-gulp.task 'test-browser', gulp.series('test-watch', 'test-serve')
+gulp.task('test-browser', gulp.series('test-watch', 'test-serve'));

@@ -1,30 +1,51 @@
+/*
+ * decaffeinate suggestions:
+ * DS102: Remove unnecessary code created because of implicit returns
+ * DS205: Consider reworking code to avoid use of IIFEs
+ * DS207: Consider shorter variations of null checks
+ * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
+ */
 
-if window?
-  Q = window.Q
-  _ = window._
+let _, Q;
+if (typeof window !== 'undefined' && window !== null) {
+  ({
+    Q
+  } = window);
+  ({
+    _
+  } = window);
+}
 
-Q ||= (try require? 'q')
-_ ||= (try require? 'lodash')
-_ ||= (try require? 'underscore')
+if (!Q) { Q = ((() => { try { return (typeof require === 'function' ? require('q') : undefined); } catch (error) {} })()); }
+if (!_) { _ = ((() => { try { return (typeof require === 'function' ? require('lodash') : undefined); } catch (error1) {} })()); }
+if (!_) { _ = ((() => { try { return (typeof require === 'function' ? require('underscore') : undefined); } catch (error2) {} })()); }
 
-utils = require('./yayson/utils')(_, Q)
+const utils = require('./yayson/utils')(_, Q);
 
-Adapter = require('./yayson/adapter')
-adapters = require('./yayson/adapters')
-presenterFactory = require('./yayson/presenter')
+const Adapter = require('./yayson/adapter');
+const adapters = require('./yayson/adapters');
+const presenterFactory = require('./yayson/presenter');
 
-lookupAdapter = (nameOrAdapter) ->
-  return Adapter if nameOrAdapter == 'default'
-  adapters[nameOrAdapter] || nameOrAdapter || Adapter
+const lookupAdapter = function(nameOrAdapter) {
+  if (nameOrAdapter === 'default') { return Adapter; }
+  return adapters[nameOrAdapter] || nameOrAdapter || Adapter;
+};
 
-presenter = (options = {}) ->
-  adapter = lookupAdapter options.adapter
-  presenterFactory(utils, adapter)
+const presenter = function(options) {
+  if (options == null) { options = {}; }
+  const adapter = lookupAdapter(options.adapter);
+  return presenterFactory(utils, adapter);
+};
 
-module.exports = ({adapter} = {}) ->
-  Store: require('./yayson/store')(utils)
-  Presenter: presenter({adapter})
-  Adapter: Adapter
+module.exports = function(param) {
+  if (param == null) { param = {}; }
+  const {adapter} = param;
+  return {
+    Store: require('./yayson/store')(utils),
+    Presenter: presenter({adapter}),
+    Adapter
+  };
+};
 
 
 

@@ -1,132 +1,176 @@
+/*
+ * decaffeinate suggestions:
+ * DS102: Remove unnecessary code created because of implicit returns
+ * DS207: Consider shorter variations of null checks
+ * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
+ */
 
-module.exports = (utils) ->
+module.exports = function(utils) {
 
-  class Record
-    constructor: (options) ->
-      {@id, @type, @attributes, @relationships, @links, @meta} = options
+  let Store;
+  class Record {
+    constructor(options) {
+      ({id: this.id, type: this.type, attributes: this.attributes, relationships: this.relationships, links: this.links, meta: this.meta} = options);
+    }
+  }
 
-  class Store
-    constructor: (options) ->
-      @reset()
+  return Store = class Store {
+    constructor(options) {
+      this.reset();
+    }
 
-    reset: ->
-      @records = []
-      @relations = {}
+    reset() {
+      this.records = [];
+      return this.relations = {};
+    }
 
-    toModel: (rec, type, models) ->
+    toModel(rec, type, models) {
 
-      model = utils.clone(rec.attributes) || {}
+      const model = utils.clone(rec.attributes) || {};
 
-      model.id = rec.id
-      model.type = rec.type
-      models[type] ||= {}
-      models[type][rec.id] ||= model
+      model.id = rec.id;
+      model.type = rec.type;
+      if (!models[type]) { models[type] = {}; }
+      if (!models[type][rec.id]) { models[type][rec.id] = model; }
 
-      if model.hasOwnProperty 'meta'
+      if (model.hasOwnProperty('meta')) {
         model.attributes = {meta: model.meta};
         delete model.meta;
+      }
 
-      if rec.meta?
-        model.meta = rec.meta
+      if (rec.meta != null) {
+        model.meta = rec.meta;
+      }
 
-      if rec.links?
-        model.links = rec.links
+      if (rec.links != null) {
+        model.links = rec.links;
+      }
 
-      if rec.relationships?
-        for key, rel of rec.relationships
+      if (rec.relationships != null) {
+        for (let key in rec.relationships) {
 
-          data = rel.data
-          links = rel.links
-          meta = rel.meta
+          const rel = rec.relationships[key];
+          const {
+            data
+          } = rel;
+          const {
+            links
+          } = rel;
+          const {
+            meta
+          } = rel;
 
-          model[key] = null
-          continue unless data? or links?
-          resolve = ({type, id}) =>
-            @find type, id, models
-          model[key] = if data instanceof Array
-            data.map resolve
-          else if data?
-            resolve data
-          else
-            {}
+          model[key] = null;
+          if ((data == null) && (links == null)) { continue; }
+          const resolve = ({type, id}) => {
+            return this.find(type, id, models);
+          };
+          model[key] = data instanceof Array ?
+            data.map(resolve)
+          : (data != null) ?
+            resolve(data)
+          :
+            {};
 
-          # Model of the relation
-          currentModel = model[key]
+          // Model of the relation
+          const currentModel = model[key];
 
-          if currentModel?
-            # retain the links and meta from the relationship entry
-            # use as underscore property name because the currentModel may also have a link and meta reference
-            currentModel._links = links || {}
-            currentModel._meta = meta || {}
+          if (currentModel != null) {
+            // retain the links and meta from the relationship entry
+            // use as underscore property name because the currentModel may also have a link and meta reference
+            currentModel._links = links || {};
+            currentModel._meta = meta || {};
+          }
+        }
+      }
 
-      model
+      return model;
+    }
 
-    findRecord: (type, id) ->
-      utils.find @records, (r) ->
-        r.type == type && r.id == id
+    findRecord(type, id) {
+      return utils.find(this.records, r => (r.type === type) && (r.id === id));
+    }
 
-    findRecords: (type) ->
-      utils.filter @records, (r) ->
-        r.type == type
+    findRecords(type) {
+      return utils.filter(this.records, r => r.type === type);
+    }
 
-    find: (type, id, models = {}) ->
-      rec = @findRecord(type, id)
-      return null unless rec?
-      models[type] ||= {}
-      models[type][id] || @toModel(rec, type, models)
+    find(type, id, models) {
+      if (models == null) { models = {}; }
+      const rec = this.findRecord(type, id);
+      if (rec == null) { return null; }
+      if (!models[type]) { models[type] = {}; }
+      return models[type][id] || this.toModel(rec, type, models);
+    }
 
-    findAll: (type, models = {}) ->
-      recs = @findRecords(type)
-      return [] unless recs?
-      recs.forEach (rec) =>
-        models[type] ||= {}
-        @toModel(rec, type, models)
-      utils.values models[type]
+    findAll(type, models) {
+      if (models == null) { models = {}; }
+      const recs = this.findRecords(type);
+      if (recs == null) { return []; }
+      recs.forEach(rec => {
+        if (!models[type]) { models[type] = {}; }
+        return this.toModel(rec, type, models);
+      });
+      return utils.values(models[type]);
+    }
 
-    remove: (type, id) ->
-      remove = (record) =>
-        index = @records.indexOf record
-        @records.splice(index, 1) unless index < 0
+    remove(type, id) {
+      const remove = record => {
+        const index = this.records.indexOf(record);
+        if (!(index < 0)) { return this.records.splice(index, 1); }
+      };
 
-      if id?
-        remove @findRecord(type, id)
-      else
-        records = @findRecords type
-        records.map remove
+      if (id != null) {
+        return remove(this.findRecord(type, id));
+      } else {
+        const records = this.findRecords(type);
+        return records.map(remove);
+      }
+    }
 
-    sync: (body) ->
-      sync = (data) =>
-        return null unless data?
-        add = (obj) =>
-          {type, id} = obj
-          @remove type, id
-          rec = new Record(obj)
-          @records.push rec
-          rec
+    sync(body) {
+      const sync = data => {
+        if (data == null) { return null; }
+        const add = obj => {
+          const {type, id} = obj;
+          this.remove(type, id);
+          const rec = new Record(obj);
+          this.records.push(rec);
+          return rec;
+        };
 
-        if data instanceof Array
-          data.map add
-        else
-          add data
+        if (data instanceof Array) {
+          return data.map(add);
+        } else {
+          return add(data);
+        }
+      };
 
-      sync body.included
-      recs = sync body.data
+      sync(body.included);
+      const recs = sync(body.data);
 
-      return null unless recs?
+      if (recs == null) { return null; }
 
-      models = {}
-      result = null;
+      const models = {};
+      let result = null;
 
-      if recs instanceof Array
-        result = recs.map (rec) =>
-          @toModel rec, rec.type, models
-      else
-        result = @toModel recs, recs.type, models
+      if (recs instanceof Array) {
+        result = recs.map(rec => {
+          return this.toModel(rec, rec.type, models);
+        });
+      } else {
+        result = this.toModel(recs, recs.type, models);
+      }
 
-      if body.hasOwnProperty 'links'
+      if (body.hasOwnProperty('links')) {
         result.links = body.links;
+      }
 
-      if body.hasOwnProperty 'meta'
+      if (body.hasOwnProperty('meta')) {
         result.meta = body.meta;
+      }
 
-      result
+      return result;
+    }
+  };
+};

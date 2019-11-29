@@ -1,2 +1,2 @@
 module.exports =
-  sequelize: require('./sequelize')
+  {sequelize: require('./sequelize')};

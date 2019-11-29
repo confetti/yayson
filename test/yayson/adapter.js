@@ -1,17 +1,30 @@
+/*
+ * decaffeinate suggestions:
+ * DS102: Remove unnecessary code created because of implicit returns
+ * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
+ */
 
-expect = require('chai').expect
+const {
+  expect
+} = require('chai');
 
-Adapter = require('../../src/yayson.coffee')().Adapter
+const {
+  Adapter
+} = require('../../src/yayson.coffee')();
 
-describe 'Adapter', ->
-  it 'should get all object properties', ->
-    attributes = Adapter.get {name: 'Abraham'}
-    expect(attributes.name).to.eq 'Abraham'
+describe('Adapter', function() {
+  it('should get all object properties', function() {
+    const attributes = Adapter.get({name: 'Abraham'});
+    return expect(attributes.name).to.eq('Abraham');
+  });
 
-  it 'should get object property', ->
-    name = Adapter.get {name: 'Abraham'}, 'name'
-    expect(name).to.eq 'Abraham'
+  it('should get object property', function() {
+    const name = Adapter.get({name: 'Abraham'}, 'name');
+    return expect(name).to.eq('Abraham');
+  });
 
-  it 'should get the id', ->
-    id = Adapter.id {id: 5}
-    expect(id).to.eq '5'
+  return it('should get the id', function() {
+    const id = Adapter.id({id: 5});
+    return expect(id).to.eq('5');
+  });
+});

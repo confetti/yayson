@@ -1,135 +1,187 @@
-module.exports = (utils, adapter) ->
-  class Presenter
-    buildLinks = (link) ->
-      return unless link?
-      if link.self? || link.related?
-        link
-      else
-        self: link
+/*
+ * decaffeinate suggestions:
+ * DS102: Remove unnecessary code created because of implicit returns
+ * DS205: Consider reworking code to avoid use of IIFEs
+ * DS206: Consider reworking classes to avoid initClass
+ * DS207: Consider shorter variations of null checks
+ * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
+ */
+module.exports = function(utils, adapter) {
+  var Presenter = (function() {
+    let buildLinks = undefined;
+    Presenter = class Presenter {
+      static initClass() {
+        buildLinks = function(link) {
+          if (link == null) { return; }
+          if ((link.self != null) || (link.related != null)) {
+            return link;
+          } else {
+            return {self: link};
+          }
+        };
+  
+        this.adapter = adapter;
+        this.prototype.type = 'objects';
+      }
 
-    @adapter: adapter
-    type: 'objects'
+      constructor(scope) {
+        if (scope == null) { scope = {}; }
+        this.scope = scope;
+      }
 
-    constructor: (scope = {}) ->
-      @scope = scope
+      id(instance) {
+        return this.constructor.adapter.id(instance);
+      }
 
-    id: (instance) ->
-      @constructor.adapter.id instance
+      selfLinks(instance) {}
 
-    selfLinks: (instance) ->
+      links() {}
 
-    links: ->
+      relationships() {}
 
-    relationships: ->
+      attributes(instance) {
+        if (instance == null) { return null; }
+        const attributes = utils.clone(this.constructor.adapter.get(instance));
+        delete attributes['id'];
+        delete attributes['type'];
 
-    attributes: (instance) ->
-      return null unless instance?
-      attributes = utils.clone @constructor.adapter.get instance
-      delete attributes['id']
-      delete attributes['type']
+        const relationships = this.relationships();
+        for (let key in relationships) {
+          delete attributes[key];
+        }
+        return attributes;
+      }
 
-      relationships = @relationships()
-      for key of relationships
-        delete attributes[key]
-      attributes
+      includeRelationships(scope, instance) {
+        const relationships = this.relationships();
+        return (() => {
+          const result = [];
+          for (var key in relationships) {
+            const factory = relationships[key] || (() => { throw new Error(`Presenter for ${key} in ${this.type} is not defined`); })();
+            const presenter = new factory(scope);
 
-    includeRelationships: (scope, instance) ->
-      relationships = @relationships()
-      for key of relationships
-        factory = relationships[key] || throw new Error("Presenter for #{key} in #{@type} is not defined")
-        presenter = new factory(scope)
+            const data = this.constructor.adapter.get(instance, key);
+            if (data != null) { result.push(presenter.toJSON(data, {include: true})); } else {
+              result.push(undefined);
+            }
+          }
+          return result;
+        })();
+      }
 
-        data = @constructor.adapter.get instance, key
-        presenter.toJSON data, include: true if data?
+      buildRelationships(instance) {
+        if (instance == null) { return null; }
+        const rels = this.relationships();
+        const links = this.links(instance) || {};
+        let relationships = null;
+        for (var key in rels) {
+          let data = this.constructor.adapter.get(instance, key);
+          var presenter = rels[key];
+          var buildData = d => {
+            return data = { 
+              id: this.constructor.adapter.id(d),
+              type: presenter.prototype.type
+            };
+          };
+          const build = d => {
+            const rel = {};
+            if (d != null) {
+              rel.data = buildData(d);
+            }
+            if (links[key] != null) {
+              rel.links = buildLinks(links[key]);
+            } else if (d == null) {
+              rel.data = null;
+            }
+            return rel;
+          };
+          if (!relationships) { relationships = {}; }
+          if (!relationships[key]) { relationships[key] = {}; }
+          if (data instanceof Array) {
+            relationships[key].data =  data.map(buildData);
+            if (links[key] != null) {
+              relationships[key].links = buildLinks(links[key]);
+            }
+          } else {
+            relationships[key]= build(data);
+          }
+        }
+        return relationships;
+      }
 
-    buildRelationships: (instance) ->
-      return null unless instance?
-      rels = @relationships()
-      links = @links(instance) || {}
-      relationships = null
-      for key of rels
-        data = @constructor.adapter.get instance, key
-        presenter = rels[key]
-        buildData = (d) =>
-          data = 
-            id: @constructor.adapter.id d
-            type: presenter::type
-        build = (d) =>
-          rel = {}
-          if d?
-            rel.data = buildData(d)
-          if links[key]?
-            rel.links = buildLinks links[key]
-          else unless d?
-            rel.data = null
-          rel
-        relationships ||= {}
-        relationships[key] ||= {}
-        if data instanceof Array
-          relationships[key].data =  data.map buildData
-          if links[key]?
-            relationships[key].links = buildLinks links[key]
-        else
-          relationships[key]= build data
-      relationships
+      buildSelfLink(instance) {
+        return buildLinks(this.selfLinks(instance));
+      }
 
-    buildSelfLink: (instance) ->
-      buildLinks @selfLinks(instance)
+      toJSON(instanceOrCollection, options) {
+        if (options == null) { options = {}; }
+        if (options.meta != null) { this.scope.meta = options.meta; }
+        if (!this.scope.data) { this.scope.data = null; }
 
-    toJSON: (instanceOrCollection, options = {}) ->
-      @scope.meta = options.meta if options.meta?
-      @scope.data ||= null
+        if (instanceOrCollection == null) { return this.scope; }
 
-      return @scope unless instanceOrCollection?
+        if (instanceOrCollection instanceof Array) {
+          const collection = instanceOrCollection;
+          if (!this.scope.data) { this.scope.data = []; }
+          collection.forEach(instance => {
+            return this.toJSON(instance, options);
+          });
+        } else {
+          const instance = instanceOrCollection;
+          let added = true;
+          const model  = {
+            id: this.id(instance),
+            type: this.type,
+            attributes: this.attributes(instance)
+          };
+          if (model.id === undefined) { delete model.id; }
+          const relationships = this.buildRelationships(instance);
+          if (relationships != null) { model.relationships = relationships; }
+          const links = this.buildSelfLink(instance);
+          if (links != null) { model.links = links; }
 
-      if instanceOrCollection instanceof Array
-        collection = instanceOrCollection
-        @scope.data ||= []
-        collection.forEach (instance) =>
-          @toJSON instance, options
-      else
-        instance = instanceOrCollection
-        added = true
-        model  =
-          id: @id instance
-          type: @type
-          attributes: @attributes instance
-        delete model.id if model.id == undefined
-        relationships = @buildRelationships instance
-        model.relationships = relationships if relationships?
-        links = @buildSelfLink instance
-        model.links = links if links?
+          if (options.include) {
+            if (!this.scope.included) { this.scope.included = []; }
+            if (!utils.any(this.scope.included.concat(this.scope.data), i => (i.id === model.id) && (i.type === model.type))) {
+              this.scope.included.push(model);
+            } else {
+              added = false;
+            }
+          } else if (this.scope.data != null) {
+            if (!(this.scope.data instanceof Array) || !utils.any(this.scope.data, i => i.id === model.id)) {
+              this.scope.data.push(model);
+            } else {
+              added = false;
+            }
+          } else {
+            this.scope.data = model;
+          }
 
-        if options.include
-          @scope.included ||= []
-          unless utils.any(@scope.included.concat(@scope.data), (i) ->
-            i.id == model.id && i.type == model.type
-          )
-            @scope.included.push model
-          else
-            added = false
-        else if @scope.data?
-          unless @scope.data instanceof Array and utils.any(@scope.data, (i) -> i.id == model.id)
-            @scope.data.push model
-          else
-            added = false
-        else
-          @scope.data = model
+          if (added) { this.includeRelationships(this.scope, instance); }
+        }
+        return this.scope;
+      }
 
-        @includeRelationships @scope, instance if added
-      @scope
+      render(instanceOrCollection, options) {
+        if (utils.isPromise(instanceOrCollection)) {
+          return instanceOrCollection.then(data => this.toJSON(data, options));
+        } else {
+          return this.toJSON(instanceOrCollection, options);
+        }
+      }
 
-    render: (instanceOrCollection, options) ->
-      if utils.isPromise(instanceOrCollection)
-        instanceOrCollection.then (data) => @toJSON data, options
-      else
-        @toJSON instanceOrCollection, options
+      static toJSON() {
+        return (new (this)).toJSON(...arguments);
+      }
 
-    @toJSON: ->
-      (new this).toJSON arguments...
-
-    @render: ->
-      (new this).render arguments...
+      static render() {
+        return (new (this)).render(...arguments);
+      }
+    };
+    Presenter.initClass();
+    return Presenter;
+  })();
 
 
-  module.exports = Presenter
+  return module.exports = Presenter;
+};
