@@ -1,4 +1,5 @@
 module.exports = {
+  mode: 'production',
   entry: {
     yayson: './src/yayson.js',
     'yayson.min': './src/yayson.js'
