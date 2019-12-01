@@ -5,7 +5,7 @@
   "main": "src/yayson.js",
   "scripts": {
     "test": "mocha",
-    "build": "webpack",
+    "build": "webpack --config webpack.dist.js",
     "test-browser": "webpack-dev-server --config webpack.browser.js"
   },
   "repository": {
@@ -41,7 +41,8 @@
     "uglifyjs-webpack-plugin": "^2.2.0",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.10",
-    "webpack-dev-server": "^3.9.0"
+    "webpack-dev-server": "^3.9.0",
+    "webpack-merge": "^4.2.2"
   },
   "optionalDependencies": {
     "lodash": "^4.17.4",

@@ -1,6 +1,6 @@
 const { expect } = require('chai')
 
-const SequelizeAdapter = require('../../../src/yayson/adapters/sequelize.js')
+const SequelizeAdapter = yayson({ adapter: 'sequelize' }).Presenter.adapter
 
 describe('SequelizeAdapter', function() {
   beforeEach(function() {})

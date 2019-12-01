@@ -12,8 +12,8 @@ const sinon = require('sinon')
 const { expect } = require('chai')
 const { assert } = require('chai')
 
-const presenterFactory = require('../../src/yayson.js')
-const { Presenter } = presenterFactory()
+const yaysonLib = yayson
+const { Presenter } = yayson()
 
 describe('Presenter', function() {
   it('handles null', function() {
@@ -421,7 +421,6 @@ describe('Presenter', function() {
     expect(json.data.relationships.car.links.related).to.eq('/cars/3/car')
     expect(json.data.relationships.car.data).to.eq(undefined)
   })
-
   it('should render data: null for unspecified relationships', function() {
     class CarPresenter extends Presenter {
       static initClass() {
@@ -456,7 +455,7 @@ describe('Presenter', function() {
   })
 
   it('should use the sequelize adapter', function() {
-    const PresenterSequalize = require('../../src/yayson.js')({
+    const PresenterSequalize = yaysonLib({
       adapter: 'sequelize'
     }).Presenter
     const obj = {
@@ -503,13 +502,13 @@ describe('Presenter', function() {
     })
   })
 
-  return it('can use custom adapters', function() {
+  it('can use custom adapters', function() {
     const obj = { id: 5, foo: 'bar' }
     const adapter = {
       id: sinon.spy(() => 1),
       get: sinon.spy(() => 'bar')
     }
-    const PresenterWithMockAdapter = presenterFactory({ adapter }).Presenter
+    const PresenterWithMockAdapter = yaysonLib({ adapter }).Presenter
     const json = PresenterWithMockAdapter.toJSON(obj)
     expect(adapter.id).to.have.been.calledOnce
     expect(adapter.get).to.have.been.calledOnce

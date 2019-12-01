@@ -1,5 +1,5 @@
 const { expect } = require('chai')
-const { Store } = require('../../src/yayson.js')()
+const { Store } = yayson()
 
 describe('Store', function() {
   beforeEach(function() {

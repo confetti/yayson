@@ -1,9 +1,11 @@
 const path = require('path')
+const merge = require('webpack-merge')
+const common = require('./webpack.common.js')
 
-module.exports = {
+module.exports = merge(common, {
   mode: 'production',
   entry: {
-    tests: './test/index.js'
+    tests: './test/browser.js'
   },
   output: {
     path: __dirname + '/test',
@@ -18,4 +20,4 @@ module.exports = {
     compress: true,
     port: 9000
   }
-}
+})

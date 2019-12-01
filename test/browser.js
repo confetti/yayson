@@ -1,3 +1,5 @@
+require('./common')
+
 mocha.setup('bdd')
 
 require('./yayson/store')

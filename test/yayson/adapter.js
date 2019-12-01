@@ -1,6 +1,6 @@
 const { expect } = require('chai')
 
-const { Adapter } = require('../../src/yayson.js')()
+const { Adapter } = yayson()
 
 describe('Adapter', function() {
   it('should get all object properties', function() {

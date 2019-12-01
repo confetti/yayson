@@ -1,4 +1,4 @@
---require test/common.js
+--require test/node.js
 --watch-extensions js
 --timeout 5000
 test/yayson/**/*.js
