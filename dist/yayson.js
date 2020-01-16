@@ -369,8 +369,11 @@ module.exports = function(utils) {
     };
 
     Store.prototype.toModel = function(rec, type, models) {
-      var base, currentModel, data, key, links, meta, model, name, ref, rel, resolve;
+      var base, currentModel, data, key, links, meta, model, name, ref, rel, resolve, typeAttribute;
       model = utils.clone(rec.attributes) || {};
+      if (model.type) {
+        typeAttribute = model.type;
+      }
       model.id = rec.id;
       model.type = rec.type;
       models[type] || (models[type] = {});
@@ -412,6 +415,9 @@ module.exports = function(utils) {
             currentModel._meta = meta || {};
           }
         }
+      }
+      if (typeAttribute) {
+        model.type = typeAttribute;
       }
       return model;
     };
