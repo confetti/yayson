@@ -16,6 +16,7 @@ module.exports = (utils) ->
     toModel: (rec, type, models) ->
 
       model = utils.clone(rec.attributes) || {}
+      typeAttribute = model.type if model.type
 
       model.id = rec.id
       model.type = rec.type
@@ -59,6 +60,7 @@ module.exports = (utils) ->
             currentModel._links = links || {}
             currentModel._meta = meta || {}
 
+      model.type = typeAttribute if typeAttribute
       model
 
     findRecord: (type, id) ->

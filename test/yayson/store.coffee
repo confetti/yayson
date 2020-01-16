@@ -19,6 +19,17 @@ describe 'Store', ->
 
     expect(event.name).to.equal 'Demo'
 
+  it 'should allow an attribute namned type', ->
+    event = @store.sync data:
+      type: 'events'
+      id: 1
+      attributes:
+        name: 'Demo'
+        type: 'party'
+
+    expect(event.name).to.equal 'Demo'
+    expect(event.type).to.equal 'party'
+
   it 'should find an event', ->
     @store.sync data:
       type: 'events'
