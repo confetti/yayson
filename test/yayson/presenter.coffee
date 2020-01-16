@@ -342,7 +342,7 @@ describe 'Presenter', ->
 
     expect(json.meta.count).to.eq 1
 
-  it 'should exclude id and type from attributes', ->
+  it 'should exclude id from attributes', ->
     obj = {id: 5, foo: 'bar', type: 'some'}
     json = Presenter.toJSON(obj)
     expect(json).to.deep.equal
@@ -351,6 +351,7 @@ describe 'Presenter', ->
         id: '5'
         attributes:
           foo: 'bar'
+          type: 'some'
 
   it 'can use custom adapters', ->
     obj = {id: 5, foo: 'bar'}
