@@ -172,7 +172,6 @@ module.exports = function(utils, adapter) {
       }
       attributes = utils.clone(this.constructor.adapter.get(instance));
       delete attributes['id'];
-      delete attributes['type'];
       relationships = this.relationships();
       for (key in relationships) {
         delete attributes[key];
