@@ -26,7 +26,6 @@ module.exports = (utils, adapter) ->
       return null unless instance?
       attributes = utils.clone @constructor.adapter.get instance
       delete attributes['id']
-      delete attributes['type']
 
       relationships = @relationships()
       for key of relationships
@@ -51,7 +50,7 @@ module.exports = (utils, adapter) ->
         data = @constructor.adapter.get instance, key
         presenter = rels[key]
         buildData = (d) =>
-          data = 
+          data =
             id: @constructor.adapter.id d
             type: presenter::type
         build = (d) =>
