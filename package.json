@@ -1,6 +1,6 @@
 {
   "name": "yayson",
-  "version": "2.0.9",
+  "version": "2.0.10-quickfix",
   "description": "A library for serializing and reading JSON API standardized data in JavaScript.",
   "main": "lib/yayson.js",
   "scripts": {
