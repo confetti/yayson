@@ -77,6 +77,7 @@ module.exports = (utils, adapter) ->
 
     toJSON: (instanceOrCollection, options = {}) ->
       @scope.meta = options.meta if options.meta?
+      @scope.links = options.links if options.links?
       @scope.data ||= null
 
       return @scope unless instanceOrCollection?
