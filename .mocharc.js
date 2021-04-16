@@ -2,14 +2,14 @@
 
 module.exports = {
   recursive: true,
-  require: ['coffeescript/register', 'test/common.coffee'],
+  require: ['test/common.js'],
   diff: true,
-  extension: ['js', 'coffee'],
+  extension: ['js'],
   package: './package.json',
   reporter: 'spec',
   slow: 75,
   timeout: 10000,
   ui: 'bdd',
-  spec: ['test/yayson/**/*.coffee'],
-  'watch-files': ['src/**/*.coffee', 'test/**/*.coffee'],
+  spec: ['test/yayson/**/*.js'],
+  'watch-files': ['src/**/*.js', 'test/**/*.js'],
 }

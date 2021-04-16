@@ -1,4 +1,11 @@
-module.exports = function(utils) {
+/*
+ * decaffeinate suggestions:
+ * DS102: Remove unnecessary code created because of implicit returns
+ * DS207: Consider shorter variations of null checks
+ * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
+ */
+
+module.exports = function (utils) {
   class Record {
     constructor(options) {
       ;({
@@ -7,7 +14,7 @@ module.exports = function(utils) {
         attributes: this.attributes,
         relationships: this.relationships,
         links: this.links,
-        meta: this.meta
+        meta: this.meta,
       } = options)
     }
   }
@@ -23,7 +30,11 @@ module.exports = function(utils) {
     }
 
     toModel(rec, type, models) {
+      let typeAttribute
       const model = utils.clone(rec.attributes) || {}
+      if (model.type) {
+        typeAttribute = model.type
+      }
 
       model.id = rec.id
       model.type = rec.type
@@ -80,15 +91,18 @@ module.exports = function(utils) {
         }
       }
 
+      if (typeAttribute) {
+        model.type = typeAttribute
+      }
       return model
     }
 
     findRecord(type, id) {
-      return utils.find(this.records, r => r.type === type && r.id === id)
+      return utils.find(this.records, (r) => r.type === type && r.id === id)
     }
 
     findRecords(type) {
-      return utils.filter(this.records, r => r.type === type)
+      return utils.filter(this.records, (r) => r.type === type)
     }
 
     find(type, id, models) {
@@ -113,7 +127,7 @@ module.exports = function(utils) {
       if (recs == null) {
         return []
       }
-      recs.forEach(rec => {
+      recs.forEach((rec) => {
         if (!models[type]) {
           models[type] = {}
         }
@@ -123,7 +137,7 @@ module.exports = function(utils) {
     }
 
     remove(type, id) {
-      const remove = record => {
+      const remove = (record) => {
         const index = this.records.indexOf(record)
         if (!(index < 0)) {
           return this.records.splice(index, 1)
@@ -139,11 +153,11 @@ module.exports = function(utils) {
     }
 
     sync(body) {
-      const sync = data => {
+      const sync = (data) => {
         if (data == null) {
           return null
         }
-        const add = obj => {
+        const add = (obj) => {
           const { type, id } = obj
           this.remove(type, id)
           const rec = new Record(obj)
@@ -169,7 +183,7 @@ module.exports = function(utils) {
       let result = null
 
       if (recs instanceof Array) {
-        result = recs.map(rec => {
+        result = recs.map((rec) => {
           return this.toModel(rec, rec.type, models)
         })
       } else {

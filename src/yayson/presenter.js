@@ -8,12 +8,12 @@
  * DS207: Consider shorter variations of null checks
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
-module.exports = function(utils, adapter) {
-  var Presenter = (function() {
+module.exports = function (utils, adapter) {
+  var Presenter = (function () {
     let buildLinks = undefined
     Presenter = class Presenter {
       static initClass() {
-        buildLinks = function(link) {
+        buildLinks = function (link) {
           if (link == null) {
             return
           }
@@ -51,7 +51,6 @@ module.exports = function(utils, adapter) {
         }
         const attributes = utils.clone(this.constructor.adapter.get(instance))
         delete attributes['id']
-        delete attributes['type']
 
         const relationships = this.relationships()
         for (let key in relationships) {
@@ -95,13 +94,13 @@ module.exports = function(utils, adapter) {
         for (var key in rels) {
           let data = this.constructor.adapter.get(instance, key)
           var presenter = rels[key]
-          var buildData = d => {
+          var buildData = (d) => {
             return (data = {
               id: this.constructor.adapter.id(d),
-              type: presenter.prototype.type
+              type: presenter.prototype.type,
             })
           }
-          const build = d => {
+          const build = (d) => {
             const rel = {}
             if (d != null) {
               rel.data = buildData(d)
@@ -142,6 +141,9 @@ module.exports = function(utils, adapter) {
         if (options.meta != null) {
           this.scope.meta = options.meta
         }
+        if (options.links != null) {
+          this.scope.links = options.links
+        }
         if (!this.scope.data) {
           this.scope.data = null
         }
@@ -155,7 +157,7 @@ module.exports = function(utils, adapter) {
           if (!this.scope.data) {
             this.scope.data = []
           }
-          collection.forEach(instance => {
+          collection.forEach((instance) => {
             return this.toJSON(instance, options)
           })
         } else {
@@ -164,7 +166,7 @@ module.exports = function(utils, adapter) {
           const model = {
             id: this.id(instance),
             type: this.type,
-            attributes: this.attributes(instance)
+            attributes: this.attributes(instance),
           }
           if (model.id === undefined) {
             delete model.id
@@ -185,7 +187,7 @@ module.exports = function(utils, adapter) {
             if (
               !utils.any(
                 this.scope.included.concat(this.scope.data),
-                i => i.id === model.id && i.type === model.type
+                (i) => i.id === model.id && i.type === model.type
               )
             ) {
               this.scope.included.push(model)
@@ -195,7 +197,7 @@ module.exports = function(utils, adapter) {
           } else if (this.scope.data != null) {
             if (
               !(this.scope.data instanceof Array) ||
-              !utils.any(this.scope.data, i => i.id === model.id)
+              !utils.any(this.scope.data, (i) => i.id === model.id)
             ) {
               this.scope.data.push(model)
             } else {
@@ -214,7 +216,7 @@ module.exports = function(utils, adapter) {
 
       render(instanceOrCollection, options) {
         if (utils.isPromise(instanceOrCollection)) {
-          return instanceOrCollection.then(data => this.toJSON(data, options))
+          return instanceOrCollection.then((data) => this.toJSON(data, options))
         } else {
           return this.toJSON(instanceOrCollection, options)
         }

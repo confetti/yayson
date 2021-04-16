@@ -15,15 +15,15 @@ const { assert } = require('chai')
 const yaysonLib = yayson
 const { Presenter } = yayson()
 
-describe('Presenter', function() {
-  it('handles null', function() {
+describe('Presenter', function () {
+  it('handles null', function () {
     const json = Presenter.toJSON(null)
-    expect(json).to.deep.equal({
-      data: null
+    return expect(json).to.deep.equal({
+      data: null,
     })
   })
 
-  it('create json structure of an object', function() {
+  it('create json structure of an object', function () {
     const obj = { id: 5, foo: 'bar' }
     const json = Presenter.toJSON(obj)
     expect(json).to.deep.equal({
@@ -31,14 +31,17 @@ describe('Presenter', function() {
         type: 'objects',
         id: '5',
         attributes: {
-          foo: 'bar'
-        }
-      }
+          foo: 'bar',
+        },
+      },
     })
   })
 
-  it('create json structure of an array of objects', function() {
-    const obj = [{ id: 1, foo: 'bar' }, { id: 2, foo: 'baz' }]
+  it('create json structure of an array of objects', function () {
+    const obj = [
+      { id: 1, foo: 'bar' },
+      { id: 2, foo: 'baz' },
+    ]
     const json = Presenter.toJSON(obj)
     expect(json).to.deep.equal({
       data: [
@@ -46,34 +49,34 @@ describe('Presenter', function() {
           type: 'objects',
           id: '1',
           attributes: {
-            foo: 'bar'
-          }
+            foo: 'bar',
+          },
         },
         {
           type: 'objects',
           id: '2',
           attributes: {
-            foo: 'baz'
-          }
-        }
-      ]
+            foo: 'baz',
+          },
+        },
+      ],
     })
   })
 
-  it('should not include id if not specified', function() {
+  it('should not include id if not specified', function () {
     const obj = { foo: 'bar' }
     const json = Presenter.toJSON(obj)
     expect(json).to.deep.equal({
       data: {
         type: 'objects',
         attributes: {
-          foo: 'bar'
-        }
-      }
+          foo: 'bar',
+        },
+      },
     })
   })
 
-  it('should not dup object', function() {
+  it('should not dup object', function () {
     const obj = [{ id: 1 }, { id: 1 }]
     const json = Presenter.toJSON(obj)
     expect(json).to.deep.equal({
@@ -81,13 +84,13 @@ describe('Presenter', function() {
         {
           type: 'objects',
           id: '1',
-          attributes: {}
-        }
-      ]
+          attributes: {},
+        },
+      ],
     })
   })
 
-  it('should serialize relations', function() {
+  it('should serialize relations', function () {
     class MotorPresenter extends Presenter {
       static initClass() {
         this.prototype.type = 'motors'
@@ -110,12 +113,12 @@ describe('Presenter', function() {
 
     const motor = {
       id: 2,
-      car: null
+      car: null,
     }
 
     const car = {
       id: 1,
-      motor
+      motor,
     }
 
     motor.car = car
@@ -130,10 +133,10 @@ describe('Presenter', function() {
           motor: {
             data: {
               type: 'motors',
-              id: '2'
-            }
-          }
-        }
+              id: '2',
+            },
+          },
+        },
       },
       included: [
         {
@@ -144,16 +147,16 @@ describe('Presenter', function() {
             car: {
               data: {
                 type: 'cars',
-                id: '1'
-              }
-            }
-          }
-        }
-      ]
+                id: '1',
+              },
+            },
+          },
+        },
+      ],
     })
   })
 
-  it('should serialize relations array', function() {
+  it('should serialize relations array', function () {
     class WheelPresenter extends Presenter {
       static initClass() {
         this.prototype.type = 'wheels'
@@ -180,21 +183,21 @@ describe('Presenter', function() {
       // would not get included
       {
         id: 1,
-        bike: null
+        bike: null,
       },
       {
         id: 2,
-        bike: null
+        bike: null,
       },
       {
         id: 3,
-        bike: null
-      }
+        bike: null,
+      },
     ]
 
     const bike = {
       id: 1,
-      wheels
+      wheels,
     }
 
     for (let w of Array.from(wheels)) {
@@ -212,19 +215,19 @@ describe('Presenter', function() {
             data: [
               {
                 type: 'wheels',
-                id: '1'
+                id: '1',
               },
               {
                 type: 'wheels',
-                id: '2'
+                id: '2',
               },
               {
                 type: 'wheels',
-                id: '3'
-              }
-            ]
-          }
-        }
+                id: '3',
+              },
+            ],
+          },
+        },
       },
       included: [
         {
@@ -235,10 +238,10 @@ describe('Presenter', function() {
             bike: {
               data: {
                 type: 'bikes',
-                id: '1'
-              }
-            }
-          }
+                id: '1',
+              },
+            },
+          },
         },
         {
           type: 'wheels',
@@ -248,10 +251,10 @@ describe('Presenter', function() {
             bike: {
               data: {
                 type: 'bikes',
-                id: '1'
-              }
-            }
-          }
+                id: '1',
+              },
+            },
+          },
         },
         {
           type: 'wheels',
@@ -261,16 +264,16 @@ describe('Presenter', function() {
             bike: {
               data: {
                 type: 'bikes',
-                id: '1'
-              }
-            }
-          }
-        }
-      ]
+                id: '1',
+              },
+            },
+          },
+        },
+      ],
     })
   })
 
-  it('should include self link', function() {
+  it('should include self link', function () {
     class CarPresenter extends Presenter {
       static initClass() {
         this.prototype.type = 'cars'
@@ -285,7 +288,7 @@ describe('Presenter', function() {
     expect(json.data.links.self).to.eq('/cars/3')
   })
 
-  it('should include self and related link', function() {
+  it('should include self and related link', function () {
     class CarPresenter extends Presenter {
       static initClass() {
         this.prototype.type = 'cars'
@@ -293,7 +296,7 @@ describe('Presenter', function() {
       selfLinks(instance) {
         return {
           self: '/cars/linkage/' + this.id(instance),
-          related: '/cars/' + this.id(instance)
+          related: '/cars/' + this.id(instance),
         }
       }
     }
@@ -304,7 +307,7 @@ describe('Presenter', function() {
     expect(json.data.links.related).to.eq('/cars/3')
   })
 
-  it('should handle links in relationships', function() {
+  it('should handle links in relationships', function () {
     class CarPresenter extends Presenter {
       static initClass() {
         this.prototype.type = 'cars'
@@ -322,8 +325,8 @@ describe('Presenter', function() {
         return {
           car: {
             self: this.selfLinks(instance) + '/linkage/car',
-            related: this.selfLinks(instance) + '/car'
-          }
+            related: this.selfLinks(instance) + '/car',
+          },
         }
       }
     }
@@ -335,7 +338,7 @@ describe('Presenter', function() {
     expect(json.data.relationships.car.links.related).to.eq('/cars/3/car')
   })
 
-  it('should handle links in relationships array', function() {
+  it('should handle links in relationships array', function () {
     class CarPresenter extends Presenter {
       static initClass() {
         this.prototype.type = 'cars'
@@ -353,8 +356,8 @@ describe('Presenter', function() {
         return {
           cars: {
             self: this.selfLinks(instance) + '/linkage/cars',
-            related: this.selfLinks(instance) + '/cars'
-          }
+            related: this.selfLinks(instance) + '/cars',
+          },
         }
       }
     }
@@ -363,17 +366,17 @@ describe('Presenter', function() {
     const cars = [
       {
         id: 2,
-        car: null
+        car: null,
       },
       {
         id: 3,
-        car: null
-      }
+        car: null,
+      },
     ]
 
     const car = {
       id: 1,
-      cars
+      cars,
     }
 
     for (let c of Array.from(cars)) {
@@ -390,7 +393,7 @@ describe('Presenter', function() {
     expect(json.data.relationships.cars.data).to.be.an('array')
   })
 
-  it('should handle links in relationships without data', function() {
+  it('should handle links in relationships without data', function () {
     class CarPresenter extends Presenter {
       static initClass() {
         this.prototype.type = 'cars'
@@ -408,8 +411,8 @@ describe('Presenter', function() {
         return {
           car: {
             self: this.selfLinks(instance) + '/linkage/car',
-            related: this.selfLinks(instance) + '/car'
-          }
+            related: this.selfLinks(instance) + '/car',
+          },
         }
       }
     }
@@ -421,7 +424,8 @@ describe('Presenter', function() {
     expect(json.data.relationships.car.links.related).to.eq('/cars/3/car')
     expect(json.data.relationships.car.data).to.eq(undefined)
   })
-  it('should render data: null for unspecified relationships', function() {
+
+  it('should render data: null for unspecified relationships', function () {
     class CarPresenter extends Presenter {
       static initClass() {
         this.prototype.type = 'cars'
@@ -436,8 +440,8 @@ describe('Presenter', function() {
     const json = CarPresenter.render({ id: 3 })
     expect(json.data.relationships).to.deep.equal({
       car: {
-        data: null
-      }
+        data: null,
+      },
     })
   })
 
@@ -466,7 +470,7 @@ describe('Presenter', function() {
         } else {
           return attrs
         }
-      }
+      },
     }
 
     const json = PresenterSequalize.toJSON(obj)
@@ -475,20 +479,27 @@ describe('Presenter', function() {
         type: 'objects',
         id: '5',
         attributes: {
-          foo: 'bar'
-        }
-      }
+          foo: 'bar',
+        },
+      },
     })
   })
 
-  it('should add meta', function() {
+  it('should add meta', function () {
     const obj = { id: 1 }
     const json = Presenter.render(obj, { meta: { count: 1 } })
 
     expect(json.meta.count).to.eq(1)
   })
 
-  it('should exclude id and type from attributes', function() {
+  it('should add top-level links', function () {
+    const obj = { id: 1 }
+    const json = Presenter.render(obj, { links: { next: '/obj?page=2' } })
+
+    return expect(json.links.next).to.eq('/obj?page=2')
+  })
+
+  it('should exclude id from attributes', function () {
     const obj = { id: 5, foo: 'bar', type: 'some' }
     const json = Presenter.toJSON(obj)
     expect(json).to.deep.equal({
@@ -496,9 +507,10 @@ describe('Presenter', function() {
         type: 'objects',
         id: '5',
         attributes: {
-          foo: 'bar'
-        }
-      }
+          foo: 'bar',
+          type: 'some',
+        },
+      },
     })
   })
 
@@ -506,7 +518,7 @@ describe('Presenter', function() {
     const obj = { id: 5, foo: 'bar' }
     const adapter = {
       id: sinon.spy(() => 1),
-      get: sinon.spy(() => 'bar')
+      get: sinon.spy(() => 'bar'),
     }
     const PresenterWithMockAdapter = yaysonLib({ adapter }).Presenter
     const json = PresenterWithMockAdapter.toJSON(obj)
