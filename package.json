@@ -3,6 +3,10 @@
   "version": "2.0.10-quickfix",
   "description": "A library for serializing and reading JSON API standardized data in JavaScript.",
   "main": "lib/yayson.js",
+  "engines": {
+    "node": ">=10",
+    "npm": ">=6"
+  },
   "scripts": {
     "test": "mocha"
   },
@@ -29,28 +33,29 @@
   },
   "homepage": "https://github.com/confetti/yayson",
   "devDependencies": {
-    "bower": "^1.7.7",
-    "browserify": "^16.2.3",
-    "chai": "^4.2.0",
-    "coffee-script": "^1.12.7",
-    "coffeeify": "^2.1.0",
-    "ecstatic": "^4.0.0",
-    "gulp": "^4.0.0",
+    "bower": "^1.8.12",
+    "browserify": "^17.0.0",
+    "chai": "^4.3.4",
+    "coffeeify": "^3.0.1",
+    "coffeescript": "^1.12.7",
+    "ecstatic": "^4.1.4",
+    "gulp": "^4.0.2",
     "gulp-coffee": "^3.0.3",
     "gulp-util": "^3.0.1",
-    "mocha": "*",
-    "sinon": "^7.3.1",
-    "sinon-chai": "^3.3.0",
+    "mocha": "^8.3.2",
+    "sinon": "^10.0.0",
+    "sinon-chai": "^3.6.0",
     "vinyl-source-stream": "^2.0.0"
   },
   "optionalDependencies": {
-    "lodash": "^4.17.4",
-    "q": "^1.0.1",
-    "underscore": "^1.8.3"
+    "lodash": "^4.17.21",
+    "q": "^1.5.1",
+    "underscore": "^1.13.1"
   },
   "browser": {
     "lodash": false,
     "q": false,
     "underscore": false
-  }
+  },
+  "dependencies": {}
 }

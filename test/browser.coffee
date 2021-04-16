@@ -1,5 +1,7 @@
 mocha.setup('bdd')
 
+require('./common')
+
 require('./yayson/store')
 require('./yayson/presenter')
 require('./yayson/utils')

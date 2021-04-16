@@ -36,8 +36,8 @@ gulp.task 'test-coffee', ->
     .pipe(gulp.dest('./test/.tmp/'))
 
 gulp.task 'test-watch', ->
-  gulp.watch('./src/**/*.coffee', ['test-coffee'])
-  gulp.watch('./test/**/*.coffee', ['test-coffee'])
+  gulp.watch('./src/**/*.coffee', {ignoreInitial: false}, gulp.series('test-coffee'))
+  gulp.watch('./test/**/*.coffee', gulp.series('test-coffee'))
 
 
-gulp.task 'test-browser', gulp.series('test-watch', 'test-serve')
+gulp.task 'test-browser', gulp.parallel('test-watch', 'test-serve')
