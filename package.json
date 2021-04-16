@@ -1,12 +1,19 @@
 {
   "name": "yayson",
-  "version": "2.0.8",
+  "version": "2.1.0",
   "description": "A library for serializing and reading JSON API standardized data in JavaScript.",
   "main": "src/yayson.js",
+  "engines": {
+    "node": ">=10",
+    "npm": ">=6"
+  },
   "scripts": {
     "test": "mocha",
     "build": "webpack --config webpack.dist.js",
-    "test-browser": "webpack-dev-server --config webpack.browser.js"
+    "test-browser": "webpack-dev-server --config webpack.browser.js",
+    "preversion": "npm test && npm run build && git add dist/yayson.js",
+    "postversion": "git push --follow-tags origin master",
+    "release": "npm version minor"
   },
   "repository": {
     "type": "git",
@@ -34,10 +41,10 @@
     "@babel/core": "^7.7.4",
     "@babel/preset-env": "^7.7.4",
     "babel-loader": "^8.0.6",
-    "chai": "^4.2.0",
-    "mocha": "^6.2.2",
-    "sinon": "^7.5.0",
-    "sinon-chai": "^3.3.0",
+    "chai": "^4.3.4",
+    "mocha": "^8.3.2",
+    "sinon": "^10.0.0",
+    "sinon-chai": "^3.6.0",
     "uglifyjs-webpack-plugin": "^2.2.0",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.10",
@@ -45,9 +52,9 @@
     "webpack-merge": "^4.2.2"
   },
   "optionalDependencies": {
-    "lodash": "^4.17.4",
-    "q": "^1.0.1",
-    "underscore": "^1.8.3"
+    "lodash": "^4.17.21",
+    "q": "^1.5.1",
+    "underscore": "^1.13.1"
   },
   "browser": {
     "lodash": false,
