@@ -342,6 +342,12 @@ describe 'Presenter', ->
 
     expect(json.meta.count).to.eq 1
 
+  it 'should add top-level links', -> 
+    obj = {id: 1}
+    json = Presenter.render(obj, links: next: '/obj?page=2')
+
+    expect(json.links.next).to.eq('/obj?page=2')
+
   it 'should exclude id from attributes', ->
     obj = {id: 5, foo: 'bar', type: 'some'}
     json = Presenter.toJSON(obj)
