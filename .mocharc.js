@@ -2,7 +2,7 @@
 
 module.exports = {
   recursive: true,
-  require: ['test/common.js'],
+  require: ['test/node.js'],
   diff: true,
   extension: ['js'],
   package: './package.json',
