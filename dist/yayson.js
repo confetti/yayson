@@ -260,6 +260,9 @@ module.exports = function(utils, adapter) {
       if (options.meta != null) {
         this.scope.meta = options.meta;
       }
+      if (options.links != null) {
+        this.scope.links = options.links;
+      }
       (base = this.scope).data || (base.data = null);
       if (instanceOrCollection == null) {
         return this.scope;
