@@ -8,7 +8,11 @@
     "npm": ">=6"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "build": "gulp",
+    "preversion": "npm test && npm run build && git add dist/yayson.js",
+    "postversion": "git push --follow-tags origin master",
+    "release": "npm version minor"
   },
   "repository": {
     "type": "git",
