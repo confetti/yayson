@@ -70,6 +70,7 @@ describe('Presenter', function () {
     const obj = [{ id: 1 }, { id: 1 }]
     const json = Presenter.toJSON(obj)
     expect(json).to.deep.equal({
+
       data: [
         {
           type: 'objects',

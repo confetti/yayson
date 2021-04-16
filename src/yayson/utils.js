@@ -1,20 +1,7 @@
-// TODO: This file was created by bulk-decaffeinate.
-// Sanity-check the conversion and remove this comment.
-/*
- * decaffeinate suggestions:
- * DS101: Remove unnecessary use of Array.from
- * DS102: Remove unnecessary code created because of implicit returns
- * DS207: Consider shorter variations of null checks
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
- */
-
-module.exports = function(_, Q) {
+module.exports = function(_) {
   let utils
   if (_ == null) {
     _ = {}
-  }
-  if (Q == null) {
-    Q = {}
   }
   return (utils = {
     find:
@@ -65,12 +52,5 @@ module.exports = function(_, Q) {
 
     any: _.any || ((arr, callback) => utils.find(arr, callback) != null),
 
-    // stolen from https://github.com/kriskowal/q
-    isPromise:
-      Q.isPromise ||
-      (obj =>
-        obj === Object(obj) &&
-        typeof obj.promiseDispatch === 'function' &&
-        typeof obj.inspect === 'function')
   })
 }
