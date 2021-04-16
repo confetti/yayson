@@ -97,7 +97,7 @@ module.exports = function (utils, adapter) {
           var buildData = (d) => {
             return (data = {
               id: this.constructor.adapter.id(d),
-              type: presenter.prototype.type,
+              type: presenter.type,
             })
           }
           const build = (d) => {

@@ -1,13 +1,3 @@
-// TODO: This file was created by bulk-decaffeinate.
-// Sanity-check the conversion and remove this comment.
-/*
- * decaffeinate suggestions:
- * DS101: Remove unnecessary use of Array.from
- * DS102: Remove unnecessary code created because of implicit returns
- * DS206: Consider reworking classes to avoid initClass
- * DS207: Consider shorter variations of null checks
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
- */
 const sinon = require('sinon')
 const { expect } = require('chai')
 const { assert } = require('chai')
@@ -92,24 +82,20 @@ describe('Presenter', function () {
 
   it('should serialize relations', function () {
     class MotorPresenter extends Presenter {
-      static initClass() {
-        this.prototype.type = 'motors'
-      }
+      static type = 'motors'
+
       relationships() {
         return { car: CarPresenter }
       }
     }
-    MotorPresenter.initClass()
 
     class CarPresenter extends Presenter {
-      static initClass() {
-        this.prototype.type = 'cars'
-      }
+      static type = 'cars'
+
       relationships() {
         return { motor: MotorPresenter }
       }
     }
-    CarPresenter.initClass()
 
     const motor = {
       id: 2,
@@ -158,24 +144,19 @@ describe('Presenter', function () {
 
   it('should serialize relations array', function () {
     class WheelPresenter extends Presenter {
-      static initClass() {
-        this.prototype.type = 'wheels'
-      }
+      static type = 'wheels'
+
       relationships() {
         return { bike: BikePresenter }
       }
     }
-    WheelPresenter.initClass()
 
     class BikePresenter extends Presenter {
-      static initClass() {
-        this.prototype.type = 'bikes'
-      }
+      static type = 'bikes'
       relationships() {
         return { wheels: WheelPresenter }
       }
     }
-    BikePresenter.initClass()
 
     const wheels = [
       // Intentionally adding a relation that uses the same ID as the base data
@@ -200,7 +181,7 @@ describe('Presenter', function () {
       wheels,
     }
 
-    for (let w of Array.from(wheels)) {
+    for (let w of wheels) {
       w.bike = bike
     }
 
@@ -275,14 +256,11 @@ describe('Presenter', function () {
 
   it('should include self link', function () {
     class CarPresenter extends Presenter {
-      static initClass() {
-        this.prototype.type = 'cars'
-      }
+      static type = 'cars'
       selfLinks(instance) {
         return '/cars/' + this.id(instance)
       }
     }
-    CarPresenter.initClass()
 
     const json = CarPresenter.render({ id: 3 })
     expect(json.data.links.self).to.eq('/cars/3')
@@ -290,9 +268,7 @@ describe('Presenter', function () {
 
   it('should include self and related link', function () {
     class CarPresenter extends Presenter {
-      static initClass() {
-        this.prototype.type = 'cars'
-      }
+      static type = 'cars'
       selfLinks(instance) {
         return {
           self: '/cars/linkage/' + this.id(instance),
@@ -300,7 +276,6 @@ describe('Presenter', function () {
         }
       }
     }
-    CarPresenter.initClass()
 
     const json = CarPresenter.render({ id: 3 })
     expect(json.data.links.self).to.eq('/cars/linkage/3')
@@ -309,9 +284,7 @@ describe('Presenter', function () {
 
   it('should handle links in relationships', function () {
     class CarPresenter extends Presenter {
-      static initClass() {
-        this.prototype.type = 'cars'
-      }
+      static type = 'cars'
 
       relationships() {
         return { car: CarPresenter }
@@ -330,7 +303,6 @@ describe('Presenter', function () {
         }
       }
     }
-    CarPresenter.initClass()
 
     const json = CarPresenter.render({ id: 3, car: { id: 5 } })
     expect(json.data.links.self).to.eq('/cars/3')
@@ -340,9 +312,7 @@ describe('Presenter', function () {
 
   it('should handle links in relationships array', function () {
     class CarPresenter extends Presenter {
-      static initClass() {
-        this.prototype.type = 'cars'
-      }
+      static type = 'cars'
 
       relationships() {
         return { cars: CarPresenter }
@@ -361,7 +331,6 @@ describe('Presenter', function () {
         }
       }
     }
-    CarPresenter.initClass()
 
     const cars = [
       {
@@ -379,7 +348,7 @@ describe('Presenter', function () {
       cars,
     }
 
-    for (let c of Array.from(cars)) {
+    for (let c of cars) {
       c.car = car
     }
 
@@ -395,9 +364,7 @@ describe('Presenter', function () {
 
   it('should handle links in relationships without data', function () {
     class CarPresenter extends Presenter {
-      static initClass() {
-        this.prototype.type = 'cars'
-      }
+      static type = 'cars'
 
       relationships() {
         return { car: CarPresenter }
@@ -416,7 +383,6 @@ describe('Presenter', function () {
         }
       }
     }
-    CarPresenter.initClass()
 
     const json = CarPresenter.render({ id: 3 })
     expect(json.data.links.self).to.eq('/cars/3')
@@ -427,15 +393,12 @@ describe('Presenter', function () {
 
   it('should render data: null for unspecified relationships', function () {
     class CarPresenter extends Presenter {
-      static initClass() {
-        this.prototype.type = 'cars'
-      }
+      static type = 'cars'
 
       relationships() {
         return { car: CarPresenter }
       }
     }
-    CarPresenter.initClass()
 
     const json = CarPresenter.render({ id: 3 })
     expect(json.data.relationships).to.deep.equal({
@@ -445,7 +408,7 @@ describe('Presenter', function () {
     })
   })
 
-  it('should serialize in pure JS', function() {
+  it('should serialize in pure JS', function () {
     class EventPresenter extends Presenter {
       attributes() {
         super.attributes(...arguments)
@@ -458,9 +421,9 @@ describe('Presenter', function () {
     expect(json.data.attributes.hej).to.eq('test')
   })
 
-  it('should use the sequelize adapter', function() {
+  it('should use the sequelize adapter', function () {
     const PresenterSequalize = yaysonLib({
-      adapter: 'sequelize'
+      adapter: 'sequelize',
     }).Presenter
     const obj = {
       get(attr) {
@@ -514,7 +477,7 @@ describe('Presenter', function () {
     })
   })
 
-  it('can use custom adapters', function() {
+  it('can use custom adapters', function () {
     const obj = { id: 5, foo: 'bar' }
     const adapter = {
       id: sinon.spy(() => 1),
