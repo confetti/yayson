@@ -1,6 +1,9 @@
 const Adapter = require('./yayson/adapter')
 const adapters = require('./yayson/adapters')
-const presenterFactory = require('./yayson/presenter')
+const presenter = require('./yayson/presenter')
+const legacyPresenter = require('./yayson/legacy-presenter')
+const store = require('./yayson/store')
+const legacyStore = require('./yayson/legacy-store')
 
 const lookupAdapter = function (nameOrAdapter) {
   if (nameOrAdapter === 'default') {
@@ -9,15 +12,13 @@ const lookupAdapter = function (nameOrAdapter) {
   return adapters[nameOrAdapter] || nameOrAdapter || Adapter
 }
 
-const presenter = function (options = {}) {
+module.exports = function (options = {}) {
   const adapter = lookupAdapter(options.adapter)
-  return presenterFactory(adapter)
-}
-
-module.exports = function ({ adapter } = {}) {
   return {
-    Store: require('./yayson/store')(),
-    Presenter: presenter({ adapter }),
+    Store: store(),
+    Presenter: presenter(adapter),
+    LegacyStore: legacyStore(),
+    LegacyPresenter: legacyPresenter(adapter),
     Adapter,
   }
 }
