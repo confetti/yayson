@@ -10,12 +10,9 @@
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
 module.exports = function (adapter) {
-  class Presenter {
-    static initClass() {
-      this.adapter = adapter
-
-      this.prototype.name = 'object'
-    }
+  return class LegacyPresenter {
+    static adapter = adapter
+    static type = 'object'
 
     constructor(scope) {
       if (scope == null) {
@@ -24,8 +21,8 @@ module.exports = function (adapter) {
       this.scope = scope
     }
 
-    pluralName() {
-      return this.plural || this.name + 's'
+    pluralType() {
+      return this.plural || this.constructor.type + 's'
     }
 
     links() {}
@@ -66,7 +63,7 @@ module.exports = function (adapter) {
           const factory =
             serialize[key] ||
             (() => {
-              throw new Error(`Presenter for ${key} in ${this.name} is not defined`)
+              throw new Error(`Presenter for ${key} in ${this.constructor.type} is not defined`)
             })()
           const presenter = new factory(scope)
 
@@ -75,23 +72,23 @@ module.exports = function (adapter) {
             presenter.toJSON(data, { defaultPlural: true })
           }
 
-          const name = scope[this.pluralName()] != null ? this.pluralName() : this.name
-          const keyName = scope[presenter.pluralName()] != null ? presenter.pluralName() : presenter.name
-          result.push((scope.links[`${name}.${key}`] = { type: keyName }))
+          const type = scope[this.pluralType()] != null ? this.pluralType() : this.constructor.type
+          const keyName = scope[presenter.pluralType()] != null ? presenter.pluralType() : presenter.constructor.type
+          result.push((scope.links[`${type}.${key}`] = { type: keyName }))
         }
         return result
       })()
     }
 
     toJSON(instanceOrCollection, options) {
-      let name
+      let type
       if (options == null) {
         options = {}
       }
       if (instanceOrCollection instanceof Array) {
         const collection = instanceOrCollection
-        if (!this.scope[(name = this.pluralName())]) {
-          this.scope[name] = []
+        if (!this.scope[(type = this.pluralType())]) {
+          this.scope[type] = []
         }
         collection.forEach((instance) => {
           return this.toJSON(instance)
@@ -105,26 +102,26 @@ module.exports = function (adapter) {
           attrs.links = links
         }
         // If eg x.image already exists
-        if (this.scope[this.name] && !this.scope[this.pluralName()]) {
-          if (this.scope[this.name].id !== attrs.id) {
-            this.scope[this.pluralName()] = [this.scope[this.name]]
-            delete this.scope[this.name]
-            this.scope[this.pluralName()].push(attrs)
+        if (this.scope[this.constructor.type] && !this.scope[this.pluralType()]) {
+          if (this.scope[this.constructor.type].id !== attrs.id) {
+            this.scope[this.pluralType()] = [this.scope[this.constructor.type]]
+            delete this.scope[this.constructor.type]
+            this.scope[this.pluralType()].push(attrs)
           } else {
             added = false
           }
 
           // If eg x.images already exists
-        } else if (this.scope[this.pluralName()]) {
-          if (!this.scope[this.pluralName()].some((i) => i.id === attrs.id)) {
-            this.scope[this.pluralName()].push(attrs)
+        } else if (this.scope[this.pluralType()]) {
+          if (!this.scope[this.pluralType()].some((i) => i.id === attrs.id)) {
+            this.scope[this.pluralType()].push(attrs)
           } else {
             added = false
           }
         } else if (options.defaultPlural) {
-          this.scope[this.pluralName()] = [attrs]
+          this.scope[this.pluralType()] = [attrs]
         } else {
-          this.scope[this.name] = attrs
+          this.scope[this.constructor.type] = attrs
         }
 
         if (added) {
@@ -146,7 +143,4 @@ module.exports = function (adapter) {
       return new this().render(...arguments)
     }
   }
-  Presenter.initClass()
-
-  return (module.exports = Presenter)
 }

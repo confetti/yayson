@@ -10,7 +10,6 @@
  */
 
 module.exports = function () {
-  let Store
   class Record {
     constructor(options) {
       this.type = options.type
@@ -18,7 +17,7 @@ module.exports = function () {
     }
   }
 
-  return (Store = class Store {
+  return class Store {
     constructor(options) {
       this.types = options.types || {}
       this.reset()
@@ -153,5 +152,5 @@ module.exports = function () {
         return result
       })()
     }
-  })
+  }
 }

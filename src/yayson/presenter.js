@@ -50,7 +50,7 @@ module.exports = function (adapter) {
       const result = []
       for (var key in relationships) {
         const factory = relationships[key]
-        if (!factory) throw new Error(`Presenter for ${key} in ${this.type} is not defined`)
+        if (!factory) throw new Error(`Presenter for ${key} in ${this.constructor.type} is not defined`)
 
         const presenter = new factory(scope)
 

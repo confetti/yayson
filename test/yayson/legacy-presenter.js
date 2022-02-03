@@ -69,24 +69,20 @@ describe('LegacyPresenter', function () {
 
   it('should serialize relations', function () {
     class TirePresenter extends LegacyPresenter {
-      static initClass() {
-        this.prototype.name = 'tire'
-      }
+      static type = 'tire'
+
       serialize() {
         return { car: CarPresenter }
       }
     }
-    TirePresenter.initClass()
 
     class CarPresenter extends LegacyPresenter {
-      static initClass() {
-        this.prototype.name = 'car'
-      }
+      static type = 'car'
+
       serialize() {
         return { tire: TirePresenter }
       }
     }
-    CarPresenter.initClass()
 
     const obj = {
       id: 1,
