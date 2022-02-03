@@ -1,4 +1,4 @@
-module.exports = function (utils) {
+module.exports = function () {
   class Record {
     constructor(options) {
       ;({
@@ -24,7 +24,7 @@ module.exports = function (utils) {
 
     toModel(rec, type, models) {
       let typeAttribute
-      const model = utils.clone(rec.attributes) || {}
+      const model = {...rec.attributes || {}}
       if (model.type) {
         typeAttribute = model.type
       }
@@ -91,11 +91,11 @@ module.exports = function (utils) {
     }
 
     findRecord(type, id) {
-      return utils.find(this.records, (r) => r.type === type && r.id === id)
+      return this.records.find((r) => r.type === type && r.id === id)
     }
 
     findRecords(type) {
-      return utils.filter(this.records, (r) => r.type === type)
+      return this.records.filter((r) => r.type === type)
     }
 
     find(type, id, models) {
@@ -126,7 +126,7 @@ module.exports = function (utils) {
         }
         return this.toModel(rec, type, models)
       })
-      return utils.values(models[type])
+      return Object.values(models[type] || {})
     }
 
     remove(type, id) {

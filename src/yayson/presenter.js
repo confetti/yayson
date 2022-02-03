@@ -1,4 +1,4 @@
-module.exports = function (utils, adapter) {
+module.exports = function (adapter) {
   const buildLinks = function (link) {
     if (link == null) {
       return
@@ -35,7 +35,7 @@ module.exports = function (utils, adapter) {
       if (instance == null) {
         return null
       }
-      const attributes = utils.clone(this.constructor.adapter.get(instance))
+      const attributes = {...this.constructor.adapter.get(instance)}
       delete attributes['id']
 
       const relationships = this.relationships()
@@ -162,10 +162,7 @@ module.exports = function (utils, adapter) {
             this.scope.included = []
           }
           if (
-            !utils.any(
-              this.scope.included.concat(this.scope.data),
-              (i) => i.id === model.id && i.type === model.type
-            )
+            !this.scope.included.concat(this.scope.data).some((i) => i.id === model.id && i.type === model.type)
           ) {
             this.scope.included.push(model)
           } else {
@@ -174,7 +171,7 @@ module.exports = function (utils, adapter) {
         } else if (this.scope.data != null) {
           if (
             !(this.scope.data instanceof Array) ||
-            !utils.any(this.scope.data, (i) => i.id === model.id)
+            !this.scope.data.some((i) => i.id === model.id)
           ) {
             this.scope.data.push(model)
           } else {

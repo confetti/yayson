@@ -50,15 +50,5 @@
     "webpack-cli": "^3.3.10",
     "webpack-dev-server": "^3.9.0",
     "webpack-merge": "^4.2.2"
-  },
-  "optionalDependencies": {
-    "lodash": "^4.17.21",
-    "q": "^1.5.1",
-    "underscore": "^1.13.1"
-  },
-  "browser": {
-    "lodash": false,
-    "q": false,
-    "underscore": false
   }
 }

@@ -46,9 +46,3 @@ describe('utils without optional dependencies', function() {
   return testUtils(utils)
 })
 
-describe('utils with optional dependencies', function() {
-  const Q = require('q')
-  const _ = require('lodash')
-  const utils = require('../../src/yayson/utils')(_, Q)
-  return testUtils(utils)
-})
