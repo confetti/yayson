@@ -1,6 +1,8 @@
 # YAYSON
 
-A library for serializing and reading [JSON API](http://jsonapi.org) data in JavaScript. As of 2.0.0 YAYSON aims to support JSON API version 1.
+A library for serializing and reading [JSON API](http://jsonapi.org) data in JavaScript.
+
+As of 2.0.0 YAYSON aims to support JSON API version 1. In version 3.0.0 we now support native JavaScript classes.
 
 [![NPM](https://nodei.co/npm/yayson.png?downloads=true)](https://nodei.co/npm/yayson/)
 
@@ -10,29 +12,17 @@ A library for serializing and reading [JSON API](http://jsonapi.org) data in Jav
 Install yayson by running:
 
 ```
-$ npm install yayson --save
+
+$ npm i yayson
 ```
 
 ## Presenting data
 
-A basic `Presenter` can look like this in Coffeescript:
-
-```coffee
-  {Presenter} = require('yayson')(adapter: 'default')
-
-  class ItemsPresenter extends Presenter
-    type: 'items'
-
-  item =
-    id: 5
-    name: 'First'
-
-  ItemsPresenter.render(item)
-```
-
-Or in plain JavaScript:
+A basic `Presenter` can look like this:
 
 ```javascript
+
+
   const Presenter = require('yayson')({
     adapter: 'default'
   }).Presenter;
@@ -52,6 +42,8 @@ Or in plain JavaScript:
 This would produce:
 
 ```javascript
+
+
 {
   data: {
     id: 5,
@@ -69,26 +61,10 @@ be an array.
 
 A bit more advanced example:
 
-```coffee
-  {Presenter} = require('yayson')(adapter: 'default')
-
-  class ItemsPresenter extends Presenter
-    type: 'items'
-
-    attributes: ->
-      attrs = super
-      attrs.start = moment.utc(attrs.start).toDate()
-      attrs
-
-    relationships: ->
-      event: EventsPresenter
-
-  ItemsPresenter.render(item)
-```
-
-In JavaScript this would be done as:
 
 ```javascript
+
+
 
 
 var Presenter = require('yayson')().Presenter;
@@ -118,6 +94,7 @@ By default it is set up to handle standard JS objects. You can also make
 it handle Sequelize.js models like this:
 
 ```javascript
+
 {Presenter} = require('yayson')({adapter: 'sequelize'})
 
 ```
@@ -125,6 +102,7 @@ it handle Sequelize.js models like this:
 You can also define your own adapter globally:
 
 ```javascript
+
 {Presenter} = require('yayson')(adapter: {
   id: function(model){ return 'omg' + model.id},
   get: function(model, key){ return model[key] }
@@ -135,6 +113,7 @@ You can also define your own adapter globally:
 Or at Presenter level:
 
 ```javascript
+
 ItemPresenter.adapter = {
   id: function(model){ return 'omg' + model.id},
   get: function(model, key){ return model[key] }
@@ -147,13 +126,15 @@ Take a look at the SequelizeAdapter if you want to extend YAYSON to your ORM. Pu
 
 You can add metadata to the top level object.
 
-``` coffee
-  ItemsPresenter.render(items, meta: count: 10)
+``` javascript
+
+  ItemsPresenter.render(items, {meta: count: 10})
 ```
 
 This would produce:
 
 ```javascript
+
 {
   meta: {
     count: 10
@@ -173,12 +154,15 @@ This would produce:
 
 You can use a `Store` can like this:
 
-```coffee
-    {Store} = require('yayson')()
-    store = new Store()
+```javascript
 
-    adapter.get(path: '/events/' + id).then (data) ->
-      event = store.sync(data)
+    const {Store} = require('yayson')();
+    const store = new Store();
+
+    adapter.get({path: '/events/' + id}).then(function(data) {
+      let event;
+      return event = store.sync(data);
+    });
 ```
 
 This will give you the parsed event with all its relationships.
@@ -190,6 +174,8 @@ Recommended way is to use it via [webpack](https://github.com/webpack/webpack) o
 
 If you just want to try it out, copy the file `dist/yayson.js` to your project. Then simply include it:
 ```html
+
+
     <script src="./lib/yayson.js"></script>
 ```
 Then you can `var yayson = window.yayson()` use the `yayson.Presenter` and `yayson.Store` as usual.
