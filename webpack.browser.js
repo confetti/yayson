@@ -6,6 +6,7 @@ module.exports = merge(common, {
   entry: {
     tests: './test/browser.js',
   },
+  devtool: 'eval',
   output: {
     path: __dirname + '/test',
     filename: '[name].js',
