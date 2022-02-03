@@ -189,5 +189,5 @@ Then you can `var yayson = window.yayson()` use the `yayson.Presenter` and `yays
 - Safari iOS
 
 #### Untested, but should work
-- IE 9+
+- IE 11
 - Android
