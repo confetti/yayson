@@ -60,6 +60,5 @@
     "lodash": false,
     "q": false,
     "underscore": false
-  },
-  "dependencies": {}
+  }
 }
