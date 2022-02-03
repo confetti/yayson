@@ -8,13 +8,13 @@ module.exports = merge(common, {
   optimization: {
     minimizer: [
       new UglifyJSPlugin({
-        include: /\.min\.js$/
-      })
-    ]
+        include: /\.min\.js$/,
+      }),
+    ],
   },
   plugins: [
     new webpack.BannerPlugin({
-      banner: `yayson v ${PACKAGE.version} (${PACKAGE.homepage}) by ${PACKAGE.author}`
-    })
-  ]
+      banner: `yayson v ${PACKAGE.version} (${PACKAGE.homepage}) by ${PACKAGE.author}`,
+    }),
+  ],
 })

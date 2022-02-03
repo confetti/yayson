@@ -35,7 +35,7 @@ module.exports = function (adapter) {
       if (instance == null) {
         return null
       }
-      const attributes = {...this.constructor.adapter.get(instance)}
+      const attributes = { ...this.constructor.adapter.get(instance) }
       delete attributes['id']
 
       const relationships = this.relationships()
@@ -50,8 +50,7 @@ module.exports = function (adapter) {
       const result = []
       for (var key in relationships) {
         const factory = relationships[key]
-        if (!factory)
-          throw new Error(`Presenter for ${key} in ${this.type} is not defined`)
+        if (!factory) throw new Error(`Presenter for ${key} in ${this.type} is not defined`)
 
         const presenter = new factory(scope)
 
@@ -161,18 +160,13 @@ module.exports = function (adapter) {
           if (!this.scope.included) {
             this.scope.included = []
           }
-          if (
-            !this.scope.included.concat(this.scope.data).some((i) => i.id === model.id && i.type === model.type)
-          ) {
+          if (!this.scope.included.concat(this.scope.data).some((i) => i.id === model.id && i.type === model.type)) {
             this.scope.included.push(model)
           } else {
             added = false
           }
         } else if (this.scope.data != null) {
-          if (
-            !(this.scope.data instanceof Array) ||
-            !this.scope.data.some((i) => i.id === model.id)
-          ) {
+          if (!(this.scope.data instanceof Array) || !this.scope.data.some((i) => i.id === model.id)) {
             this.scope.data.push(model)
           } else {
             added = false

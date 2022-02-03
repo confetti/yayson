@@ -24,7 +24,7 @@ module.exports = function () {
 
     toModel(rec, type, models) {
       let typeAttribute
-      const model = {...rec.attributes || {}}
+      const model = { ...(rec.attributes || {}) }
       if (model.type) {
         typeAttribute = model.type
       }
@@ -65,12 +65,7 @@ module.exports = function () {
           const resolve = ({ type, id }) => {
             return this.find(type, id, models)
           }
-          model[key] =
-            data instanceof Array
-              ? data.map(resolve)
-              : data != null
-              ? resolve(data)
-              : {}
+          model[key] = data instanceof Array ? data.map(resolve) : data != null ? resolve(data) : {}
 
           // Model of the relation
           const currentModel = model[key]

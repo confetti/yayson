@@ -70,7 +70,6 @@ describe('Presenter', function () {
     const obj = [{ id: 1 }, { id: 1 }]
     const json = Presenter.toJSON(obj)
     expect(json).to.deep.equal({
-
       data: [
         {
           type: 'objects',
@@ -356,9 +355,7 @@ describe('Presenter', function () {
     const json = CarPresenter.render(car)
     expect(json.data.links.self).to.eq('/cars/1')
     expect(json.data.relationships.cars.links).to.not.eq(undefined)
-    expect(json.data.relationships.cars.links.self).to.eq(
-      '/cars/1/linkage/cars'
-    )
+    expect(json.data.relationships.cars.links.self).to.eq('/cars/1/linkage/cars')
     expect(json.data.relationships.cars.links.related).to.eq('/cars/1/cars')
     expect(json.data.relationships.cars.data).to.be.an('array')
   })

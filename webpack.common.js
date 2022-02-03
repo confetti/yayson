@@ -2,15 +2,15 @@ module.exports = {
   mode: 'production',
   entry: {
     yayson: './src/yayson.js',
-    'yayson.min': './src/yayson.js'
+    'yayson.min': './src/yayson.js',
   },
   output: {
     path: __dirname + '/dist',
     filename: '[name].js',
-    library: 'yayson'
+    library: 'yayson',
   },
   devServer: {
-    inline: true
+    inline: true,
   },
   module: {
     rules: [
@@ -20,10 +20,10 @@ module.exports = {
         use: {
           loader: 'babel-loader',
           options: {
-            presets: ['@babel/preset-env']
-          }
-        }
-      }
-    ]
-  }
+            presets: ['@babel/preset-env'],
+          },
+        },
+      },
+    ],
+  },
 }
