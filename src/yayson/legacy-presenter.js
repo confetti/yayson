@@ -1,41 +1,18 @@
-// TODO: This file was created by bulk-decaffeinate.
-// Sanity-check the conversion and remove this comment.
-/*
- * decaffeinate suggestions:
- * DS102: Remove unnecessary code created because of implicit returns
- * DS104: Avoid inline assignments
- * DS205: Consider reworking code to avoid use of IIFEs
- * DS206: Consider reworking classes to avoid initClass
- * DS207: Consider shorter variations of null checks
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
- */
-module.exports = function (adapter) {
-  return class LegacyPresenter {
-    static adapter = adapter
+module.exports = function (Presenter) {
+  return class LegacyPresenter extends Presenter {
     static type = 'object'
 
-    constructor(scope) {
-      if (scope == null) {
-        scope = {}
-      }
-      this.scope = scope
-    }
-
     pluralType() {
-      return this.plural || this.constructor.type + 's'
+      return this.constructor.plural || this.constructor.type + 's'
     }
-
-    links() {}
-
-    serialize() {}
 
     attributes(instance) {
       if (!instance) {
         return null
       }
-      const attributes = { ...adapter.get(instance) }
-      const serialize = this.serialize()
-      for (let key in serialize) {
+      const attributes = { ...this.constructor.adapter.get(instance) }
+      const relationships = this.relationships()
+      for (let key in relationships) {
         var id
         const data = attributes[key]
         if (data == null) {
@@ -52,32 +29,30 @@ module.exports = function (adapter) {
       return attributes
     }
 
-    relations(scope, instance) {
+    includeRelationships(scope, instance) {
       if (!scope.links) {
         scope.links = {}
       }
-      const serialize = this.serialize()
-      return (() => {
-        const result = []
-        for (var key in serialize) {
-          const factory =
-            serialize[key] ||
-            (() => {
-              throw new Error(`Presenter for ${key} in ${this.constructor.type} is not defined`)
-            })()
-          const presenter = new factory(scope)
+      const relationships = this.relationships()
+      const result = []
+      for (var key in relationships) {
+        const factory = relationships[key]
+        if (!factory) throw new Error(`Presenter for ${key} in ${this.constructor.type} is not defined`)
 
-          const data = adapter.get(instance, key)
-          if (data != null) {
-            presenter.toJSON(data, { defaultPlural: true })
-          }
+        const presenter = new factory(scope)
 
-          const type = scope[this.pluralType()] != null ? this.pluralType() : this.constructor.type
-          const keyName = scope[presenter.pluralType()] != null ? presenter.pluralType() : presenter.constructor.type
-          result.push((scope.links[`${type}.${key}`] = { type: keyName }))
+        const data = this.constructor.adapter.get(instance, key)
+        if (data != null) {
+          presenter.toJSON(data, { defaultPlural: true })
         }
-        return result
-      })()
+
+        const type = scope[this.pluralType()] != null ? this.pluralType() : this.constructor.type
+        const keyName = scope[presenter.pluralType()] != null ? presenter.pluralType() : presenter.constructor.type
+        const link = { type: keyName }
+        scope.links[`${type}.${key}`] = link
+        result.push(link)
+      }
+      return result
     }
 
     toJSON(instanceOrCollection, options) {
@@ -125,7 +100,7 @@ module.exports = function (adapter) {
         }
 
         if (added) {
-          this.relations(this.scope, instance)
+          this.includeRelationships(this.scope, instance)
         }
       }
       return this.scope

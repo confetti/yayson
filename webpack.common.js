@@ -3,6 +3,8 @@ module.exports = {
   entry: {
     yayson: './src/yayson.js',
     'yayson.min': './src/yayson.js',
+    'yayson-legacy': './src/legacy.js',
+    'yayson-legacy.min': './src/legacy.js',
   },
   output: {
     path: __dirname + '/dist',

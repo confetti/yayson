@@ -9,9 +9,7 @@
 const { expect } = require('chai')
 
 //eslint-disable-next-line no-undef
-const yaysonLib = yayson
-//eslint-disable-next-line no-undef
-const { LegacyPresenter } = yayson({ adapter: 'sequelize' })
+const { Presenter: LegacyPresenter } = yaysonLegacy({ adapter: 'sequelize' })
 
 describe('LegacyPresenter', function () {
   it('handles null', function () {
@@ -69,11 +67,32 @@ describe('LegacyPresenter', function () {
     return expect(json).to.deep.equal({ objects: [{ id: 1 }], links: {} })
   })
 
+  it('should use plural type', function () {
+    class CactusPresenter extends LegacyPresenter {
+      static type = 'cactus'
+      static plural = 'cacti'
+    }
+    const obj = [
+      {
+        get() {
+          return { id: 1 }
+        },
+      },
+      {
+        get() {
+          return { id: 2 }
+        },
+      },
+    ]
+    const json = CactusPresenter.toJSON(obj)
+    return expect(json).to.deep.equal({ cacti: [{ id: 1 }, { id: 2 }], links: {} })
+  })
+
   it('should serialize relations', function () {
     class TirePresenter extends LegacyPresenter {
       static type = 'tire'
 
-      serialize() {
+      relationships() {
         return { car: CarPresenter }
       }
     }
@@ -81,7 +100,7 @@ describe('LegacyPresenter', function () {
     class CarPresenter extends LegacyPresenter {
       static type = 'car'
 
-      serialize() {
+      relationships() {
         return { tire: TirePresenter }
       }
     }
@@ -126,7 +145,7 @@ describe('LegacyPresenter', function () {
     })
   })
 
-  it('should serialize with custom attributes method', function () {
+  it('should relationships with custom attributes method', function () {
     class EventPresenter extends LegacyPresenter {
       attributes() {
         return { hej: 'test' }

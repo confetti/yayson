@@ -20,7 +20,6 @@ module.exports = function () {
 
     reset() {
       this.records = []
-      return (this.relations = {})
     }
 
     toModel(rec, type, models) {

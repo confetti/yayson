@@ -8,7 +8,7 @@
 const { expect } = require('chai')
 
 //eslint-disable-next-line no-undef
-const { LegacyStore } = yayson()
+const { Store: LegacyStore } = yaysonLegacy()
 
 describe('LegacyStore', function () {
   beforeEach(function () {
