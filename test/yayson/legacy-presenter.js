@@ -8,7 +8,9 @@
  */
 const { expect } = require('chai')
 
+//eslint-disable-next-line no-undef
 const yaysonLib = yayson
+//eslint-disable-next-line no-undef
 const { LegacyPresenter } = yayson({ adapter: 'sequelize' })
 
 describe('LegacyPresenter', function () {

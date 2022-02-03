@@ -13,6 +13,7 @@ module.exports = function () {
   }
 
   class Store {
+    //eslint-disable-next-line no-unused-vars
     constructor(options) {
       this.reset()
     }
@@ -38,7 +39,7 @@ module.exports = function () {
         models[type][rec.id] = model
       }
 
-      if (model.hasOwnProperty('meta')) {
+      if (Object.prototype.hasOwnProperty.call(model, 'meta')) {
         model.attributes = { meta: model.meta }
         delete model.meta
       }
@@ -178,11 +179,11 @@ module.exports = function () {
         result = this.toModel(recs, recs.type, models)
       }
 
-      if (body.hasOwnProperty('links')) {
+      if (Object.prototype.hasOwnProperty.call(body, 'links')) {
         result.links = body.links
       }
 
-      if (body.hasOwnProperty('meta')) {
+      if (Object.prototype.hasOwnProperty.call(body, 'meta')) {
         result.meta = body.meta
       }
 

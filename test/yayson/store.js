@@ -1,4 +1,5 @@
 const { expect } = require('chai')
+//eslint-disable-next-line no-undef
 const { Store } = yayson()
 
 describe('Store', function () {
@@ -126,7 +127,7 @@ describe('Store', function () {
     expect(event.image).to.be.null
   })
 
-  it('should handle circular relations', function () {
+  it('should handle more circular relations', function () {
     this.store.sync({
       data: {
         type: 'events',

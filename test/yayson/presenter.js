@@ -2,7 +2,9 @@ const sinon = require('sinon')
 const { expect } = require('chai')
 const { assert } = require('chai')
 
+//eslint-disable-next-line no-undef
 const yaysonLib = yayson
+//eslint-disable-next-line no-undef
 const { Presenter } = yayson()
 
 describe('Presenter', function () {

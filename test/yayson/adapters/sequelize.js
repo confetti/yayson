@@ -1,5 +1,6 @@
 const { expect } = require('chai')
 
+//eslint-disable-next-line no-undef
 const SequelizeAdapter = yayson({ adapter: 'sequelize' }).Presenter.adapter
 
 describe('SequelizeAdapter', function () {

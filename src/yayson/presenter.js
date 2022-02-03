@@ -25,6 +25,7 @@ module.exports = function (adapter) {
       return this.constructor.adapter.id(instance)
     }
 
+    //eslint-disable-next-line no-unused-vars
     selfLinks(instance) {}
 
     links() {}

@@ -1,0 +1,28 @@
+{
+  "env": {
+    "commonjs": true,
+    "es6": true,
+    "mocha": true,
+    "node": true
+  },
+  "parser": "@babel/eslint-parser",
+  "parserOptions": {
+    "ecmaVersion": 2020
+  },
+  "ignorePatterns": ["node_modules", "dist"],
+  "rules": {
+    "eqeqeq": ["error", "smart"],
+    "semi": ["error", "never", { "beforeStatementContinuationChars": "always" }],
+    "no-extra-semi": "off"
+  },
+  "plugins": ["mocha"],
+  "extends": ["eslint:recommended", "plugin:mocha/recommended"],
+  "overrides": [
+    {
+      "files": ["test/**/*.js"],
+      "rules": {
+        "no-unused-vars": "off"
+      }
+    }
+  ]
+}

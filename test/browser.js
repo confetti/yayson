@@ -1,4 +1,4 @@
-import "core-js/stable";
+import 'core-js/stable'
 
 require('./common')
 
@@ -11,4 +11,3 @@ require('./yayson/adapters/sequelize')
 
 mocha.checkLeaks()
 mocha.run()
-console.log(55555)
