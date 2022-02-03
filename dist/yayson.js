@@ -1,243 +1,303 @@
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.yayson = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+/*! yayson v 3.0.0 (https://github.com/confetti/yayson) by Johannes Edelstam <johannes@edelst.am>, Jonny Strömberg <jonny.stromberg@gmail.com> */
+var yayson =
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
+/******/
+/******/ 	// create a fake namespace object
+/******/ 	// mode & 1: value is a module id, require it
+/******/ 	// mode & 2: merge all properties of value into the ns
+/******/ 	// mode & 4: return value when already ns object
+/******/ 	// mode & 8|1: behave like require
+/******/ 	__webpack_require__.t = function(value, mode) {
+/******/ 		if(mode & 1) value = __webpack_require__(value);
+/******/ 		if(mode & 8) return value;
+/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
+/******/ 		var ns = Object.create(null);
+/******/ 		__webpack_require__.r(ns);
+/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
+/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 		return ns;
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = 1);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ (function(module, exports) {
 
-},{}],2:[function(require,module,exports){
-var Adapter, Q, _, adapters, lookupAdapter, presenter, presenterFactory, utils;
-
-if (typeof window !== "undefined" && window !== null) {
-  Q = window.Q;
-  _ = window._;
-}
-
-Q || (Q = ((function() {
-  try {
-    return typeof require === "function" ? require('q') : void 0;
-  } catch (error) {}
-})()));
-
-_ || (_ = ((function() {
-  try {
-    return typeof require === "function" ? require('lodash') : void 0;
-  } catch (error) {}
-})()));
-
-_ || (_ = ((function() {
-  try {
-    return typeof require === "function" ? require('underscore') : void 0;
-  } catch (error) {}
-})()));
-
-utils = require('./yayson/utils')(_, Q);
-
-Adapter = require('./yayson/adapter');
-
-adapters = require('./yayson/adapters');
-
-presenterFactory = require('./yayson/presenter');
-
-lookupAdapter = function(nameOrAdapter) {
-  if (nameOrAdapter === 'default') {
-    return Adapter;
-  }
-  return adapters[nameOrAdapter] || nameOrAdapter || Adapter;
-};
-
-presenter = function(options) {
-  var adapter;
-  if (options == null) {
-    options = {};
-  }
-  adapter = lookupAdapter(options.adapter);
-  return presenterFactory(utils, adapter);
-};
-
-module.exports = function(arg) {
-  var adapter;
-  adapter = (arg != null ? arg : {}).adapter;
-  return {
-    Store: require('./yayson/store')(utils),
-    Presenter: presenter({
-      adapter: adapter
-    }),
-    Adapter: Adapter
-  };
-};
-
-
-},{"./yayson/adapter":3,"./yayson/adapters":4,"./yayson/presenter":6,"./yayson/store":7,"./yayson/utils":8,"lodash":1,"q":1,"underscore":1}],3:[function(require,module,exports){
-var Adapter;
-
-Adapter = (function() {
-  function Adapter() {}
-
-  Adapter.get = function(model, key) {
+class Adapter {
+  static get(model, key) {
     if (key) {
       return model[key];
     }
-    return model;
-  };
 
-  Adapter.id = function(model) {
-    var id;
-    id = this.get(model, 'id');
-    if (id === void 0) {
+    return model;
+  }
+
+  static id(model) {
+    const id = this.get(model, 'id');
+
+    if (id === undefined) {
       return id;
     }
-    return "" + id;
-  };
 
-  return Adapter;
+    return "".concat(id);
+  }
 
-})();
+}
 
 module.exports = Adapter;
 
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
 
-},{}],4:[function(require,module,exports){
-module.exports = {
-  sequelize: require('./sequelize')
-};
+const Adapter = __webpack_require__(0);
 
+const adapters = __webpack_require__(2);
 
-},{"./sequelize":5}],5:[function(require,module,exports){
-var Adapter, SequelizeAdapter,
-  extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-  hasProp = {}.hasOwnProperty;
+const presenterFactory = __webpack_require__(4);
 
-Adapter = require('../adapter');
-
-SequelizeAdapter = (function(superClass) {
-  extend(SequelizeAdapter, superClass);
-
-  function SequelizeAdapter() {
-    return SequelizeAdapter.__super__.constructor.apply(this, arguments);
+const lookupAdapter = function (nameOrAdapter) {
+  if (nameOrAdapter === 'default') {
+    return Adapter;
   }
 
-  SequelizeAdapter.get = function(model, key) {
+  return adapters[nameOrAdapter] || nameOrAdapter || Adapter;
+};
+
+const presenter = function () {
+  let options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  const adapter = lookupAdapter(options.adapter);
+  return presenterFactory(adapter);
+};
+
+module.exports = function () {
+  let {
+    adapter
+  } = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  return {
+    Store: __webpack_require__(5)(),
+    Presenter: presenter({
+      adapter
+    }),
+    Adapter
+  };
+};
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = {
+  sequelize: __webpack_require__(3)
+};
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+const Adapter = __webpack_require__(0);
+
+class SequelizeAdapter extends Adapter {
+  static get(model, key) {
     if (model != null) {
       return model.get(key);
     }
-  };
+  }
 
-  return SequelizeAdapter;
-
-})(Adapter);
+}
 
 module.exports = SequelizeAdapter;
 
+/***/ }),
+/* 4 */
+/***/ (function(module, exports) {
 
-},{"../adapter":3}],6:[function(require,module,exports){
-module.exports = function(utils, adapter) {
-  var Presenter;
-  Presenter = (function() {
-    var buildLinks;
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-    buildLinks = function(link) {
-      if (link == null) {
-        return;
-      }
-      if ((link.self != null) || (link.related != null)) {
-        return link;
-      } else {
-        return {
-          self: link
-        };
-      }
-    };
+module.exports = function (adapter) {
+  var _class, _temp;
 
-    Presenter.adapter = adapter;
+  const buildLinks = function (link) {
+    if (link == null) {
+      return;
+    }
 
-    Presenter.prototype.type = 'objects';
+    if (link.self != null || link.related != null) {
+      return link;
+    } else {
+      return {
+        self: link
+      };
+    }
+  };
 
-    function Presenter(scope) {
+  return _temp = _class = class Presenter {
+    constructor(scope) {
       if (scope == null) {
         scope = {};
       }
+
       this.scope = scope;
     }
 
-    Presenter.prototype.id = function(instance) {
+    id(instance) {
       return this.constructor.adapter.id(instance);
-    };
+    }
 
-    Presenter.prototype.selfLinks = function(instance) {};
+    selfLinks(instance) {}
 
-    Presenter.prototype.links = function() {};
+    links() {}
 
-    Presenter.prototype.relationships = function() {};
+    relationships() {}
 
-    Presenter.prototype.attributes = function(instance) {
-      var attributes, key, relationships;
+    attributes(instance) {
       if (instance == null) {
         return null;
       }
-      attributes = utils.clone(this.constructor.adapter.get(instance));
+
+      const attributes = { ...this.constructor.adapter.get(instance)
+      };
       delete attributes['id'];
-      relationships = this.relationships();
-      for (key in relationships) {
+      const relationships = this.relationships();
+
+      for (let key in relationships) {
         delete attributes[key];
       }
+
       return attributes;
-    };
+    }
 
-    Presenter.prototype.includeRelationships = function(scope, instance) {
-      var data, factory, key, presenter, relationships, results;
-      relationships = this.relationships();
-      results = [];
-      for (key in relationships) {
-        factory = relationships[key] || (function() {
-          throw new Error("Presenter for " + key + " in " + this.type + " is not defined");
-        }).call(this);
-        presenter = new factory(scope);
-        data = this.constructor.adapter.get(instance, key);
-        if (data != null) {
-          results.push(presenter.toJSON(data, {
-            include: true
-          }));
-        } else {
-          results.push(void 0);
-        }
+    includeRelationships(scope, instance) {
+      const relationships = this.relationships();
+      const result = [];
+
+      for (var key in relationships) {
+        const factory = relationships[key];
+        if (!factory) throw new Error("Presenter for ".concat(key, " in ").concat(this.type, " is not defined"));
+        const presenter = new factory(scope);
+        const data = this.constructor.adapter.get(instance, key);
+        result.push(presenter.toJSON(data, {
+          include: true
+        }));
       }
-      return results;
-    };
 
-    Presenter.prototype.buildRelationships = function(instance) {
-      var build, buildData, data, key, links, presenter, relationships, rels;
+      return result;
+    }
+
+    buildRelationships(instance) {
       if (instance == null) {
         return null;
       }
-      rels = this.relationships();
-      links = this.links(instance) || {};
-      relationships = null;
-      for (key in rels) {
-        data = this.constructor.adapter.get(instance, key);
-        presenter = rels[key];
-        buildData = (function(_this) {
-          return function(d) {
-            return data = {
-              id: _this.constructor.adapter.id(d),
-              type: presenter.prototype.type
-            };
+
+      const rels = this.relationships();
+      const links = this.links(instance) || {};
+      let relationships = null;
+
+      for (var key in rels) {
+        let data = this.constructor.adapter.get(instance, key);
+        var presenter = rels[key];
+
+        var buildData = d => {
+          return data = {
+            id: this.constructor.adapter.id(d),
+            type: presenter.type
           };
-        })(this);
-        build = (function(_this) {
-          return function(d) {
-            var rel;
-            rel = {};
-            if (d != null) {
-              rel.data = buildData(d);
-            }
-            if (links[key] != null) {
-              rel.links = buildLinks(links[key]);
-            } else if (d == null) {
-              rel.data = null;
-            }
-            return rel;
-          };
-        })(this);
-        relationships || (relationships = {});
-        relationships[key] || (relationships[key] = {});
+        };
+
+        const build = d => {
+          const rel = {};
+
+          if (d != null) {
+            rel.data = buildData(d);
+          }
+
+          if (links[key] != null) {
+            rel.links = buildLinks(links[key]);
+          } else if (d == null) {
+            rel.data = null;
+          }
+
+          return rel;
+        };
+
+        if (!relationships) {
+          relationships = {};
+        }
+
+        if (!relationships[key]) {
+          relationships[key] = {};
+        }
+
         if (data instanceof Array) {
           relationships[key].data = data.map(buildData);
+
           if (links[key] != null) {
             relationships[key].links = buildLinks(links[key]);
           }
@@ -245,68 +305,82 @@ module.exports = function(utils, adapter) {
           relationships[key] = build(data);
         }
       }
+
       return relationships;
-    };
+    }
 
-    Presenter.prototype.buildSelfLink = function(instance) {
+    buildSelfLink(instance) {
       return buildLinks(this.selfLinks(instance));
-    };
+    }
 
-    Presenter.prototype.toJSON = function(instanceOrCollection, options) {
-      var added, base, base1, base2, collection, instance, links, model, relationships;
+    toJSON(instanceOrCollection, options) {
       if (options == null) {
         options = {};
       }
+
       if (options.meta != null) {
         this.scope.meta = options.meta;
       }
+
       if (options.links != null) {
         this.scope.links = options.links;
       }
-      (base = this.scope).data || (base.data = null);
+
+      if (!this.scope.data) {
+        this.scope.data = null;
+      }
+
       if (instanceOrCollection == null) {
         return this.scope;
       }
+
       if (instanceOrCollection instanceof Array) {
-        collection = instanceOrCollection;
-        (base1 = this.scope).data || (base1.data = []);
-        collection.forEach((function(_this) {
-          return function(instance) {
-            return _this.toJSON(instance, options);
-          };
-        })(this));
+        const collection = instanceOrCollection;
+
+        if (!this.scope.data) {
+          this.scope.data = [];
+        }
+
+        collection.forEach(instance => {
+          return this.toJSON(instance, options);
+        });
       } else {
-        instance = instanceOrCollection;
-        added = true;
-        model = {
+        const instance = instanceOrCollection;
+        let added = true;
+        const model = {
           id: this.id(instance),
-          type: this.type,
+          type: this.constructor.type,
           attributes: this.attributes(instance)
         };
-        if (model.id === void 0) {
+
+        if (model.id === undefined) {
           delete model.id;
         }
-        relationships = this.buildRelationships(instance);
+
+        const relationships = this.buildRelationships(instance);
+
         if (relationships != null) {
           model.relationships = relationships;
         }
-        links = this.buildSelfLink(instance);
+
+        const links = this.buildSelfLink(instance);
+
         if (links != null) {
           model.links = links;
         }
+
         if (options.include) {
-          (base2 = this.scope).included || (base2.included = []);
-          if (!utils.any(this.scope.included.concat(this.scope.data), function(i) {
-            return i.id === model.id && i.type === model.type;
-          })) {
+          if (!this.scope.included) {
+            this.scope.included = [];
+          }
+
+          if (!this.scope.included.concat(this.scope.data).some(i => i.id === model.id && i.type === model.type)) {
             this.scope.included.push(model);
           } else {
             added = false;
           }
         } else if (this.scope.data != null) {
-          if (!(this.scope.data instanceof Array && utils.any(this.scope.data, function(i) {
-            return i.id === model.id;
-          }))) {
+          if (!(this.scope.data instanceof Array) || !this.scope.data.some(i => i.id === model.id)) {
             this.scope.data.push(model);
           } else {
             added = false;
@@ -314,293 +388,262 @@ module.exports = function(utils, adapter) {
         } else {
           this.scope.data = model;
         }
+
         if (added) {
           this.includeRelationships(this.scope, instance);
         }
       }
+
       return this.scope;
-    };
-
-    Presenter.prototype.render = function(instanceOrCollection, options) {
-      if (utils.isPromise(instanceOrCollection)) {
-        return instanceOrCollection.then((function(_this) {
-          return function(data) {
-            return _this.toJSON(data, options);
-          };
-        })(this));
-      } else {
-        return this.toJSON(instanceOrCollection, options);
-      }
-    };
-
-    Presenter.toJSON = function() {
-      var ref;
-      return (ref = new this).toJSON.apply(ref, arguments);
-    };
-
-    Presenter.render = function() {
-      var ref;
-      return (ref = new this).render.apply(ref, arguments);
-    };
-
-    return Presenter;
-
-  })();
-  return module.exports = Presenter;
-};
-
-
-},{}],7:[function(require,module,exports){
-module.exports = function(utils) {
-  var Record, Store;
-  Record = (function() {
-    function Record(options) {
-      this.id = options.id, this.type = options.type, this.attributes = options.attributes, this.relationships = options.relationships, this.links = options.links, this.meta = options.meta;
     }
 
-    return Record;
+    render(instanceOrCollection, options) {
+      return this.toJSON(instanceOrCollection, options);
+    }
 
-  })();
-  return Store = (function() {
-    function Store(options) {
+    static toJSON() {
+      return new this().toJSON(...arguments);
+    }
+
+    static render() {
+      return new this().render(...arguments);
+    }
+
+  }, _defineProperty(_class, "adapter", adapter), _defineProperty(_class, "type", 'objects'), _temp;
+};
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports) {
+
+module.exports = function () {
+  class Record {
+    constructor(options) {
+      ;
+      ({
+        id: this.id,
+        type: this.type,
+        attributes: this.attributes,
+        relationships: this.relationships,
+        links: this.links,
+        meta: this.meta
+      } = options);
+    }
+
+  }
+
+  class Store {
+    constructor(options) {
       this.reset();
     }
 
-    Store.prototype.reset = function() {
+    reset() {
       this.records = [];
       return this.relations = {};
-    };
+    }
 
-    Store.prototype.toModel = function(rec, type, models) {
-      var base, currentModel, data, key, links, meta, model, name, ref, rel, resolve, typeAttribute;
-      model = utils.clone(rec.attributes) || {};
+    toModel(rec, type, models) {
+      let typeAttribute;
+      const model = { ...(rec.attributes || {})
+      };
+
       if (model.type) {
         typeAttribute = model.type;
       }
+
       model.id = rec.id;
       model.type = rec.type;
-      models[type] || (models[type] = {});
-      (base = models[type])[name = rec.id] || (base[name] = model);
+
+      if (!models[type]) {
+        models[type] = {};
+      }
+
+      if (!models[type][rec.id]) {
+        models[type][rec.id] = model;
+      }
+
       if (model.hasOwnProperty('meta')) {
         model.attributes = {
           meta: model.meta
         };
         delete model.meta;
       }
+
       if (rec.meta != null) {
         model.meta = rec.meta;
       }
+
       if (rec.links != null) {
         model.links = rec.links;
       }
+
       if (rec.relationships != null) {
-        ref = rec.relationships;
-        for (key in ref) {
-          rel = ref[key];
-          data = rel.data;
-          links = rel.links;
-          meta = rel.meta;
+        for (let key in rec.relationships) {
+          const rel = rec.relationships[key];
+          const {
+            data
+          } = rel;
+          const {
+            links
+          } = rel;
+          const {
+            meta
+          } = rel;
           model[key] = null;
-          if (!((data != null) || (links != null))) {
+
+          if (data == null && links == null) {
             continue;
           }
-          resolve = (function(_this) {
-            return function(arg) {
-              var id, type;
-              type = arg.type, id = arg.id;
-              return _this.find(type, id, models);
-            };
-          })(this);
-          model[key] = data instanceof Array ? data.map(resolve) : data != null ? resolve(data) : {};
-          currentModel = model[key];
+
+          const resolve = _ref => {
+            let {
+              type,
+              id
+            } = _ref;
+            return this.find(type, id, models);
+          };
+
+          model[key] = data instanceof Array ? data.map(resolve) : data != null ? resolve(data) : {}; // Model of the relation
+
+          const currentModel = model[key];
+
           if (currentModel != null) {
+            // retain the links and meta from the relationship entry
+            // use as underscore property name because the currentModel may also have a link and meta reference
             currentModel._links = links || {};
             currentModel._meta = meta || {};
           }
         }
       }
+
       if (typeAttribute) {
         model.type = typeAttribute;
       }
+
       return model;
-    };
+    }
 
-    Store.prototype.findRecord = function(type, id) {
-      return utils.find(this.records, function(r) {
-        return r.type === type && r.id === id;
-      });
-    };
+    findRecord(type, id) {
+      return this.records.find(r => r.type === type && r.id === id);
+    }
 
-    Store.prototype.findRecords = function(type) {
-      return utils.filter(this.records, function(r) {
-        return r.type === type;
-      });
-    };
+    findRecords(type) {
+      return this.records.filter(r => r.type === type);
+    }
 
-    Store.prototype.find = function(type, id, models) {
-      var rec;
+    find(type, id, models) {
       if (models == null) {
         models = {};
       }
-      rec = this.findRecord(type, id);
+
+      const rec = this.findRecord(type, id);
+
       if (rec == null) {
         return null;
       }
-      models[type] || (models[type] = {});
-      return models[type][id] || this.toModel(rec, type, models);
-    };
 
-    Store.prototype.findAll = function(type, models) {
-      var recs;
+      if (!models[type]) {
+        models[type] = {};
+      }
+
+      return models[type][id] || this.toModel(rec, type, models);
+    }
+
+    findAll(type, models) {
       if (models == null) {
         models = {};
       }
-      recs = this.findRecords(type);
+
+      const recs = this.findRecords(type);
+
       if (recs == null) {
         return [];
       }
-      recs.forEach((function(_this) {
-        return function(rec) {
-          models[type] || (models[type] = {});
-          return _this.toModel(rec, type, models);
-        };
-      })(this));
-      return utils.values(models[type]);
-    };
 
-    Store.prototype.remove = function(type, id) {
-      var records, remove;
-      remove = (function(_this) {
-        return function(record) {
-          var index;
-          index = _this.records.indexOf(record);
-          if (!(index < 0)) {
-            return _this.records.splice(index, 1);
-          }
-        };
-      })(this);
+      recs.forEach(rec => {
+        if (!models[type]) {
+          models[type] = {};
+        }
+
+        return this.toModel(rec, type, models);
+      });
+      return Object.values(models[type] || {});
+    }
+
+    remove(type, id) {
+      const remove = record => {
+        const index = this.records.indexOf(record);
+
+        if (!(index < 0)) {
+          return this.records.splice(index, 1);
+        }
+      };
+
       if (id != null) {
         return remove(this.findRecord(type, id));
       } else {
-        records = this.findRecords(type);
+        const records = this.findRecords(type);
         return records.map(remove);
       }
-    };
+    }
 
-    Store.prototype.sync = function(body) {
-      var models, recs, result, sync;
-      sync = (function(_this) {
-        return function(data) {
-          var add;
-          if (data == null) {
-            return null;
-          }
-          add = function(obj) {
-            var id, rec, type;
-            type = obj.type, id = obj.id;
-            _this.remove(type, id);
-            rec = new Record(obj);
-            _this.records.push(rec);
-            return rec;
-          };
-          if (data instanceof Array) {
-            return data.map(add);
-          } else {
-            return add(data);
-          }
+    sync(body) {
+      const sync = data => {
+        if (data == null) {
+          return null;
+        }
+
+        const add = obj => {
+          const {
+            type,
+            id
+          } = obj;
+          this.remove(type, id);
+          const rec = new Record(obj);
+          this.records.push(rec);
+          return rec;
         };
-      })(this);
+
+        if (data instanceof Array) {
+          return data.map(add);
+        } else {
+          return add(data);
+        }
+      };
+
       sync(body.included);
-      recs = sync(body.data);
+      const recs = sync(body.data);
+
       if (recs == null) {
         return null;
       }
-      models = {};
-      result = null;
+
+      const models = {};
+      let result = null;
+
       if (recs instanceof Array) {
-        result = recs.map((function(_this) {
-          return function(rec) {
-            return _this.toModel(rec, rec.type, models);
-          };
-        })(this));
+        result = recs.map(rec => {
+          return this.toModel(rec, rec.type, models);
+        });
       } else {
         result = this.toModel(recs, recs.type, models);
       }
+
       if (body.hasOwnProperty('links')) {
         result.links = body.links;
       }
+
       if (body.hasOwnProperty('meta')) {
         result.meta = body.meta;
       }
+
       return result;
-    };
-
-    return Store;
-
-  })();
-};
-
-
-},{}],8:[function(require,module,exports){
-module.exports = function(_, Q) {
-  var utils;
-  if (_ == null) {
-    _ = {};
-  }
-  if (Q == null) {
-    Q = {};
-  }
-  return utils = {
-    find: _.find || function(arr, callback) {
-      var elem, i, len;
-      for (i = 0, len = arr.length; i < len; i++) {
-        elem = arr[i];
-        if (callback(elem)) {
-          return elem;
-        }
-      }
-      return void 0;
-    },
-    filter: _.filter || function(arr, callback) {
-      var elem, i, len, res;
-      res = [];
-      for (i = 0, len = arr.length; i < len; i++) {
-        elem = arr[i];
-        if (callback(elem)) {
-          res.push(elem);
-        }
-      }
-      return res;
-    },
-    values: _.values || function(obj) {
-      if (obj == null) {
-        obj = {};
-      }
-      return Object.keys(obj).map(function(key) {
-        return obj[key];
-      });
-    },
-    clone: _.clone || function(obj) {
-      var clone, key, val;
-      if (obj == null) {
-        obj = {};
-      }
-      clone = {};
-      for (key in obj) {
-        val = obj[key];
-        clone[key] = val;
-      }
-      return clone;
-    },
-    any: _.any || function(arr, callback) {
-      return utils.find(arr, callback) != null;
-    },
-    isPromise: Q.isPromise || function(obj) {
-      return obj === Object(obj) && typeof obj.promiseDispatch === "function" && typeof obj.inspect === "function";
     }
-  };
+
+  }
+
+  return Store;
 };
 
-
-},{}]},{},[2])(2)
-});
+/***/ })
+/******/ ]);
