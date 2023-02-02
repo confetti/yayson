@@ -2,7 +2,7 @@
 
 A library for serializing and reading [JSON API](http://jsonapi.org) data in JavaScript.
 
-As of 2.0.0 YAYSON aims to support JSON API version 1. In version 3.0.0 we now support native JavaScript classes.
+From version 3 we now support native JavaScript classes. YAYSON has zero dependencies and works in the browser and in node 14 and up.
 
 [![NPM](https://nodei.co/npm/yayson.png?downloads=true)](https://nodei.co/npm/yayson/)
 
