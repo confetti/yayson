@@ -15,7 +15,6 @@ module.exports = merge(common, {
     maxAssetSize: 3000000,
     maxEntrypointSize: 3000000,
     assetFilter: (asset) => {
-      console.log(1212, asset, asset.match('tests.js'))
       return asset.match('tests.js')
     },
   },
