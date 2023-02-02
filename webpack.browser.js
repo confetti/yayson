@@ -1,5 +1,5 @@
 const path = require('path')
-const merge = require('webpack-merge')
+const { merge } = require('webpack-merge')
 const common = require('./webpack.common.js')
 
 module.exports = merge(common, {
@@ -11,12 +11,16 @@ module.exports = merge(common, {
     path: __dirname + '/test',
     filename: '[name].js',
   },
+  performance: {
+    maxAssetSize: 3000000,
+    maxEntrypointSize: 3000000,
+    assetFilter: (asset) => {
+      console.log(1212, asset, asset.match('tests.js'))
+      return asset.match('tests.js')
+    },
+  },
   devServer: {
-    contentBase: [
-      path.join(__dirname, 'test'),
-      path.join(__dirname, 'dist'),
-      path.join(__dirname, 'node_modules/mocha'),
-    ],
+    static: [path.join(__dirname, 'test'), path.join(__dirname, 'dist'), path.join(__dirname, 'node_modules/mocha')],
     compress: true,
     port: 9000,
   },

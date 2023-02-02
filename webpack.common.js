@@ -11,14 +11,14 @@ module.exports = {
     filename: '[name].js',
     library: 'yayson',
   },
-  devServer: {
-    inline: true,
+  resolve: {
+    fallback: { util: false },
   },
   module: {
     rules: [
       {
         test: /\.js$/,
-        exclude: /(node_modules)/,
+        exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
           options: {
