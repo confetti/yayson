@@ -13,6 +13,7 @@ Install yayson by running:
 
 ```
 
+
 $ npm i yayson
 ```
 
@@ -21,21 +22,19 @@ $ npm i yayson
 A basic `Presenter` can look like this:
 
 ```javascript
+const yayson = require('yayson')
+const { Presenter } = yayson()
 
+class BikePresenter extends Presenter {
+  static type = 'bikes'
+}
 
-  const Presenter = require('yayson')({
-    adapter: 'default'
-  }).Presenter;
+const bike = {
+  id: 5,
+  name: 'Monark'
+};
 
-  class ItemsPresenter extends Presenter {};
-  ItemsPresenter.prototype.type = 'items';
-
-  var item = {
-    id: 5,
-    name: 'First'
-  };
-
-  ItemsPresenter.render(item);
+BikePresenter.render(bike);
 ```
 
 
@@ -44,13 +43,14 @@ This would produce:
 ```javascript
 
 
+
 {
   data: {
     id: 5,
-    type: 'items',
+    type: 'bikes',
     attributes: {
       id: 5,
-      name: 'First'
+      name: 'Monark'
     }
   }
 }
@@ -64,28 +64,25 @@ A bit more advanced example:
 
 ```javascript
 
+const yayson = require('yayson')
+const { Presenter } = yayson()
 
-
-
-var Presenter = require('yayson')().Presenter;
-
-class ItemsPresenter extends Presenter {
-  attributes() {
-    var attrs = super.attributes(...arguments);
-    attrs.start = moment.utc(attrs.start).toDate();
-    return attrs;
-  }
+class WheelPresenter extends Presenter {
+  static type = 'wheels'
 
   relationships() {
-    return {
-      event: EventsPresenter
-    }
+    return { bike: BikePresenter }
   }
-};
-ItemsPresenter.prototype.type = 'items'
+}
+
+class BikePresenter extends Presenter {
+  static type = 'bikes'
+  relationships() {
+    return { wheels: WheelPresenter }
+  }
+}
 
 
-ItemsPresenter.render(item)
 ```
 
 ### Sequelize support
@@ -95,7 +92,8 @@ it handle Sequelize.js models like this:
 
 ```javascript
 
-{Presenter} = require('yayson')({adapter: 'sequelize'})
+const yayson = require('yayson')
+{Presenter} = yayson({adapter: 'sequelize'})
 
 ```
 
@@ -103,22 +101,15 @@ You can also define your own adapter globally:
 
 ```javascript
 
-{Presenter} = require('yayson')(adapter: {
+
+const yayson = require('yayson')
+{Presenter} = yayson(adapter: {
   id: function(model){ return 'omg' + model.id},
   get: function(model, key){ return model[key] }
 })
 
 ```
 
-Or at Presenter level:
-
-```javascript
-
-ItemPresenter.adapter = {
-  id: function(model){ return 'omg' + model.id},
-  get: function(model, key){ return model[key] }
-}
-```
 
 Take a look at the SequelizeAdapter if you want to extend YAYSON to your ORM. Pull requests are welcome. :)
 
@@ -128,12 +119,14 @@ You can add metadata to the top level object.
 
 ``` javascript
 
+
   ItemsPresenter.render(items, {meta: count: 10})
 ```
 
 This would produce:
 
 ```javascript
+
 
 {
   meta: {
@@ -155,17 +148,23 @@ This would produce:
 You can use a `Store` can like this:
 
 ```javascript
+  const {Store} = require('yayson')();
+  const store = new Store();
 
-    const {Store} = require('yayson')();
-    const store = new Store();
-
-    adapter.get({path: '/events/' + id}).then(function(data) {
-      let event;
-      return event = store.sync(data);
-    });
+  const data = await adapter.get({path: '/events/' + id});
+  const event = store.sync(data);
 ```
 
 This will give you the parsed event with all its relationships.
+
+Its also possible to find in the synched data:
+
+
+```javascript
+  const event = this.store.find('events', id)
+
+  const images = this.store.findAll('images')
+```
 
 
 ## Use in the browser
@@ -174,7 +173,6 @@ Recommended way is to use it via [webpack](https://github.com/webpack/webpack) o
 
 If you just want to try it out, copy the file `dist/yayson.js` to your project. Then simply include it:
 ```html
-
 
     <script src="./lib/yayson.js"></script>
 ```
@@ -191,3 +189,17 @@ Then you can `var yayson = window.yayson()` use the `yayson.Presenter` and `yays
 #### Untested, but should work
 - IE 11
 - Android
+
+
+## Legacy support
+
+Earlier versions of JSON API worked a bit different from 1.0. Therefore YAYSON provides legacy presenters and stores in order to have interoperability between the versions. Its used similar to the standard presenters:
+
+```javascript
+
+const yayson = require('yayson/legacy')
+const { Presenter } = yayson()
+
+```
+
+
