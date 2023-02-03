@@ -13,8 +13,8 @@ Install yayson by running:
 
 ```
 
-
 $ npm i yayson
+
 ```
 
 ## Presenting data
@@ -22,6 +22,7 @@ $ npm i yayson
 A basic `Presenter` can look like this:
 
 ```javascript
+
 const yayson = require('yayson')
 const { Presenter } = yayson()
 
@@ -35,14 +36,13 @@ const bike = {
 };
 
 BikePresenter.render(bike);
+
 ```
 
 
 This would produce:
 
 ```javascript
-
-
 
 {
   data: {
@@ -54,6 +54,7 @@ This would produce:
     }
   }
 }
+
 ```
 
 It also works with arrays, so if you send an array to render, "data" will
@@ -93,7 +94,7 @@ it handle Sequelize.js models like this:
 ```javascript
 
 const yayson = require('yayson')
-{Presenter} = yayson({adapter: 'sequelize'})
+const { Presenter } = yayson({adapter: 'sequelize'})
 
 ```
 
@@ -101,9 +102,8 @@ You can also define your own adapter globally:
 
 ```javascript
 
-
 const yayson = require('yayson')
-{Presenter} = yayson(adapter: {
+const { Presenter } = yayson(adapter: {
   id: function(model){ return 'omg' + model.id},
   get: function(model, key){ return model[key] }
 })
@@ -119,14 +119,13 @@ You can add metadata to the top level object.
 
 ``` javascript
 
-
   ItemsPresenter.render(items, {meta: count: 10})
+
 ```
 
 This would produce:
 
 ```javascript
-
 
 {
   meta: {
@@ -141,6 +140,7 @@ This would produce:
     }
   }
 }
+
 ```
 
 ## Parsing data
@@ -148,11 +148,13 @@ This would produce:
 You can use a `Store` can like this:
 
 ```javascript
+
   const {Store} = require('yayson')();
   const store = new Store();
 
   const data = await adapter.get({path: '/events/' + id});
   const event = store.sync(data);
+
 ```
 
 This will give you the parsed event with all its relationships.
@@ -161,9 +163,11 @@ Its also possible to find in the synched data:
 
 
 ```javascript
+
   const event = this.store.find('events', id)
 
   const images = this.store.findAll('images')
+
 ```
 
 
