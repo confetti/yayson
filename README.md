@@ -103,10 +103,10 @@ You can also define your own adapter globally:
 ```javascript
 
 const yayson = require('yayson')
-const { Presenter } = yayson(adapter: {
+const { Presenter } = yayson({adapter: {
   id: function(model){ return 'omg' + model.id},
   get: function(model, key){ return model[key] }
-})
+}})
 
 ```
 
