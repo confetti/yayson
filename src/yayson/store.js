@@ -65,7 +65,7 @@ module.exports = function () {
           const resolve = ({ type, id }) => {
             return this.find(type, id, models)
           }
-          model[key] = data instanceof Array ? data.map(resolve) : data != null ? resolve(data) : {}
+          model[key] = Array.isArray(data) ? data.map(resolve) : data != null ? resolve(data) : {}
 
           // Model of the relation
           const currentModel = model[key]
@@ -153,7 +153,7 @@ module.exports = function () {
           return rec
         }
 
-        if (data instanceof Array) {
+        if (Array.isArray(data)) {
           return data.map(add)
         } else {
           return add(data)
@@ -170,7 +170,7 @@ module.exports = function () {
       const models = {}
       let result = null
 
-      if (recs instanceof Array) {
+      if (Array.isArray(recs)) {
         result = recs.map((rec) => {
           return this.toModel(rec, rec.type, models)
         })

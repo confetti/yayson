@@ -13,7 +13,8 @@
     "test-browser": "webpack-dev-server --config webpack.browser.js",
     "preversion": "npm test && npm run build && git add dist/yayson.js",
     "postversion": "git push --follow-tags origin master",
-    "release": "npm version minor"
+    "release": "npm version minor",
+    "format": "prettier --write src"
   },
   "repository": {
     "type": "git",

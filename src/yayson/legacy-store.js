@@ -29,7 +29,7 @@ module.exports = function () {
     }
 
     toModel(rec, type, models) {
-      const model = {...rec.data}
+      const model = { ...rec.data }
       if (!models[type][model.id]) {
         models[type][model.id] = model
       }
@@ -37,10 +37,9 @@ module.exports = function () {
       const relations = this.relations[type]
       for (let attribute in relations) {
         var relationType = relations[attribute]
-        model[attribute] =
-          model[attribute] instanceof Array
-            ? model[attribute].map((id) => this.find(relationType, id, models))
-            : this.find(relationType, model[attribute], models)
+        model[attribute] = Array.isArray(model[attribute])
+          ? model[attribute].map((id) => this.find(relationType, id, models))
+          : this.find(relationType, model[attribute], models)
       }
 
       return model
@@ -143,7 +142,7 @@ module.exports = function () {
             return this.records.push(new Record({ type, data: d }))
           }
 
-          if (value instanceof Array) {
+          if (Array.isArray(value)) {
             result.push(value.forEach(add))
           } else {
             result.push(add(value))

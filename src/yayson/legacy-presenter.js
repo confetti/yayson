@@ -20,7 +20,7 @@ module.exports = function (Presenter) {
           if (id != null) {
             attributes[key] = id
           }
-        } else if (data instanceof Array) {
+        } else if (Array.isArray(data)) {
           attributes[key] = data.map((obj) => obj.id)
         } else {
           attributes[key] = data.id
@@ -60,7 +60,7 @@ module.exports = function (Presenter) {
       if (options == null) {
         options = {}
       }
-      if (instanceOrCollection instanceof Array) {
+      if (Array.isArray(instanceOrCollection)) {
         const collection = instanceOrCollection
         if (!this.scope[(type = this.pluralType())]) {
           this.scope[type] = []
