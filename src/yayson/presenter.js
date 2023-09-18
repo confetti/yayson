@@ -95,7 +95,7 @@ module.exports = function (adapter) {
         if (!relationships[key]) {
           relationships[key] = {}
         }
-        if (data instanceof Array) {
+        if (Array.isArray(data)) {
           relationships[key].data = data.map(buildData)
           if (links[key] != null) {
             relationships[key].links = buildLinks(links[key])
@@ -129,7 +129,7 @@ module.exports = function (adapter) {
         return this.scope
       }
 
-      if (instanceOrCollection instanceof Array) {
+      if (Array.isArray(instanceOrCollection)) {
         const collection = instanceOrCollection
         if (!this.scope.data) {
           this.scope.data = []
@@ -167,7 +167,7 @@ module.exports = function (adapter) {
             added = false
           }
         } else if (this.scope.data != null) {
-          if (!(this.scope.data instanceof Array) || !this.scope.data.some((i) => i.id === model.id)) {
+          if (!Array.isArray(this.scope.data) || !this.scope.data.some((i) => i.id === model.id)) {
             this.scope.data.push(model)
           } else {
             added = false
