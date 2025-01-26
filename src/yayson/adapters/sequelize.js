@@ -10,9 +10,7 @@ class SequelizeAdapter extends Adapter {
   static id(model) {
     // Retain backwards compatibility with older sequelize versions
     const pkFields =
-      model.constructor && model.constructor.primaryKeys ?
-        Object.keys(model.constructor.primaryKeys) :
-        ['id']
+      model.constructor && model.constructor.primaryKeys ? Object.keys(model.constructor.primaryKeys) : ['id']
 
     if (pkFields.length > 1) {
       throw new Error(
