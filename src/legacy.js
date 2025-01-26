@@ -10,5 +10,3 @@ module.exports = function (options = {}) {
     Adapter,
   }
 }
-
-
