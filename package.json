@@ -4,8 +4,8 @@
   "description": "A library for serializing and reading JSON API standardized data in JavaScript.",
   "main": "src/yayson.js",
   "engines": {
-    "node": ">=14",
-    "npm": ">=6"
+    "node": ">=18",
+    "npm": ">=8"
   },
   "scripts": {
     "test": "mocha",
