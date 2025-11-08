@@ -6,7 +6,7 @@
  * DS206: Consider reworking classes to avoid initClass
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
-const { expect } = require('chai')
+import { expect } from 'chai'
 
 //eslint-disable-next-line no-undef
 const { Presenter: LegacyPresenter } = yaysonLegacy({ adapter: 'sequelize' })

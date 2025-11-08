@@ -1,6 +1,6 @@
-const sinon = require('sinon')
-const { expect } = require('chai')
-const { assert } = require('chai')
+import sinon from 'sinon'
+import { expect } from 'chai'
+import { assert } from 'chai'
 
 //eslint-disable-next-line no-undef
 const yaysonLib = yayson
