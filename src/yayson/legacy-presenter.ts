@@ -16,8 +16,14 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
     _plural?: string
 
     constructor(scope?: JsonApiDocument) {
-      super(scope)
-      this._plural = (this.constructor as LegacyPresenterConstructor).plural
+      // LegacyPresenter doesn't use the 'data' property, so pass an empty scope
+      super(scope || ({} as JsonApiDocument))
+      const ctor = Object.getPrototypeOf(this).constructor as LegacyPresenterConstructor
+      this._plural = ctor.plural
+      // Remove the 'data' property that the parent constructor adds
+      if (!scope) {
+        delete (this.scope as any).data
+      }
     }
 
     pluralType(): string {
@@ -87,6 +93,10 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
       options?: PresenterOptions,
     ): LegacyJsonApiDocument {
       const opts = options ?? {}
+      // Initialize links if not present
+      if (!this.scope.links) {
+        this.scope.links = {}
+      }
       if (Array.isArray(instanceOrCollection)) {
         const collection = instanceOrCollection
         const type = this.pluralType()

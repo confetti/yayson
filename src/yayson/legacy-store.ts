@@ -40,12 +40,16 @@ class LegacyStoreClass {
   }
 
   toModel(rec: LegacyStoreRecordType, type: string, models: StoreModels): StoreModel {
-    const model: StoreModel = { ...rec.data, id: String(rec.data.id), type }
+    // Keep original id type from data, but ensure string key for models lookup
+    const idStr = String(rec.data.id)
+    const model: StoreModel = { ...rec.data, type, id: idStr }
+    // Preserve original id type from data
+    model.id = rec.data.id as string
     if (!models[type]) {
       models[type] = {}
     }
-    if (!models[type]![model.id]) {
-      models[type]![model.id] = model
+    if (!models[type]![idStr]) {
+      models[type]![idStr] = model
     }
 
     const relations = this.relations[type]
@@ -93,14 +97,15 @@ class LegacyStoreClass {
 
   find(type: string, id: string, models?: StoreModels): StoreModel | null {
     const modelsObj = models ?? {}
-    const rec = this.findRecord(type, id)
+    const idStr = String(id)
+    const rec = this.findRecord(type, idStr)
     if (rec == null) {
       return null
     }
     if (!modelsObj[type]) {
       modelsObj[type] = {}
     }
-    return modelsObj[type]![id] || this.toModel(rec, type, modelsObj)
+    return modelsObj[type]![idStr] || this.toModel(rec, type, modelsObj)
   }
 
   findAll(type: string, models?: StoreModels): StoreModel[] {
@@ -129,7 +134,8 @@ class LegacyStoreClass {
     }
 
     if (id != null) {
-      const record = this.findRecord(normalizedType, id)
+      const idStr = String(id)
+      const record = this.findRecord(normalizedType, idStr)
       if (record) {
         removeOne(record)
       }

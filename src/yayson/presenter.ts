@@ -36,8 +36,14 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
 
     constructor(scope?: JsonApiDocument) {
       this.scope = scope ?? { data: null }
-      this._adapter = (this.constructor as typeof Presenter).adapter
-      this._type = (this.constructor as typeof Presenter).type
+      // Walk up prototype chain to find adapter and type
+      // Use Object.getPrototypeOf on constructor to walk the chain
+      let ctor: any = Object.getPrototypeOf(this).constructor
+      while (ctor && !ctor.adapter) {
+        ctor = Object.getPrototypeOf(ctor)
+      }
+      this._adapter = ctor?.adapter || adapter
+      this._type = ctor?.type || 'objects'
     }
 
     id(instance: ModelLike): string | undefined {

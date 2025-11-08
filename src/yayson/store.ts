@@ -40,8 +40,9 @@ class Store {
     toModel(rec: StoreRecord, type: string, models: StoreModels): StoreModel {
       let typeAttribute: string | undefined
       const model: StoreModel = { ...(rec.attributes || {}), id: '', type: '' }
-      if ('type' in model && typeof model.type === 'string') {
-        typeAttribute = model.type
+      // Check if there's a 'type' attribute in the original attributes
+      if (rec.attributes && 'type' in rec.attributes && typeof rec.attributes.type === 'string') {
+        typeAttribute = rec.attributes.type
       }
 
       model.id = rec.id
