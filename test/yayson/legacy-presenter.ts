@@ -8,7 +8,7 @@
  */
 import { expect } from 'chai'
 
-//eslint-disable-next-line no-undef
+ 
 const { Presenter: LegacyPresenter } = yaysonLegacy({ adapter: 'sequelize' })
 
 describe('LegacyPresenter', function () {

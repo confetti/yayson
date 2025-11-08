@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 
-//eslint-disable-next-line no-undef
+ 
 const { Adapter } = yayson()
 
 describe('Adapter', function () {

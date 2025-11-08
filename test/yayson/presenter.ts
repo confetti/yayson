@@ -2,9 +2,9 @@ import sinon from 'sinon'
 import { expect } from 'chai'
 import { assert } from 'chai'
 
-//eslint-disable-next-line no-undef
+ 
 const yaysonLib = yayson
-//eslint-disable-next-line no-undef
+ 
 const { Presenter } = yayson()
 
 describe('Presenter', function () {
@@ -183,7 +183,7 @@ describe('Presenter', function () {
       wheels,
     }
 
-    for (let w of wheels) {
+    for (const w of wheels) {
       w.bike = bike
     }
 
@@ -350,7 +350,7 @@ describe('Presenter', function () {
       cars,
     }
 
-    for (let c of cars) {
+    for (const c of cars) {
       c.car = car
     }
 

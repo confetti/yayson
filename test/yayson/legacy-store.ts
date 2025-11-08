@@ -7,7 +7,7 @@
  */
 import { expect } from 'chai'
 
-//eslint-disable-next-line no-undef
+ 
 const { Store: LegacyStore } = yaysonLegacy()
 
 describe('LegacyStore', function () {

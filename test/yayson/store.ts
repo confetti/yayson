@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-//eslint-disable-next-line no-undef
+ 
 const { Store } = yayson()
 
 describe('Store', function () {

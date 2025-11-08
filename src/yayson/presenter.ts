@@ -50,7 +50,7 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
       return this._adapter.id(instance)
     }
 
-    //eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     selfLinks(_instance: ModelLike): JsonApiLink | string | undefined {
       return undefined
     }
