@@ -10,7 +10,7 @@ interface LegacyYaysonResult {
 }
 
 export default function legacy(options?: YaysonOptions): LegacyYaysonResult {
-  const { Store, Presenter, Adapter } = yayson(options)
+  const { Presenter, Adapter } = yayson(options)
   return {
     Store: createLegacyStore(),
     Presenter: createLegacyPresenter(Presenter),

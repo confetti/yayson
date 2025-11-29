@@ -6,7 +6,6 @@ From version 3 we now support native JavaScript classes. YAYSON has zero depende
 
 [![NPM](https://nodei.co/npm/yayson.png?downloads=true)](https://nodei.co/npm/yayson/)
 
-
 ## Installing
 
 Install yayson by running:
@@ -22,7 +21,6 @@ $ npm i yayson
 A basic `Presenter` can look like this:
 
 ```javascript
-
 const yayson = require('yayson')
 const { Presenter } = yayson()
 
@@ -32,13 +30,11 @@ class BikePresenter extends Presenter {
 
 const bike = {
   id: 5,
-  name: 'Monark'
-};
+  name: 'Monark',
+}
 
-BikePresenter.render(bike);
-
+BikePresenter.render(bike)
 ```
-
 
 This would produce:
 
@@ -62,9 +58,7 @@ be an array.
 
 A bit more advanced example:
 
-
 ```javascript
-
 const yayson = require('yayson')
 const { Presenter } = yayson()
 
@@ -82,8 +76,6 @@ class BikePresenter extends Presenter {
     return { wheels: WheelPresenter }
   }
 }
-
-
 ```
 
 ### Sequelize support
@@ -92,24 +84,25 @@ By default it is set up to handle standard JS objects. You can also make
 it handle Sequelize.js models like this:
 
 ```javascript
-
 const yayson = require('yayson')
-const { Presenter } = yayson({adapter: 'sequelize'})
-
+const { Presenter } = yayson({ adapter: 'sequelize' })
 ```
 
 You can also define your own adapter globally:
 
 ```javascript
-
 const yayson = require('yayson')
-const { Presenter } = yayson({adapter: {
-  id: function(model){ return 'omg' + model.id},
-  get: function(model, key){ return model[key] }
-}})
-
+const { Presenter } = yayson({
+  adapter: {
+    id: function (model) {
+      return 'omg' + model.id
+    },
+    get: function (model, key) {
+      return model[key]
+    },
+  },
+})
 ```
-
 
 Take a look at the SequelizeAdapter if you want to extend YAYSON to your ORM. Pull requests are welcome. :)
 
@@ -117,7 +110,7 @@ Take a look at the SequelizeAdapter if you want to extend YAYSON to your ORM. Pu
 
 You can add metadata to the top level object.
 
-``` javascript
+```javascript
 
   ItemsPresenter.render(items, {meta: count: 10})
 
@@ -148,62 +141,54 @@ This would produce:
 You can use a `Store` can like this:
 
 ```javascript
+const { Store } = require('yayson')()
+const store = new Store()
 
-  const {Store} = require('yayson')();
-  const store = new Store();
-
-  const data = await adapter.get({path: '/events/' + id});
-  const event = store.sync(data);
-
+const data = await adapter.get({ path: '/events/' + id })
+const event = store.sync(data)
 ```
 
 This will give you the parsed event with all its relationships.
 
 Its also possible to find in the synched data:
 
-
 ```javascript
+const event = this.store.find('events', id)
 
-  const event = this.store.find('events', id)
-
-  const images = this.store.findAll('images')
-
+const images = this.store.findAll('images')
 ```
-
 
 ## Use in the browser
 
 Recommended way is to use it via [webpack](https://github.com/webpack/webpack) or similar build system wich lets you just require the package as usual.
 
 If you just want to try it out, copy the file `dist/yayson.js` to your project. Then simply include it:
-```html
 
-    <script src="./lib/yayson.js"></script>
+```html
+<script src="./lib/yayson.js"></script>
 ```
+
 Then you can `var yayson = window.yayson()` use the `yayson.Presenter` and `yayson.Store` as usual.
 
 ### Browser support
 
 #### Tested
+
 - Chrome
 - Firefox
 - Safari
 - Safari iOS
 
 #### Untested, but should work
+
 - IE 11
 - Android
-
 
 ## Legacy support
 
 Earlier versions of JSON API worked a bit different from 1.0. Therefore YAYSON provides legacy presenters and stores in order to have interoperability between the versions. Its used similar to the standard presenters:
 
 ```javascript
-
 const yayson = require('yayson/legacy')
 const { Presenter } = yayson()
-
 ```
-
-

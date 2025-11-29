@@ -6,23 +6,27 @@ interface SequelizeModel {
     primaryKeys?: Record<string, unknown>
   }
 }
+function isSequelizeModel(model: unknown): model is SequelizeModel {
+  return model != null && typeof model === 'object' && 'get' in model && typeof model.get === 'function'
+}
 
 class SequelizeAdapter extends Adapter {
   static override get<T = unknown>(model: ModelLike, key?: string): T {
-    const seqModel = model as unknown as SequelizeModel | null | undefined
-    if (seqModel != null && 'get' in seqModel) {
-      return seqModel.get(key) as T
+    if (isSequelizeModel(model)) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Sequelize adapter converts unknown to T
+      return model.get(key) as T
     }
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Return undefined as T for compatibility
     return undefined as T
   }
 
   static override id(model: ModelLike): string | undefined {
-    const seqModel = model as unknown as SequelizeModel
     // Retain backwards compatibility with older sequelize versions
-    const pkFields =
-      seqModel.constructor && (seqModel.constructor as any).primaryKeys
-        ? Object.keys((seqModel.constructor as any).primaryKeys)
-        : ['id']
+    const hasPrimaryKeys = model.constructor && 'primaryKeys' in model.constructor
+    const pkFields = hasPrimaryKeys
+      ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Type checked with guard above
+        Object.keys((model.constructor as unknown as { primaryKeys: Record<string, unknown> }).primaryKeys)
+      : ['id']
 
     if (pkFields.length > 1) {
       throw new Error(

@@ -19,9 +19,12 @@ interface YaysonResult {
 function lookupAdapter(nameOrAdapter?: AdapterOption): AdapterConstructor {
   if (nameOrAdapter === 'default' || !nameOrAdapter) {
     return Adapter
-  }
-  if (typeof nameOrAdapter === 'string') {
-    return (adapters as Record<string, AdapterConstructor>)[nameOrAdapter] || Adapter
+  } else if (typeof nameOrAdapter === 'string') {
+    if (nameOrAdapter === 'sequelize') {
+      return adapters.sequelize
+    } else {
+      throw new Error('Adapter not found: ' + nameOrAdapter)
+    }
   }
   return nameOrAdapter
 }

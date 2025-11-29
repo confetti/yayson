@@ -8,18 +8,17 @@
  */
 import { expect } from 'chai'
 
- 
 const { Presenter: LegacyPresenter } = yaysonLegacy({ adapter: 'sequelize' })
 
-describe('LegacyPresenter', function () {
-  it('handles null', function () {
+describe('LegacyPresenter', function (): void {
+  it('handles null', function (): void {
     const json = LegacyPresenter.toJSON(null)
     return expect(json).to.deep.equal({ object: null, links: {} })
   })
 
-  it('create json structure of an object', function () {
+  it('create json structure of an object', function (): void {
     const obj = {
-      get() {
+      get(): unknown {
         return { foo: 'bar' }
       },
     }
@@ -27,15 +26,15 @@ describe('LegacyPresenter', function () {
     return expect(json).to.deep.equal({ object: { foo: 'bar' }, links: {} })
   })
 
-  it('create json structure of two objects', function () {
+  it('create json structure of two objects', function (): void {
     const obj = [
       {
-        get() {
+        get(): unknown {
           return { id: 1, foo: 'bar' }
         },
       },
       {
-        get() {
+        get(): unknown {
           return { id: 2, foo: 'bar' }
         },
       },
@@ -50,15 +49,15 @@ describe('LegacyPresenter', function () {
     })
   })
 
-  it('should not dup object', function () {
+  it('should not dup object', function (): void {
     const obj = [
       {
-        get() {
+        get(): unknown {
           return { id: 1 }
         },
       },
       {
-        get() {
+        get(): unknown {
           return { id: 1 }
         },
       },
@@ -67,19 +66,19 @@ describe('LegacyPresenter', function () {
     return expect(json).to.deep.equal({ objects: [{ id: 1 }], links: {} })
   })
 
-  it('should use plural type', function () {
+  it('should use plural type', function (): void {
     class CactusPresenter extends LegacyPresenter {
       static type = 'cactus'
       static plural = 'cacti'
     }
     const obj = [
       {
-        get() {
+        get(): unknown {
           return { id: 1 }
         },
       },
       {
-        get() {
+        get(): unknown {
           return { id: 2 }
         },
       },
@@ -88,11 +87,11 @@ describe('LegacyPresenter', function () {
     return expect(json).to.deep.equal({ cacti: [{ id: 1 }, { id: 2 }], links: {} })
   })
 
-  it('should serialize relations', function () {
+  it('should serialize relations', function (): void {
     class TirePresenter extends LegacyPresenter {
       static type = 'tire'
 
-      relationships() {
+      relationships(): unknown {
         return { car: CarPresenter }
       }
     }
@@ -100,18 +99,19 @@ describe('LegacyPresenter', function () {
     class CarPresenter extends LegacyPresenter {
       static type = 'car'
 
-      relationships() {
+      relationships(): unknown {
         return { tire: TirePresenter }
       }
     }
 
     const obj = {
       id: 1,
-      get(attr) {
+      get(attr: unknown): unknown {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
         const car = this
         const tire = {
           id: 2,
-          get(attr) {
+          get(attr: unknown): unknown {
             if (!attr) {
               return {
                 id: this.id,
@@ -145,9 +145,9 @@ describe('LegacyPresenter', function () {
     })
   })
 
-  it('should relationships with custom attributes method', function () {
+  it('should relationships with custom attributes method', function (): void {
     class EventPresenter extends LegacyPresenter {
-      attributes() {
+      attributes(): unknown {
         return { hej: 'test' }
       }
     }

@@ -43,7 +43,8 @@ class LegacyStoreClass {
     // Keep original id type from data, but ensure string key for models lookup
     const idStr = String(rec.data.id)
     const model: StoreModel = { ...rec.data, type, id: idStr }
-    // Preserve original id type from data
+    // Preserve original id type from data (could be number or string)
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Legacy format preserves original id type
     model.id = rec.data.id as string
     if (!models[type]) {
       models[type] = {}
@@ -90,9 +91,14 @@ class LegacyStoreClass {
 
   retrive(type: string, data: LegacyData): StoreModel | null {
     this.sync(data)
-    const typeData = data[type] as Record<string, unknown>
-    const { id } = typeData
-    return this.find(type, String(id))
+    const typeData = data[type]
+    if (!typeData || typeof typeData !== 'object' || Array.isArray(typeData)) {
+      throw new Error(`Invalid data for type ${type}`)
+    }
+    if (!('id' in typeData)) {
+      throw new Error(`Data for type ${type} is missing an id`)
+    }
+    return this.find(type, String(typeData.id))
   }
 
   find(type: string, id: string, models?: StoreModels): StoreModel | null {
@@ -165,8 +171,8 @@ class LegacyStoreClass {
 
       if (Array.isArray(value)) {
         value.forEach(add)
-      } else {
-        add(value as Record<string, unknown>)
+      } else if (typeof value === 'object' && value !== null) {
+        add(value)
       }
     }
   }

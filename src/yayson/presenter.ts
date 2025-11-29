@@ -31,14 +31,14 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
 
     scope: JsonApiDocument
     _adapter: AdapterConstructor
-    _type: string
+    _type: string;
     ['constructor']!: PresenterConstructor
 
     constructor(scope?: JsonApiDocument) {
       this.scope = scope ?? { data: null }
       // Walk up prototype chain to find adapter and type
       // Use Object.getPrototypeOf on constructor to walk the chain
-      let ctor: any = Object.getPrototypeOf(this).constructor
+      let ctor: typeof Presenter | null = Object.getPrototypeOf(this).constructor
       while (ctor && !ctor.adapter) {
         ctor = Object.getPrototypeOf(ctor)
       }
@@ -50,7 +50,6 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
       return this._adapter.id(instance)
     }
 
-     
     selfLinks(_instance: ModelLike): JsonApiLink | string | undefined {
       return undefined
     }
@@ -92,7 +91,7 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
 
         const presenter = new factory(scope)
 
-        const data = this._adapter.get(instance, key) as ModelLike | ModelLike[] | null
+        const data = this._adapter.get<ModelLike | ModelLike[] | null>(instance, key)
         result.push(presenter.toJSON(data, { include: true }))
       }
       return result
@@ -114,8 +113,12 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
         const data = this._adapter.get<ModelLike | ModelLike[] | null | undefined>(instance, key)
         const presenter = rels[key]
         const buildData = (d: ModelLike): JsonApiResourceIdentifier => {
+          const id = this._adapter.id(d)
+          if (!id) {
+            throw new Error(`Model of type ${presenter.type} is missing an id`)
+          }
           return {
-            id: this._adapter.id(d) as string,
+            id,
             type: presenter.type,
           }
         }
@@ -247,5 +250,5 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
     }
   }
 
-  return Presenter as unknown as PresenterConstructor
+  return Presenter
 }

@@ -1,5 +1,5 @@
 import { expect } from 'chai'
- 
+
 const { Store } = yayson()
 
 describe('Store', function () {

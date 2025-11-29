@@ -10,6 +10,7 @@ interface LegacyJsonApiDocument extends JsonApiDocument {
 }
 
 export default function createLegacyPresenter(Presenter: PresenterConstructor): LegacyPresenterConstructor {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Factory pattern with class expression
   return class LegacyPresenter extends Presenter {
     static type = 'object'
     declare scope: LegacyJsonApiDocument
@@ -17,12 +18,16 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
 
     constructor(scope?: JsonApiDocument) {
       // LegacyPresenter doesn't use the 'data' property, so pass an empty scope
-      super(scope || ({} as JsonApiDocument))
+      const emptyScope: JsonApiDocument = { data: null }
+      super(scope || emptyScope)
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Safe cast after getPrototypeOf
       const ctor = Object.getPrototypeOf(this).constructor as LegacyPresenterConstructor
       this._plural = ctor.plural
       // Remove the 'data' property that the parent constructor adds
       if (!scope) {
-        delete (this.scope as any).data
+        // Legacy format doesn't include 'data' property
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Need Partial to allow delete
+        delete (this.scope as Partial<JsonApiDocument>).data
       }
     }
 
@@ -49,9 +54,14 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
             attributes[key] = id
           }
         } else if (Array.isArray(data)) {
-          attributes[key] = data.map((obj: Record<string, unknown>) => obj.id)
-        } else {
-          attributes[key] = (data as Record<string, unknown>).id
+          attributes[key] = data.map((obj) => {
+            if (typeof obj === 'object' && obj !== null && 'id' in obj) {
+              return obj.id
+            }
+            return obj
+          })
+        } else if (typeof data === 'object' && data !== null && 'id' in data) {
+          attributes[key] = data.id
         }
       }
       return attributes
@@ -72,9 +82,10 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
         const factory = relationships[key]
         if (!factory) throw new Error(`Presenter for ${key} in ${this._type} is not defined`)
 
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Factory returns PresenterInstance, we know it's LegacyPresenter
         const presenter = new factory(scope) as LegacyPresenter
 
-        const data = this._adapter.get(instance, key) as ModelLike | ModelLike[] | null
+        const data = this._adapter.get<ModelLike | ModelLike[] | null>(instance, key)
         if (data != null) {
           presenter.toJSON(data, { defaultPlural: true })
         }
@@ -82,7 +93,9 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
         const type = scope[this.pluralType()] != null ? this.pluralType() : this._type
         const keyName = scope[presenter.pluralType()] != null ? presenter.pluralType() : presenter._type
         const link = { type: keyName }
-        ;(scope.links as any)[`${type}.${key}`] = link
+        if (scope.links) {
+          scope.links[`${type}.${key}`] = link
+        }
         result.push(link)
       }
       return result
@@ -93,7 +106,6 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
       options?: PresenterOptions,
     ): LegacyJsonApiDocument {
       const opts = options ?? {}
-      // Initialize links if not present
       if (!this.scope.links) {
         this.scope.links = {}
       }
@@ -118,22 +130,33 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
         }
         // If eg x.image already exists
         if (this.scope[this._type] && !this.scope[this.pluralType()]) {
-          const existingAttrs = this.scope[this._type] as Record<string, unknown>
-          if (attrs && existingAttrs.id !== attrs.id) {
+          const existingValue = this.scope[this._type]
+          if (
+            attrs &&
+            typeof existingValue === 'object' &&
+            existingValue !== null &&
+            'id' in existingValue &&
+            existingValue.id !== attrs.id
+          ) {
             this.scope[this.pluralType()] = [this.scope[this._type]]
             delete this.scope[this._type]
-            ;(this.scope[this.pluralType()] as unknown[]).push(attrs)
+            const pluralArray = this.scope[this.pluralType()]
+            if (Array.isArray(pluralArray)) {
+              pluralArray.push(attrs)
+            }
           } else {
             added = false
           }
 
           // If eg x.images already exists
         } else if (this.scope[this.pluralType()]) {
-          const existing = this.scope[this.pluralType()] as Array<Record<string, unknown>>
-          if (attrs && !existing.some((i) => i.id === attrs.id)) {
-            existing.push(attrs)
-          } else {
-            added = false
+          const existing = this.scope[this.pluralType()]
+          if (Array.isArray(existing)) {
+            if (attrs && !existing.some((i) => typeof i === 'object' && i !== null && 'id' in i && i.id === attrs.id)) {
+              existing.push(attrs)
+            } else {
+              added = false
+            }
           }
         } else if (opts.defaultPlural) {
           this.scope[this.pluralType()] = attrs ? [attrs] : []

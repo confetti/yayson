@@ -28,185 +28,202 @@ class StoreRecord {
 class Store {
   records: StoreRecord[] = []
 
-   
   constructor(_options?: unknown) {
     this.reset()
   }
 
-    reset(): void {
-      this.records = []
+  reset(): void {
+    this.records = []
+  }
+
+  toModel(rec: StoreRecord, type: string, models: StoreModels): StoreModel {
+    let typeAttribute: string | undefined
+    const model: StoreModel = { ...(rec.attributes || {}), id: '', type: '' }
+
+    if (rec.attributes && 'type' in rec.attributes && typeof rec.attributes.type === 'string') {
+      typeAttribute = rec.attributes.type
     }
 
-    toModel(rec: StoreRecord, type: string, models: StoreModels): StoreModel {
-      let typeAttribute: string | undefined
-      const model: StoreModel = { ...(rec.attributes || {}), id: '', type: '' }
-      // Check if there's a 'type' attribute in the original attributes
-      if (rec.attributes && 'type' in rec.attributes && typeof rec.attributes.type === 'string') {
-        typeAttribute = rec.attributes.type
-      }
+    model.id = rec.id
+    model.type = rec.type
+    if (!models[type]) {
+      models[type] = {}
+    }
+    if (!models[type][rec.id]) {
+      models[type][rec.id] = model
+    }
 
-      model.id = rec.id
-      model.type = rec.type
-      if (!models[type]) {
-        models[type] = {}
-      }
-      if (!models[type][rec.id]) {
-        models[type][rec.id] = model
-      }
+    if (Object.prototype.hasOwnProperty.call(model, 'meta')) {
+      model.attributes = { meta: model.meta }
+      delete model.meta
+    }
 
-      if (Object.prototype.hasOwnProperty.call(model, 'meta')) {
-        model.attributes = { meta: model.meta }
-        delete model.meta
-      }
+    if (rec.meta != null) {
+      model.meta = rec.meta
+    }
 
-      if (rec.meta != null) {
-        model.meta = rec.meta
-      }
+    if (rec.links != null) {
+      model.links = rec.links
+    }
 
-      if (rec.links != null) {
-        model.links = rec.links
-      }
+    if (rec.relationships != null) {
+      for (const key in rec.relationships) {
+        const rel = rec.relationships[key]
+        const { data } = rel
+        const { links } = rel
+        const { meta } = rel
 
-      if (rec.relationships != null) {
-        for (const key in rec.relationships) {
-          const rel = rec.relationships[key]
-          const { data } = rel
-          const { links } = rel
-          const { meta } = rel
+        model[key] = null
+        if (data == null && links == null) {
+          continue
+        }
+        const resolve = ({ type, id }: JsonApiResourceIdentifier): StoreModel | null => {
+          return this.find(type, id, models)
+        }
+        if (Array.isArray(data)) {
+          model[key] = data.map(resolve)
+        } else {
+          const relModel: Record<string, unknown> | null = data != null ? resolve(data) : {}
 
-          model[key] = null
-          if (data == null && links == null) {
-            continue
-          }
-          const resolve = ({ type, id }: JsonApiResourceIdentifier): StoreModel | null => {
-            return this.find(type, id, models)
-          }
-          model[key] = Array.isArray(data) ? data.map(resolve) : data != null ? resolve(data) : {}
-
-          // Model of the relation
-          const currentModel = model[key] as StoreModel | StoreModel[] | Record<string, unknown> | null
-
-          if (currentModel != null && typeof currentModel === 'object') {
-            // retain the links and meta from the relationship entry
-            // use as underscore property name because the currentModel may also have a link and meta reference
-            ;(currentModel as StoreModel)._links = (links || {}) as any
-            ;(currentModel as StoreModel)._meta = meta || {}
+          if (relModel) {
+            relModel._links = links || {}
+            relModel._meta = meta || {}
+            model[key] = relModel
           }
         }
       }
-
-      if (typeAttribute) {
-        model.type = typeAttribute
-      }
-      return model
     }
 
-    findRecord(type: string, id: string): StoreRecord | undefined {
-      return this.records.find((r) => r.type === type && r.id === id)
+    if (typeAttribute) {
+      model.type = typeAttribute
     }
+    return model
+  }
 
-    findRecords(type: string): StoreRecord[] {
-      return this.records.filter((r) => r.type === type)
+  findRecord(type: string, id: string): StoreRecord | undefined {
+    return this.records.find((r) => r.type === type && r.id === id)
+  }
+
+  findRecords(type: string): StoreRecord[] {
+    return this.records.filter((r) => r.type === type)
+  }
+
+  find(type: string, id: string, models?: StoreModels): StoreModel | null {
+    const modelsObj = models ?? {}
+    const rec = this.findRecord(type, id)
+    if (rec == null) {
+      return null
     }
+    if (!modelsObj[type]) {
+      modelsObj[type] = {}
+    }
+    return modelsObj[type][id] || this.toModel(rec, type, modelsObj)
+  }
 
-    find(type: string, id: string, models?: StoreModels): StoreModel | null {
-      const modelsObj = models ?? {}
-      const rec = this.findRecord(type, id)
-      if (rec == null) {
-        return null
-      }
+  findAll(type: string, models?: StoreModels): StoreModel[] {
+    const modelsObj = models ?? {}
+    const recs = this.findRecords(type)
+    if (recs == null) {
+      return []
+    }
+    recs.forEach((rec) => {
       if (!modelsObj[type]) {
         modelsObj[type] = {}
       }
-      return modelsObj[type][id] || this.toModel(rec, type, modelsObj)
-    }
+      return this.toModel(rec, type, modelsObj)
+    })
+    return Object.values(modelsObj[type] || {})
+  }
 
-    findAll(type: string, models?: StoreModels): StoreModel[] {
-      const modelsObj = models ?? {}
-      const recs = this.findRecords(type)
-      if (recs == null) {
-        return []
-      }
-      recs.forEach((rec) => {
-        if (!modelsObj[type]) {
-          modelsObj[type] = {}
-        }
-        return this.toModel(rec, type, modelsObj)
-      })
-      return Object.values(modelsObj[type] || {})
-    }
-
-    remove(type: string, id?: string): void | void[] {
-      const removeOne = (record: StoreRecord): void => {
-        const index = this.records.indexOf(record)
-        if (!(index < 0)) {
-          this.records.splice(index, 1)
-        }
-      }
-
-      if (id != null) {
-        const record = this.findRecord(type, id)
-        if (record) {
-          return removeOne(record)
-        }
-      } else {
-        const records = this.findRecords(type)
-        return records.map(removeOne)
+  remove(type: string, id?: string): void | void[] {
+    const removeOne = (record: StoreRecord): void => {
+      const index = this.records.indexOf(record)
+      if (!(index < 0)) {
+        this.records.splice(index, 1)
       }
     }
 
-    sync(
-      body: JsonApiDocument,
-    ): (StoreModel | StoreModel[] | null) & { links?: unknown; meta?: unknown } | null {
-      const syncData = (
-        data: JsonApiDocument['data'] | JsonApiDocument['included'],
-      ): StoreRecord | StoreRecord[] | null => {
-        if (data == null) {
-          return null
-        }
-        const add = (obj: StoreRecordType): StoreRecord => {
-          const { type, id } = obj
-          this.remove(type, id)
-          const rec = new StoreRecord(obj)
-          this.records.push(rec)
-          return rec
-        }
-
-        if (Array.isArray(data)) {
-          return data.map((item) => add(item as StoreRecordType))
-        } else {
-          return add(data as StoreRecordType)
-        }
+    if (id != null) {
+      const record = this.findRecord(type, id)
+      if (record) {
+        return removeOne(record)
       }
+    } else {
+      const records = this.findRecords(type)
+      return records.map(removeOne)
+    }
+  }
 
-      syncData(body.included)
-      const recs = syncData(body.data)
-
-      if (recs == null) {
+  sync(body: JsonApiDocument): ((StoreModel | StoreModel[] | null) & { links?: unknown; meta?: unknown }) | null {
+    const syncData = (
+      data: JsonApiDocument['data'] | JsonApiDocument['included'],
+    ): StoreRecord | StoreRecord[] | null => {
+      if (data == null) {
         return null
       }
+      const add = (obj: StoreRecordType): StoreRecord => {
+        const { type, id } = obj
+        this.remove(type, id)
+        const rec = new StoreRecord(obj)
+        this.records.push(rec)
+        return rec
+      }
 
-      const models: StoreModels = {}
-      let result: (StoreModel | StoreModel[]) & { links?: unknown; meta?: unknown } | null = null
-
-      if (Array.isArray(recs)) {
-        result = recs.map((rec) => {
-          return this.toModel(rec, rec.type, models)
-        }) as StoreModel[] & { links?: unknown; meta?: unknown }
+      if (Array.isArray(data)) {
+        return data.map((item) => {
+          if (!item.id) {
+            throw new Error(`Resource of type ${item.type} is missing an id`)
+          }
+          return add({
+            ...item,
+            attributes: item.attributes ?? undefined,
+            relationships: item.relationships ?? undefined,
+            id: item.id,
+          })
+        })
       } else {
-        result = this.toModel(recs, recs.type, models) as StoreModel & { links?: unknown; meta?: unknown }
+        if (!data.id) {
+          throw new Error(`Resource of type ${data.type} is missing an id`)
+        }
+        return add({
+          ...data,
+          attributes: data.attributes ?? undefined,
+          relationships: data.relationships ?? undefined,
+          id: data.id,
+        })
       }
-
-      if (Object.prototype.hasOwnProperty.call(body, 'links')) {
-        result.links = body.links
-      }
-
-      if (Object.prototype.hasOwnProperty.call(body, 'meta')) {
-        result.meta = body.meta
-      }
-
-      return result
     }
+
+    syncData(body.included)
+    const recs = syncData(body.data)
+
+    if (recs == null) {
+      return null
+    }
+
+    const models: StoreModels = {}
+    let result: ((StoreModel | StoreModel[]) & { links?: unknown; meta?: unknown }) | null = null
+
+    if (Array.isArray(recs)) {
+      const modelArray = recs.map((rec) => {
+        return this.toModel(rec, rec.type, models)
+      })
+      // Assign links and meta properties to the array object
+      result = Object.assign(modelArray, { links: undefined, meta: undefined })
+    } else {
+      result = Object.assign(this.toModel(recs, recs.type, models), { links: undefined, meta: undefined })
+    }
+
+    if (Object.prototype.hasOwnProperty.call(body, 'links')) {
+      result.links = body.links
+    }
+
+    if (Object.prototype.hasOwnProperty.call(body, 'meta')) {
+      result.meta = body.meta
+    }
+
+    return result
+  }
 }
 
 export default function createStore(): typeof Store {

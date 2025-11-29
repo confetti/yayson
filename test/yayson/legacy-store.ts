@@ -7,7 +7,6 @@
  */
 import { expect } from 'chai'
 
- 
 const { Store: LegacyStore } = yaysonLegacy()
 
 describe('LegacyStore', function () {

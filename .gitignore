@@ -31,3 +31,6 @@ test/.tmp
 
 # Compiled
 lib
+build
+
+.claude/*.local.*

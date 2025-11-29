@@ -2,20 +2,19 @@ import sinon from 'sinon'
 import { expect } from 'chai'
 import { assert } from 'chai'
 
- 
 const yaysonLib = yayson
- 
+
 const { Presenter } = yayson()
 
-describe('Presenter', function () {
-  it('handles null', function () {
+describe('Presenter', function (): void {
+  it('handles null', function (): void {
     const json = Presenter.toJSON(null)
     return expect(json).to.deep.equal({
       data: null,
     })
   })
 
-  it('create json structure of an object', function () {
+  it('create json structure of an object', function (): void {
     const obj = { id: 5, foo: 'bar' }
     const json = Presenter.toJSON(obj)
     expect(json).to.deep.equal({
@@ -29,7 +28,7 @@ describe('Presenter', function () {
     })
   })
 
-  it('create json structure of an array of objects', function () {
+  it('create json structure of an array of objects', function (): void {
     const obj = [
       { id: 1, foo: 'bar' },
       { id: 2, foo: 'baz' },
@@ -55,7 +54,7 @@ describe('Presenter', function () {
     })
   })
 
-  it('should not include id if not specified', function () {
+  it('should not include id if not specified', function (): void {
     const obj = { foo: 'bar' }
     const json = Presenter.toJSON(obj)
     expect(json).to.deep.equal({
@@ -68,7 +67,7 @@ describe('Presenter', function () {
     })
   })
 
-  it('should not dup object', function () {
+  it('should not dup object', function (): void {
     const obj = [{ id: 1 }, { id: 1 }]
     const json = Presenter.toJSON(obj)
     expect(json).to.deep.equal({
@@ -82,11 +81,11 @@ describe('Presenter', function () {
     })
   })
 
-  it('should serialize relations', function () {
+  it('should serialize relations', function (): void {
     class MotorPresenter extends Presenter {
       static type = 'motors'
 
-      relationships() {
+      relationships(): unknown {
         return { car: CarPresenter }
       }
     }
@@ -94,7 +93,7 @@ describe('Presenter', function () {
     class CarPresenter extends Presenter {
       static type = 'cars'
 
-      relationships() {
+      relationships(): unknown {
         return { motor: MotorPresenter }
       }
     }
@@ -144,18 +143,18 @@ describe('Presenter', function () {
     })
   })
 
-  it('should serialize relations array', function () {
+  it('should serialize relations array', function (): void {
     class WheelPresenter extends Presenter {
       static type = 'wheels'
 
-      relationships() {
+      relationships(): unknown {
         return { bike: BikePresenter }
       }
     }
 
     class BikePresenter extends Presenter {
       static type = 'bikes'
-      relationships() {
+      relationships(): unknown {
         return { wheels: WheelPresenter }
       }
     }
@@ -256,10 +255,10 @@ describe('Presenter', function () {
     })
   })
 
-  it('should include self link', function () {
+  it('should include self link', function (): void {
     class CarPresenter extends Presenter {
       static type = 'cars'
-      selfLinks(instance) {
+      selfLinks(instance: unknown): unknown {
         return '/cars/' + this.id(instance)
       }
     }
@@ -268,10 +267,10 @@ describe('Presenter', function () {
     expect(json.data.links.self).to.eq('/cars/3')
   })
 
-  it('should include self and related link', function () {
+  it('should include self and related link', function (): void {
     class CarPresenter extends Presenter {
       static type = 'cars'
-      selfLinks(instance) {
+      selfLinks(instance: unknown): unknown {
         return {
           self: '/cars/linkage/' + this.id(instance),
           related: '/cars/' + this.id(instance),
@@ -284,19 +283,19 @@ describe('Presenter', function () {
     expect(json.data.links.related).to.eq('/cars/3')
   })
 
-  it('should handle links in relationships', function () {
+  it('should handle links in relationships', function (): void {
     class CarPresenter extends Presenter {
       static type = 'cars'
 
-      relationships() {
+      relationships(): unknown {
         return { car: CarPresenter }
       }
 
-      selfLinks(instance) {
+      selfLinks(instance: unknown): unknown {
         return '/cars/' + this.id(instance)
       }
 
-      links(instance) {
+      links(instance: unknown): unknown {
         return {
           car: {
             self: this.selfLinks(instance) + '/linkage/car',
@@ -312,19 +311,19 @@ describe('Presenter', function () {
     expect(json.data.relationships.car.links.related).to.eq('/cars/3/car')
   })
 
-  it('should handle links in relationships array', function () {
+  it('should handle links in relationships array', function (): void {
     class CarPresenter extends Presenter {
       static type = 'cars'
 
-      relationships() {
+      relationships(): unknown {
         return { cars: CarPresenter }
       }
 
-      selfLinks(instance) {
+      selfLinks(instance: unknown): unknown {
         return '/cars/' + this.id(instance)
       }
 
-      links(instance) {
+      links(instance: unknown): unknown {
         return {
           cars: {
             self: this.selfLinks(instance) + '/linkage/cars',
@@ -362,19 +361,19 @@ describe('Presenter', function () {
     expect(json.data.relationships.cars.data).to.be.an('array')
   })
 
-  it('should handle links in relationships without data', function () {
+  it('should handle links in relationships without data', function (): void {
     class CarPresenter extends Presenter {
       static type = 'cars'
 
-      relationships() {
+      relationships(): unknown {
         return { car: CarPresenter }
       }
 
-      selfLinks(instance) {
+      selfLinks(instance: unknown): unknown {
         return '/cars/' + this.id(instance)
       }
 
-      links(instance) {
+      links(instance: unknown): unknown {
         return {
           car: {
             self: this.selfLinks(instance) + '/linkage/car',
@@ -391,11 +390,11 @@ describe('Presenter', function () {
     expect(json.data.relationships.car.data).to.eq(undefined)
   })
 
-  it('should render data: null for unspecified relationships', function () {
+  it('should render data: null for unspecified relationships', function (): void {
     class CarPresenter extends Presenter {
       static type = 'cars'
 
-      relationships() {
+      relationships(): unknown {
         return { car: CarPresenter }
       }
     }
@@ -408,10 +407,12 @@ describe('Presenter', function () {
     })
   })
 
-  it('should serialize in pure JS', function () {
+  it('should serialize in pure JS', function (): void {
     class EventPresenter extends Presenter {
-      attributes() {
-        super.attributes(...arguments)
+      attributes(
+        ...args: Parameters<typeof Presenter.prototype.attributes>
+      ): ReturnType<typeof Presenter.prototype.attributes> {
+        super.attributes(...args)
         return { hej: 'test' }
       }
     }
@@ -421,12 +422,12 @@ describe('Presenter', function () {
     expect(json.data.attributes.hej).to.eq('test')
   })
 
-  it('should use the sequelize adapter', function () {
+  it('should use the sequelize adapter', function (): void {
     const PresenterSequalize = yaysonLib({
       adapter: 'sequelize',
     }).Presenter
     const obj = {
-      get(attr) {
+      get(attr: unknown): unknown {
         const attrs = { id: 5, foo: 'bar' }
         if (attr != null) {
           return attrs[attr]
@@ -448,21 +449,21 @@ describe('Presenter', function () {
     })
   })
 
-  it('should add meta', function () {
+  it('should add meta', function (): void {
     const obj = { id: 1 }
     const json = Presenter.render(obj, { meta: { count: 1 } })
 
     expect(json.meta.count).to.eq(1)
   })
 
-  it('should add top-level links', function () {
+  it('should add top-level links', function (): void {
     const obj = { id: 1 }
     const json = Presenter.render(obj, { links: { next: '/obj?page=2' } })
 
     return expect(json.links.next).to.eq('/obj?page=2')
   })
 
-  it('should exclude id from attributes', function () {
+  it('should exclude id from attributes', function (): void {
     const obj = { id: 5, foo: 'bar', type: 'some' }
     const json = Presenter.toJSON(obj)
     expect(json).to.deep.equal({
@@ -477,7 +478,7 @@ describe('Presenter', function () {
     })
   })
 
-  it('can use custom adapters', function () {
+  it('can use custom adapters', function (): void {
     const obj = { id: 5, foo: 'bar' }
     const adapter = {
       id: sinon.spy(() => 1),

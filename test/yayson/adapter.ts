@@ -1,6 +1,5 @@
 import { expect } from 'chai'
 
- 
 const { Adapter } = yayson()
 
 describe('Adapter', function () {
