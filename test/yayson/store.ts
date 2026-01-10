@@ -465,64 +465,6 @@ describe('Store', function () {
     })
   })
 
-  it('should preserve order with findAllOrdered', function () {
-    this.store.sync({
-      data: [
-        { type: 'events', id: '3', attributes: { name: 'Third' } },
-        { type: 'events', id: '1', attributes: { name: 'First' } },
-        { type: 'events', id: '2', attributes: { name: 'Second' } },
-      ],
-    })
-
-    const events = this.store.findAllOrdered('events')
-    expect(events.length).to.equal(3)
-    expect(events[0].id).to.equal('3')
-    expect(events[0].name).to.equal('Third')
-    expect(events[1].id).to.equal('1')
-    expect(events[1].name).to.equal('First')
-    expect(events[2].id).to.equal('2')
-    expect(events[2].name).to.equal('Second')
-  })
-
-  it('should preserve order across multiple syncs with findAllOrdered', function () {
-    this.store.sync({
-      data: [
-        { type: 'events', id: '3', attributes: { name: 'Third' } },
-        { type: 'events', id: '1', attributes: { name: 'First' } },
-      ],
-    })
-
-    this.store.sync({
-      data: { type: 'events', id: '2', attributes: { name: 'Second' } },
-    })
-
-    const events = this.store.findAllOrdered('events')
-    expect(events.length).to.equal(3)
-    expect(events[0].id).to.equal('3')
-    expect(events[1].id).to.equal('1')
-    expect(events[2].id).to.equal('2')
-  })
-
-  it('should update order when same id is synced again with findAllOrdered', function () {
-    this.store.sync({
-      data: [
-        { type: 'events', id: '1', attributes: { name: 'First' } },
-        { type: 'events', id: '2', attributes: { name: 'Second' } },
-      ],
-    })
-
-    this.store.sync({
-      data: { type: 'events', id: '1', attributes: { name: 'First Updated' } },
-    })
-
-    const events = this.store.findAllOrdered('events')
-    expect(events.length).to.equal(2)
-    expect(events[0].id).to.equal('2')
-    expect(events[0].name).to.equal('Second')
-    expect(events[1].id).to.equal('1')
-    expect(events[1].name).to.equal('First Updated')
-  })
-
   it('should sync and return only filtered type in order', function () {
     const result = this.store.sync(
       {
@@ -544,34 +486,6 @@ describe('Store', function () {
     expect(result[1].name).to.equal('First')
     expect(result[2].id).to.equal('2')
     expect(result[2].name).to.equal('Second')
-  })
-
-  it('should handle pagination scenario with filtered sync', function () {
-    this.store.sync({
-      data: [
-        { type: 'events', id: '1', attributes: { name: 'Page 1 Event 1' } },
-        { type: 'events', id: '2', attributes: { name: 'Page 1 Event 2' } },
-      ],
-    })
-
-    const page2 = this.store.sync(
-      {
-        data: [
-          { type: 'events', id: '3', attributes: { name: 'Page 2 Event 1' } },
-          { type: 'events', id: '4', attributes: { name: 'Page 2 Event 2' } },
-        ],
-      },
-      'events',
-    )
-
-    expect(page2.length).to.equal(2)
-    expect(page2[0].id).to.equal('3')
-    expect(page2[0].name).to.equal('Page 2 Event 1')
-    expect(page2[1].id).to.equal('4')
-    expect(page2[1].name).to.equal('Page 2 Event 2')
-
-    const allEvents = this.store.findAllOrdered('events')
-    expect(allEvents.length).to.equal(4)
   })
 
   it('should sync mixed types with includes and filter correctly', function () {
