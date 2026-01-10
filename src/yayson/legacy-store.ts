@@ -89,7 +89,12 @@ class LegacyStoreClass {
     return this.records.filter((r) => r.type === type)
   }
 
+  // @deprecated Use retrieve() instead.
   retrive(type: string, data: LegacyData): StoreModel | null {
+    return this.retrieve(type, data)
+  }
+
+  retrieve(type: string, data: LegacyData): StoreModel | null {
     this.sync(data)
     const typeData = data[type]
     if (!typeData || typeof typeData !== 'object' || Array.isArray(typeData)) {
