@@ -154,7 +154,10 @@ class Store {
     }
   }
 
-  sync(body: JsonApiDocument): ((StoreModel | StoreModel[] | null) & { links?: unknown; meta?: unknown }) | null {
+  sync(
+    body: JsonApiDocument,
+    filterType?: string,
+  ): ((StoreModel | StoreModel[] | null) & { links?: unknown; meta?: unknown }) | null {
     const syncData = (
       data: JsonApiDocument['data'] | JsonApiDocument['included'],
     ): StoreRecord | StoreRecord[] | null => {
@@ -205,9 +208,12 @@ class Store {
     let result: ((StoreModel | StoreModel[]) & { links?: unknown; meta?: unknown }) | null = null
 
     if (Array.isArray(recs)) {
-      const modelArray = recs.map((rec) => {
+      let modelArray = recs.map((rec) => {
         return this.toModel(rec, rec.type, models)
       })
+      if (filterType) {
+        modelArray = modelArray.filter((model) => model.type === filterType)
+      }
       result = Object.assign(modelArray, { links: undefined, meta: undefined })
     } else {
       result = Object.assign(this.toModel(recs, recs.type, models), { links: undefined, meta: undefined })
