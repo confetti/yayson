@@ -26,5 +26,5 @@
     "sourceRoot": "/"
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "build", "dist", "test"]
+  "exclude": ["node_modules", "build", "dist"]
 }

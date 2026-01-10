@@ -10,13 +10,13 @@ import { expect } from 'chai'
 
 const { Presenter: LegacyPresenter } = yaysonLegacy({ adapter: 'sequelize' })
 
-describe('LegacyPresenter', function (): void {
-  it('handles null', function (): void {
+describe('LegacyPresenter', function () {
+  it('handles null', function () {
     const json = LegacyPresenter.toJSON(null)
     return expect(json).to.deep.equal({ object: null, links: {} })
   })
 
-  it('create json structure of an object', function (): void {
+  it('create json structure of an object', function () {
     const obj = {
       get(): unknown {
         return { foo: 'bar' }
@@ -26,7 +26,7 @@ describe('LegacyPresenter', function (): void {
     return expect(json).to.deep.equal({ object: { foo: 'bar' }, links: {} })
   })
 
-  it('create json structure of two objects', function (): void {
+  it('create json structure of two objects', function () {
     const obj = [
       {
         get(): unknown {
@@ -49,7 +49,7 @@ describe('LegacyPresenter', function (): void {
     })
   })
 
-  it('should not dup object', function (): void {
+  it('should not dup object', function () {
     const obj = [
       {
         get(): unknown {
@@ -66,7 +66,7 @@ describe('LegacyPresenter', function (): void {
     return expect(json).to.deep.equal({ objects: [{ id: 1 }], links: {} })
   })
 
-  it('should use plural type', function (): void {
+  it('should use plural type', function () {
     class CactusPresenter extends LegacyPresenter {
       static type = 'cactus'
       static plural = 'cacti'
@@ -87,7 +87,7 @@ describe('LegacyPresenter', function (): void {
     return expect(json).to.deep.equal({ cacti: [{ id: 1 }, { id: 2 }], links: {} })
   })
 
-  it('should serialize relations', function (): void {
+  it('should serialize relations', function () {
     class TirePresenter extends LegacyPresenter {
       static type = 'tire'
 
@@ -145,7 +145,7 @@ describe('LegacyPresenter', function (): void {
     })
   })
 
-  it('should relationships with custom attributes method', function (): void {
+  it('should relationships with custom attributes method', function () {
     class EventPresenter extends LegacyPresenter {
       attributes(): unknown {
         return { hej: 'test' }

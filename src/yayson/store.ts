@@ -208,7 +208,6 @@ class Store {
       const modelArray = recs.map((rec) => {
         return this.toModel(rec, rec.type, models)
       })
-      // Assign links and meta properties to the array object
       result = Object.assign(modelArray, { links: undefined, meta: undefined })
     } else {
       result = Object.assign(this.toModel(recs, recs.type, models), { links: undefined, meta: undefined })

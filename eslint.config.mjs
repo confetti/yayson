@@ -68,6 +68,7 @@ export default [
       '@typescript-eslint/no-unused-vars': 'off',
       'mocha/no-exclusive-tests': 'error',
       'mocha/consistent-spacing-between-blocks': 'off',
+      '@typescript-eslint/explicit-function-return-type': ['off'],
     },
   },
 ]

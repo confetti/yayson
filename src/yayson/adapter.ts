@@ -1,13 +1,13 @@
 export type ModelLike = Record<string, unknown>
 
 class Adapter {
-  static get<T = unknown>(model: ModelLike, key?: string): T {
+  static get(model: ModelLike): Record<string, unknown>
+  static get(model: ModelLike, key: string): unknown
+  static get(model: ModelLike, key?: string): unknown {
     if (key) {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Adapter pattern requires type casting from unknown
-      return model[key] as T
+      return model[key]
     }
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Adapter pattern requires type casting from unknown
-    return model as T
+    return model
   }
 
   static id(model: ModelLike): string | undefined {
