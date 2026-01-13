@@ -2,10 +2,15 @@ import type {
   JsonApiDocument,
   JsonApiRelationship,
   JsonApiResourceIdentifier,
+  SchemaAdapterConstructor,
+  SchemaRegistry,
   StoreModel,
   StoreModels,
+  StoreOptions,
   StoreRecord as StoreRecordType,
+  ValidationError,
 } from './types.js'
+import DefaultSchemaAdapter from './schema-adapter.js'
 
 class StoreRecord {
   id: string
@@ -27,13 +32,21 @@ class StoreRecord {
 
 class Store {
   records: StoreRecord[] = []
+  schemas?: SchemaRegistry
+  schemaAdapter: SchemaAdapterConstructor
+  strict: boolean
+  validationErrors: ValidationError[] = []
 
-  constructor(_options?: unknown) {
+  constructor(options?: StoreOptions) {
+    this.schemas = options?.schemas
+    this.schemaAdapter = options?.schemaAdapter ?? DefaultSchemaAdapter
+    this.strict = options?.strict ?? false
     this.reset()
   }
 
   reset(): void {
     this.records = []
+    this.validationErrors = []
   }
 
   toModel(rec: StoreRecord, type: string, models: StoreModels): StoreModel {
@@ -97,6 +110,28 @@ class Store {
     if (typeAttribute) {
       model.type = typeAttribute
     }
+
+    // Validate with schema if provided
+    if (this.schemas && this.schemas[rec.type]) {
+      const schema = this.schemas[rec.type]
+      const result = this.schemaAdapter.validate(schema, model, this.strict)
+
+      if (this.strict) {
+        // Strict mode: validate throws on error, so we just return the data
+        return result.data as StoreModel
+      } else {
+        // Safe mode: collect errors but return model
+        if (!result.valid) {
+          this.validationErrors.push({
+            type: rec.type,
+            id: rec.id,
+            error: result.error,
+          })
+        }
+        return result.data as StoreModel
+      }
+    }
+
     return model
   }
 
@@ -154,10 +189,13 @@ class Store {
     }
   }
 
-  sync(
+  sync<T extends StoreModel = StoreModel>(
     body: JsonApiDocument,
     filterType?: string,
-  ): ((StoreModel | StoreModel[] | null) & { links?: unknown; meta?: unknown }) | null {
+  ): ((T | T[] | null) & { links?: unknown; meta?: unknown }) | null {
+    // Clear previous validation errors
+    this.validationErrors = []
+
     const syncData = (
       data: JsonApiDocument['data'] | JsonApiDocument['included'],
     ): StoreRecord | StoreRecord[] | null => {
@@ -205,18 +243,25 @@ class Store {
     }
 
     const models: StoreModels = {}
-    let result: ((StoreModel | StoreModel[]) & { links?: unknown; meta?: unknown }) | null = null
+    let result: ((T | T[]) & { links?: unknown; meta?: unknown }) | null
 
     if (Array.isArray(recs)) {
       let modelArray = recs.map((rec) => {
-        return this.toModel(rec, rec.type, models)
+        return this.toModel(rec, rec.type, models) as T
       })
       if (filterType) {
-        modelArray = modelArray.filter((model) => model.type === filterType)
+        modelArray = modelArray.filter((model) => (model as StoreModel).type === filterType)
       }
-      result = Object.assign(modelArray, { links: undefined, meta: undefined })
+      result = Object.assign(modelArray, { links: undefined, meta: undefined }) as T[] & {
+        links?: unknown
+        meta?: unknown
+      }
     } else {
-      result = Object.assign(this.toModel(recs, recs.type, models), { links: undefined, meta: undefined })
+      const model = this.toModel(recs, recs.type, models) as T
+      result = Object.assign(model, { links: undefined, meta: undefined }) as T & {
+        links?: unknown
+        meta?: unknown
+      }
     }
 
     if (Object.prototype.hasOwnProperty.call(body, 'links')) {
@@ -231,6 +276,13 @@ class Store {
   }
 }
 
-export default function createStore(): typeof Store {
+export default function createStore(options?: StoreOptions): typeof Store {
+  if (options) {
+    return class extends Store {
+      constructor() {
+        super(options)
+      }
+    }
+  }
   return Store
 }

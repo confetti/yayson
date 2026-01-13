@@ -1,8 +1,18 @@
 import Adapter from './yayson/adapter.js'
 import * as adapters from './yayson/adapters/index.js'
 import createPresenter from './yayson/presenter.js'
+import SchemaAdapter from './yayson/schema-adapter.js'
 import createStore from './yayson/store.js'
-import type { AdapterConstructor, PresenterConstructor } from './yayson/types.js'
+import type {
+  AdapterConstructor,
+  PresenterConstructor,
+  SchemaAdapterConstructor,
+  SchemaAdapterInstance,
+  SchemaRegistry,
+  StoreOptions,
+  ValidationError,
+  ValidationResult,
+} from './yayson/types.js'
 
 type AdapterOption = string | AdapterConstructor
 
@@ -41,5 +51,14 @@ export default function yayson(options?: YaysonOptions): YaysonResult {
   }
 }
 
-export { Adapter, adapters, createPresenter, createStore }
-export type { YaysonOptions, YaysonResult }
+export { Adapter, adapters, createPresenter, createStore, SchemaAdapter }
+export type {
+  SchemaAdapterConstructor,
+  SchemaAdapterInstance,
+  SchemaRegistry,
+  StoreOptions,
+  ValidationError,
+  ValidationResult,
+  YaysonOptions,
+  YaysonResult,
+}

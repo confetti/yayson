@@ -102,3 +102,34 @@ export interface StoreModels {
     [id: string]: StoreModel
   }
 }
+
+export interface SchemaRegistry {
+  [type: string]: unknown
+}
+
+export interface ValidationResult {
+  valid: boolean
+  data: unknown
+  error?: unknown
+}
+
+export interface SchemaAdapterConstructor {
+  new (): SchemaAdapterInstance
+  validate(schema: unknown, data: unknown, strict: boolean): ValidationResult
+}
+
+export interface SchemaAdapterInstance {
+  validate(schema: unknown, data: unknown, strict: boolean): ValidationResult
+}
+
+export interface StoreOptions {
+  schemas?: SchemaRegistry
+  schemaAdapter?: SchemaAdapterConstructor
+  strict?: boolean
+}
+
+export interface ValidationError {
+  type: string
+  id: string
+  error: unknown
+}

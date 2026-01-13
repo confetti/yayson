@@ -1,4 +1,6 @@
 import { expect } from 'chai'
+import { z } from 'zod'
+import type { ValidationResult } from '../../src/yayson/types.js'
 
 const { Store } = yayson()
 
@@ -530,5 +532,340 @@ describe('Store', function () {
 
     const allImages = this.store.findAll('images')
     expect(allImages.length).to.equal(2)
+  })
+
+  describe('Schema Validation', function () {
+    it('should validate data with schema in strict mode', function () {
+      const eventSchema = z.object({
+        id: z.string(),
+        type: z.string(),
+        name: z.string(),
+      })
+
+      const store = new Store({
+        schemas: { events: eventSchema },
+        strict: true,
+      })
+
+      const result = store.sync({
+        data: {
+          type: 'events',
+          id: '1',
+          attributes: { name: 'Valid Event' },
+        },
+      })
+
+      expect(result.name).to.equal('Valid Event')
+      expect(store.validationErrors.length).to.equal(0)
+    })
+
+    it('should throw error with invalid data in strict mode', function () {
+      const eventSchema = z.object({
+        id: z.string(),
+        type: z.string(),
+        name: z.string(),
+        requiredField: z.string(),
+      })
+
+      const store = new Store({
+        schemas: { events: eventSchema },
+        strict: true,
+      })
+
+      expect(() => {
+        store.sync({
+          data: {
+            type: 'events',
+            id: '1',
+            attributes: { name: 'Invalid Event' },
+          },
+        })
+      }).to.throw()
+    })
+
+    it('should collect validation errors in safe mode', function () {
+      const eventSchema = z.object({
+        id: z.string(),
+        type: z.string(),
+        name: z.string(),
+        requiredField: z.string(),
+      })
+
+      const store = new Store({
+        schemas: { events: eventSchema },
+        strict: false,
+      })
+
+      const result = store.sync({
+        data: {
+          type: 'events',
+          id: '1',
+          attributes: { name: 'Invalid Event' },
+        },
+      })
+
+      expect(result.name).to.equal('Invalid Event')
+      expect(store.validationErrors.length).to.equal(1)
+      expect(store.validationErrors[0].type).to.equal('events')
+      expect(store.validationErrors[0].id).to.equal('1')
+      expect(store.validationErrors[0].error).to.exist
+    })
+
+    it('should validate only specified types', function () {
+      const eventSchema = z.object({
+        id: z.string(),
+        type: z.string(),
+        name: z.string(),
+      })
+
+      const store = new Store({
+        schemas: { events: eventSchema },
+        strict: false,
+      })
+
+      const result = store.sync({
+        data: [
+          {
+            type: 'events',
+            id: '1',
+            attributes: { name: 'Event' },
+          },
+          {
+            type: 'images',
+            id: '2',
+            attributes: { url: 'http://example.com/image.jpg' },
+          },
+        ],
+      })
+
+      expect(result.length).to.equal(2)
+      expect(store.validationErrors.length).to.equal(0)
+    })
+
+    it('should validate array of items and collect multiple errors', function () {
+      const eventSchema = z.object({
+        id: z.string(),
+        type: z.string(),
+        name: z.string(),
+        requiredField: z.string(),
+      })
+
+      const store = new Store({
+        schemas: { events: eventSchema },
+        strict: false,
+      })
+
+      const result = store.sync({
+        data: [
+          {
+            type: 'events',
+            id: '1',
+            attributes: { name: 'Event 1' },
+          },
+          {
+            type: 'events',
+            id: '2',
+            attributes: { name: 'Event 2' },
+          },
+          {
+            type: 'events',
+            id: '3',
+            attributes: { name: 'Event 3' },
+          },
+        ],
+      })
+
+      expect(result.length).to.equal(3)
+      expect(store.validationErrors.length).to.equal(3)
+      expect(store.validationErrors[0].id).to.equal('1')
+      expect(store.validationErrors[1].id).to.equal('2')
+      expect(store.validationErrors[2].id).to.equal('3')
+    })
+
+    it('should clear validation errors on each sync', function () {
+      const eventSchema = z.object({
+        id: z.string(),
+        type: z.string(),
+        name: z.string(),
+        requiredField: z.string(),
+      })
+
+      const store = new Store({
+        schemas: { events: eventSchema },
+        strict: false,
+      })
+
+      store.sync({
+        data: {
+          type: 'events',
+          id: '1',
+          attributes: { name: 'Invalid Event' },
+        },
+      })
+
+      expect(store.validationErrors.length).to.equal(1)
+
+      store.sync({
+        data: {
+          type: 'events',
+          id: '2',
+          attributes: { name: 'Valid Event', requiredField: 'value' },
+        },
+      })
+
+      expect(store.validationErrors.length).to.equal(0)
+    })
+
+    it('should work with type-safe sync and filtered results', function () {
+      interface Event {
+        id: string
+        type: string
+        name: string
+      }
+
+      const eventSchema = z.object({
+        id: z.string(),
+        type: z.string(),
+        name: z.string(),
+      })
+
+      const store = new Store({
+        schemas: { events: eventSchema },
+        strict: true,
+      })
+
+      const result = store.sync<Event>(
+        {
+          data: [
+            {
+              type: 'events',
+              id: '1',
+              attributes: { name: 'Event 1' },
+            },
+            {
+              type: 'images',
+              id: '2',
+              attributes: { url: 'image.jpg' },
+            },
+            {
+              type: 'events',
+              id: '3',
+              attributes: { name: 'Event 3' },
+            },
+          ],
+        },
+        'events',
+      )
+
+      expect(result.length).to.equal(2)
+      expect(result[0].name).to.equal('Event 1')
+      expect(result[1].name).to.equal('Event 3')
+    })
+
+    it('should validate with pagination scenario', function () {
+      interface Event {
+        id: string
+        type: string
+        name: string
+      }
+
+      const eventSchema = z.object({
+        id: z.string(),
+        type: z.string(),
+        name: z.string(),
+      })
+
+      const store = new Store({
+        schemas: { events: eventSchema },
+        strict: true,
+      })
+
+      store.sync({
+        data: [
+          { type: 'events', id: '1', attributes: { name: 'Page 1 Event 1' } },
+          { type: 'events', id: '2', attributes: { name: 'Page 1 Event 2' } },
+        ],
+      })
+
+      const page2 = store.sync<Event>(
+        {
+          data: [
+            { type: 'events', id: '3', attributes: { name: 'Page 2 Event 1' } },
+            { type: 'events', id: '4', attributes: { name: 'Page 2 Event 2' } },
+          ],
+        },
+        'events',
+      )
+
+      expect(page2.length).to.equal(2)
+      expect(page2[0].name).to.equal('Page 2 Event 1')
+      expect(page2[1].name).to.equal('Page 2 Event 2')
+      expect(store.validationErrors.length).to.equal(0)
+    })
+
+    it('should work with custom schema adapter', function () {
+      // Custom schema adapter that validates based on custom rules
+      class CustomSchemaAdapter {
+        static validate(schema: unknown, data: unknown, strict: boolean): ValidationResult {
+          const customSchema = schema as { requiredFields: string[] }
+          const model = data as Record<string, unknown>
+
+          // Check if all required fields are present
+          const missingFields = customSchema.requiredFields.filter((field) => !(field in model))
+
+          if (missingFields.length > 0) {
+            if (strict) {
+              throw new Error(`Missing required fields: ${missingFields.join(', ')}`)
+            }
+            return {
+              valid: false,
+              data,
+              error: { message: `Missing required fields: ${missingFields.join(', ')}` },
+            }
+          }
+
+          return {
+            valid: true,
+            data,
+          }
+        }
+
+        validate(schema: unknown, data: unknown, strict: boolean): ValidationResult {
+          return CustomSchemaAdapter.validate(schema, data, strict)
+        }
+      }
+
+      const store = new Store({
+        schemas: {
+          events: { requiredFields: ['id', 'type', 'name'] },
+        },
+        schemaAdapter: CustomSchemaAdapter,
+        strict: false,
+      })
+
+      const result = store.sync({
+        data: {
+          type: 'events',
+          id: '1',
+          attributes: { name: 'Valid Event' },
+        },
+      })
+
+      expect(result.name).to.equal('Valid Event')
+      expect(store.validationErrors.length).to.equal(0)
+
+      // Sync invalid data
+      store.sync({
+        data: {
+          type: 'events',
+          id: '2',
+          attributes: {},
+        },
+      })
+
+      expect(store.validationErrors.length).to.equal(1)
+      expect(store.validationErrors[0].type).to.equal('events')
+      expect(store.validationErrors[0].id).to.equal('2')
+    })
   })
 })
