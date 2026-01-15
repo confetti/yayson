@@ -807,8 +807,10 @@ describe('Store', function () {
       // Custom schema adapter that validates based on custom rules
       class CustomSchemaAdapter {
         static validate(schema: unknown, data: unknown, strict: boolean): ValidationResult {
-          const customSchema = schema as { requiredFields: string[] }
-          const model = data as Record<string, unknown>
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test adapter, schema is known to have requiredFields
+          const customSchema = schema as unknown as { requiredFields: string[] }
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test adapter, data is known to be a record
+          const model = data as unknown as Record<string, unknown>
 
           // Check if all required fields are present
           const missingFields = customSchema.requiredFields.filter((field) => !(field in model))

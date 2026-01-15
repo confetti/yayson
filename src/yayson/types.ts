@@ -107,9 +107,22 @@ export interface SchemaRegistry {
   [type: string]: unknown
 }
 
-export interface ValidationResult {
+// Type inference helpers for extracting model types from schemas
+export type InferSchemaType<T> = T extends { parse: (data: unknown) => infer R }
+  ? R
+  : T extends (data: unknown) => infer R
+    ? R
+    : unknown
+
+export type InferModelType<S, T extends string> = S extends SchemaRegistry
+  ? T extends keyof S
+    ? InferSchemaType<S[T]>
+    : StoreModel
+  : StoreModel
+
+export interface ValidationResult<T = unknown> {
   valid: boolean
-  data: unknown
+  data: T
   error?: unknown
 }
 
@@ -122,8 +135,8 @@ export interface SchemaAdapterInstance {
   validate(schema: unknown, data: unknown, strict: boolean): ValidationResult
 }
 
-export interface StoreOptions {
-  schemas?: SchemaRegistry
+export interface StoreOptions<S extends SchemaRegistry = SchemaRegistry> {
+  schemas?: S
   schemaAdapter?: SchemaAdapterConstructor
   strict?: boolean
 }

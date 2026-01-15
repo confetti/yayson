@@ -5,22 +5,31 @@ interface ZodLikeSchema {
   safeParse: (data: unknown) => { success: true; data: unknown } | { success: false; error: unknown }
 }
 
+function isZodLikeSchema(schema: unknown): schema is ZodLikeSchema {
+  return (
+    schema != null &&
+    typeof schema === 'object' &&
+    'parse' in schema &&
+    typeof schema.parse === 'function' &&
+    'safeParse' in schema &&
+    typeof schema.safeParse === 'function'
+  )
+}
+
 class SchemaAdapter {
   static validate(schema: unknown, data: unknown, strict: boolean): ValidationResult {
-    const zodSchema = schema as ZodLikeSchema
+    if (!isZodLikeSchema(schema)) {
+      throw new Error('Invalid schema: must have parse and safeParse methods')
+    }
 
     if (strict) {
-      try {
-        const validData = zodSchema.parse(data)
-        return {
-          valid: true,
-          data: validData,
-        }
-      } catch (error) {
-        throw error
+      const validData = schema.parse(data)
+      return {
+        valid: true,
+        data: validData,
       }
     } else {
-      const result = zodSchema.safeParse(data)
+      const result = schema.safeParse(data)
       if (result.success) {
         return {
           valid: true,

@@ -1,4 +1,5 @@
 import type {
+  InferModelType,
   JsonApiDocument,
   JsonApiRelationship,
   JsonApiResourceIdentifier,
@@ -30,14 +31,14 @@ class StoreRecord {
   }
 }
 
-class Store {
+class Store<S extends SchemaRegistry = SchemaRegistry> {
   records: StoreRecord[] = []
-  schemas?: SchemaRegistry
+  schemas?: S
   schemaAdapter: SchemaAdapterConstructor
   strict: boolean
   validationErrors: ValidationError[] = []
 
-  constructor(options?: StoreOptions) {
+  constructor(options?: StoreOptions<S>) {
     this.schemas = options?.schemas
     this.schemaAdapter = options?.schemaAdapter ?? DefaultSchemaAdapter
     this.strict = options?.strict ?? false
@@ -91,7 +92,11 @@ class Store {
           continue
         }
         const resolve = ({ type, id }: JsonApiResourceIdentifier): StoreModel | null => {
-          return this.find(type, id, models)
+          const result = this.find(type, id, models)
+          // Type assertion necessary: Runtime type string cannot be type-checked at compile time
+          // find<T>(type: T) uses type parameter, but here type is dynamic from relationship data
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          return result as unknown as StoreModel | null
         }
         if (Array.isArray(data)) {
           model[key] = data.map(resolve)
@@ -116,20 +121,18 @@ class Store {
       const schema = this.schemas[rec.type]
       const result = this.schemaAdapter.validate(schema, model, this.strict)
 
-      if (this.strict) {
-        // Strict mode: validate throws on error, so we just return the data
-        return result.data as StoreModel
-      } else {
-        // Safe mode: collect errors but return model
-        if (!result.valid) {
-          this.validationErrors.push({
-            type: rec.type,
-            id: rec.id,
-            error: result.error,
-          })
-        }
-        return result.data as StoreModel
+      if (!result.valid) {
+        this.validationErrors.push({
+          type: rec.type,
+          id: rec.id,
+          error: result.error,
+        })
       }
+
+      // Type assertion necessary: Schema validation returns unknown but produces valid StoreModel-compatible data
+      // This bridges the schema validation system with the store's type system
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return result.data as unknown as StoreModel
     }
 
     return model
@@ -143,7 +146,7 @@ class Store {
     return this.records.filter((r) => r.type === type)
   }
 
-  find(type: string, id: string, models?: StoreModels): StoreModel | null {
+  find<T extends string>(type: T, id: string, models?: StoreModels): InferModelType<S, T> | null {
     const modelsObj = models ?? {}
     const rec = this.findRecord(type, id)
     if (rec == null) {
@@ -152,10 +155,14 @@ class Store {
     if (!modelsObj[type]) {
       modelsObj[type] = {}
     }
-    return modelsObj[type][id] || this.toModel(rec, type, modelsObj)
+    // Type assertion necessary for type inference feature:
+    // toModel returns StoreModel, but type system needs to look up actual type from schema registry S using type parameter T
+    // TypeScript cannot automatically map string literal T to schema type - this enables type-safe store.find('events') → Event
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return (modelsObj[type][id] || this.toModel(rec, type, modelsObj)) as unknown as InferModelType<S, T>
   }
 
-  findAll(type: string, models?: StoreModels): StoreModel[] {
+  findAll<T extends string>(type: T, models?: StoreModels): InferModelType<S, T>[] {
     const modelsObj = models ?? {}
     const recs = this.findRecords(type)
     if (recs == null) {
@@ -167,7 +174,11 @@ class Store {
       }
       return this.toModel(rec, type, modelsObj)
     })
-    return Object.values(modelsObj[type] || {})
+    // Type assertion necessary for type inference feature:
+    // Object.values returns StoreModel[], but type system needs to infer actual type from schema registry
+    // Enables type-safe store.findAll('events') → Event[] without manual type annotations
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return Object.values(modelsObj[type] || {}) as unknown as InferModelType<S, T>[]
   }
 
   remove(type: string, id?: string): void | void[] {
@@ -189,10 +200,15 @@ class Store {
     }
   }
 
-  sync<T extends StoreModel = StoreModel>(
+  sync<FT extends string = string>(
     body: JsonApiDocument,
-    filterType?: string,
-  ): ((T | T[] | null) & { links?: unknown; meta?: unknown }) | null {
+    filterType?: FT,
+  ):
+    | ((InferModelType<S, FT> | InferModelType<S, FT>[] | StoreModel | StoreModel[] | null) & {
+        links?: unknown
+        meta?: unknown
+      })
+    | null {
     // Clear previous validation errors
     this.validationErrors = []
 
@@ -243,22 +259,38 @@ class Store {
     }
 
     const models: StoreModels = {}
-    let result: ((T | T[]) & { links?: unknown; meta?: unknown }) | null
+    let result:
+      | ((InferModelType<S, FT> | InferModelType<S, FT>[] | StoreModel | StoreModel[]) & {
+          links?: unknown
+          meta?: unknown
+        })
+      | null
 
     if (Array.isArray(recs)) {
       let modelArray = recs.map((rec) => {
-        return this.toModel(rec, rec.type, models) as T
+        return this.toModel(rec, rec.type, models)
       })
       if (filterType) {
-        modelArray = modelArray.filter((model) => (model as StoreModel).type === filterType)
+        // Type assertion necessary: toModel returns StoreModel, need to access .type property for filtering
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        modelArray = modelArray.filter((model) => (model as unknown as StoreModel).type === filterType)
       }
-      result = Object.assign(modelArray, { links: undefined, meta: undefined }) as T[] & {
+      // Type assertion necessary for type inference feature:
+      // sync<FT>(body, filterType: FT) needs to infer return type from filterType parameter
+      // Enables type-safe store.sync(data, 'events') → Event[] without manual annotations
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      result = Object.assign(modelArray, { links: undefined, meta: undefined }) as unknown as InferModelType<
+        S,
+        FT
+      >[] & {
         links?: unknown
         meta?: unknown
       }
     } else {
-      const model = this.toModel(recs, recs.type, models) as T
-      result = Object.assign(model, { links: undefined, meta: undefined }) as T & {
+      const model = this.toModel(recs, recs.type, models)
+      // Type assertion necessary for type inference feature (see array case above)
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      result = Object.assign(model, { links: undefined, meta: undefined }) as unknown as InferModelType<S, FT> & {
         links?: unknown
         meta?: unknown
       }
@@ -276,13 +308,21 @@ class Store {
   }
 }
 
-export default function createStore(options?: StoreOptions): typeof Store {
+export default function createStore<S extends SchemaRegistry = SchemaRegistry>(
+  options?: StoreOptions<S>,
+): typeof Store<S> {
   if (options) {
-    return class extends Store {
+    // Type assertion necessary: Factory pattern with generic schema registry
+    // Anonymous class extends Store<S> with captured options, must be cast to typeof Store<S>
+    // Enables const Store = createStore({ schemas }); new Store() with inferred schema types
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return class extends Store<S> {
       constructor() {
         super(options)
       }
-    }
+    } as unknown as typeof Store<S>
   }
-  return Store
+  // Type assertion necessary: Return base Store class typed with schema registry S for type inference
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return Store as unknown as typeof Store<S>
 }

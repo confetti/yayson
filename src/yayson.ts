@@ -5,6 +5,8 @@ import SchemaAdapter from './yayson/schema-adapter.js'
 import createStore from './yayson/store.js'
 import type {
   AdapterConstructor,
+  InferModelType,
+  InferSchemaType,
   PresenterConstructor,
   SchemaAdapterConstructor,
   SchemaAdapterInstance,
@@ -53,6 +55,8 @@ export default function yayson(options?: YaysonOptions): YaysonResult {
 
 export { Adapter, adapters, createPresenter, createStore, SchemaAdapter }
 export type {
+  InferModelType,
+  InferSchemaType,
   SchemaAdapterConstructor,
   SchemaAdapterInstance,
   SchemaRegistry,
