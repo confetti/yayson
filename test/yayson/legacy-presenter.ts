@@ -7,6 +7,7 @@
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
 import { expect } from 'chai'
+import type { ModelLike } from '../../src/yayson/adapter.js'
 
 const { Presenter: LegacyPresenter } = yaysonLegacy({ adapter: 'sequelize' })
 
@@ -91,7 +92,7 @@ describe('LegacyPresenter', function () {
     class TirePresenter extends LegacyPresenter {
       static type = 'tire'
 
-      relationships(): unknown {
+      relationships() {
         return { car: CarPresenter }
       }
     }
@@ -99,7 +100,7 @@ describe('LegacyPresenter', function () {
     class CarPresenter extends LegacyPresenter {
       static type = 'car'
 
-      relationships(): unknown {
+      relationships() {
         return { tire: TirePresenter }
       }
     }
@@ -147,12 +148,14 @@ describe('LegacyPresenter', function () {
 
   it('should relationships with custom attributes method', function () {
     class EventPresenter extends LegacyPresenter {
-      attributes(): unknown {
+      attributes(instance: ModelLike | null): Record<string, unknown> | null {
         return { hej: 'test' }
       }
     }
     const presenter = new EventPresenter()
     const json = presenter.toJSON({ id: 1 })
-    return expect(json.object.hej).to.eq('test')
+    // Legacy presenter uses 'object' instead of 'data'
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Legacy format uses 'object' property not in standard JsonApiDocument
+    expect((json as unknown as { object: Record<string, unknown> }).object.hej).to.eq('test')
   })
 })

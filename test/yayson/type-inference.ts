@@ -222,6 +222,7 @@ describe('Type Inference', function () {
     // Without schemas, returns StoreModel
     const events = store.findAll('events')
     expect(events.length).to.equal(1)
-    expect(events[0].name).to.equal('Event')
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test validates runtime data without schema
+    expect((events[0] as { name: string }).name).to.equal('Event')
   })
 })

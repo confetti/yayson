@@ -452,16 +452,20 @@ describe('Store', function () {
       ],
     })
 
-    expect(result.meta).to.deep.equal({ name: 'top level meta data', value: 1 })
-    expect(result[0].article.meta).to.deep.equal({
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    expect((result as any).meta).to.deep.equal({ name: 'top level meta data', value: 1 })
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    expect((result as any)[0].article.meta).to.deep.equal({
       author: 'John Doe',
       date: '2017-06-26',
     })
-    expect(result[0].comment.meta).to.deep.equal({
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    expect((result as any)[0].comment.meta).to.deep.equal({
       author: 'John Doe',
       date: '2017-06-26',
     })
-    expect(result[0].comment._links).to.deep.equal({
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    expect((result as any)[0].comment._links).to.deep.equal({
       self: 'http://example.com/events/1/relationships/comment',
       related: 'http://example.com/events/1/comment',
     })
@@ -481,13 +485,20 @@ describe('Store', function () {
       'events',
     )
 
-    expect(result.length).to.equal(3)
-    expect(result[0].id).to.equal('3')
-    expect(result[0].name).to.equal('Third')
-    expect(result[1].id).to.equal('1')
-    expect(result[1].name).to.equal('First')
-    expect(result[2].id).to.equal('2')
-    expect(result[2].name).to.equal('Second')
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    expect((result as any).length).to.equal(3)
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    expect((result as any)[0].id).to.equal('3')
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    expect((result as any)[0].name).to.equal('Third')
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    expect((result as any)[1].id).to.equal('1')
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    expect((result as any)[1].name).to.equal('First')
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    expect((result as any)[2].id).to.equal('2')
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    expect((result as any)[2].name).to.equal('Second')
   })
 
   it('should sync mixed types with includes and filter correctly', function () {
@@ -524,11 +535,16 @@ describe('Store', function () {
       'events',
     )
 
-    expect(result.length).to.equal(2)
-    expect(result[0].id).to.equal('1')
-    expect(result[0].name).to.equal('Event 1')
-    expect(result[1].id).to.equal('2')
-    expect(result[1].name).to.equal('Event 2')
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    expect((result as any).length).to.equal(2)
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    expect((result as any)[0].id).to.equal('1')
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    expect((result as any)[0].name).to.equal('Event 1')
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    expect((result as any)[1].id).to.equal('2')
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    expect((result as any)[1].name).to.equal('Event 2')
 
     const allImages = this.store.findAll('images')
     expect(allImages.length).to.equal(2)
@@ -555,7 +571,9 @@ describe('Store', function () {
         },
       })
 
-      expect(result.name).to.equal('Valid Event')
+      expect(result).to.not.be.null
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test validates runtime data shape
+      expect((result as { name: string }).name).to.equal('Valid Event')
       expect(store.validationErrors.length).to.equal(0)
     })
 
@@ -604,7 +622,8 @@ describe('Store', function () {
         },
       })
 
-      expect(result.name).to.equal('Invalid Event')
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      expect((result as any).name).to.equal('Invalid Event')
       expect(store.validationErrors.length).to.equal(1)
       expect(store.validationErrors[0].type).to.equal('events')
       expect(store.validationErrors[0].id).to.equal('1')
@@ -638,7 +657,8 @@ describe('Store', function () {
         ],
       })
 
-      expect(result.length).to.equal(2)
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      expect((result as any).length).to.equal(2)
       expect(store.validationErrors.length).to.equal(0)
     })
 
@@ -675,7 +695,8 @@ describe('Store', function () {
         ],
       })
 
-      expect(result.length).to.equal(3)
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      expect((result as any).length).to.equal(3)
       expect(store.validationErrors.length).to.equal(3)
       expect(store.validationErrors[0].id).to.equal('1')
       expect(store.validationErrors[1].id).to.equal('2')
@@ -734,7 +755,7 @@ describe('Store', function () {
         strict: true,
       })
 
-      const result = store.sync<Event>(
+      const result = store.sync(
         {
           data: [
             {
@@ -757,9 +778,12 @@ describe('Store', function () {
         'events',
       )
 
-      expect(result.length).to.equal(2)
-      expect(result[0].name).to.equal('Event 1')
-      expect(result[1].name).to.equal('Event 3')
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      expect((result as any).length).to.equal(2)
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      expect((result as any)[0].name).to.equal('Event 1')
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      expect((result as any)[1].name).to.equal('Event 3')
     })
 
     it('should validate with pagination scenario', function () {
@@ -787,7 +811,7 @@ describe('Store', function () {
         ],
       })
 
-      const page2 = store.sync<Event>(
+      const page2 = store.sync(
         {
           data: [
             { type: 'events', id: '3', attributes: { name: 'Page 2 Event 1' } },
@@ -797,9 +821,12 @@ describe('Store', function () {
         'events',
       )
 
-      expect(page2.length).to.equal(2)
-      expect(page2[0].name).to.equal('Page 2 Event 1')
-      expect(page2[1].name).to.equal('Page 2 Event 2')
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      expect((page2 as any).length).to.equal(2)
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      expect((page2 as any)[0].name).to.equal('Page 2 Event 1')
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      expect((page2 as any)[1].name).to.equal('Page 2 Event 2')
       expect(store.validationErrors.length).to.equal(0)
     })
 
@@ -853,7 +880,8 @@ describe('Store', function () {
         },
       })
 
-      expect(result.name).to.equal('Valid Event')
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      expect((result as any).name).to.equal('Valid Event')
       expect(store.validationErrors.length).to.equal(0)
 
       // Sync invalid data
