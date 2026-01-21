@@ -36,6 +36,7 @@ class LegacyStoreClass<S extends SchemaRegistry = SchemaRegistry> {
   schemaAdapter: SchemaAdapterConstructor
   strict: boolean
   validationErrors: ValidationError[]
+  models: StoreModels
 
   constructor(options?: LegacyStoreOptions<S>) {
     this.types = options?.types || {}
@@ -45,27 +46,36 @@ class LegacyStoreClass<S extends SchemaRegistry = SchemaRegistry> {
     this.records = []
     this.relations = {}
     this.validationErrors = []
+    this.models = {}
   }
 
   reset(): void {
     this.records = []
     this.relations = {}
     this.validationErrors = []
+    this.models = {}
   }
 
   toModel(rec: LegacyStoreRecordType, type: string, models: StoreModels): StoreModel {
     // Keep original id type from data, but ensure string key for models lookup
     const idStr = String(rec.data.id)
+
+    if (!models[type]) {
+      models[type] = {}
+    }
+
+    // Return cached model if already built (prevents double validation)
+    if (models[type]![idStr]) {
+      return models[type]![idStr]!
+    }
+
     const model: StoreModel = { ...rec.data, type, id: idStr }
     // Preserve original id type from data (could be number or string)
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Legacy format preserves original id type
     model.id = rec.data.id as string
-    if (!models[type]) {
-      models[type] = {}
-    }
-    if (!models[type]![idStr]) {
-      models[type]![idStr] = model
-    }
+
+    // Store placeholder to handle circular relations
+    models[type]![idStr] = model
 
     const relations = this.relations[type]
     if (relations) {
@@ -91,9 +101,11 @@ class LegacyStoreClass<S extends SchemaRegistry = SchemaRegistry> {
         })
       }
 
-      // Return validated/transformed data
+      // Store and return validated/transformed data
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Schema validation returns unknown but produces valid StoreModel-compatible data
-      return result.data as unknown as StoreModel
+      const validatedModel = result.data as unknown as StoreModel
+      models[type]![idStr] = validatedModel
+      return validatedModel
     }
 
     return model
@@ -140,7 +152,7 @@ class LegacyStoreClass<S extends SchemaRegistry = SchemaRegistry> {
   }
 
   find<T extends string>(type: T, id: string, models?: StoreModels): InferModelType<S, T> | null {
-    const modelsObj = models ?? {}
+    const modelsObj = models ?? this.models
     const idStr = String(id)
     const rec = this.findRecord(type, idStr)
     if (rec == null) {
@@ -154,7 +166,7 @@ class LegacyStoreClass<S extends SchemaRegistry = SchemaRegistry> {
   }
 
   findAll<T extends string>(type: T, models?: StoreModels): InferModelType<S, T>[] {
-    const modelsObj = models ?? {}
+    const modelsObj = models ?? this.models
     const recs = this.findRecords(type)
     if (recs.length === 0) {
       return []
@@ -192,12 +204,16 @@ class LegacyStoreClass<S extends SchemaRegistry = SchemaRegistry> {
   }
 
   sync(data: LegacyData): void {
-    // Clear validation errors from previous sync
+    // Clear validation errors and models cache from previous sync
     this.validationErrors = []
+    this.models = {}
 
     if (data.links) {
       this.setupRelations(data.links)
     }
+
+    // Track records added in this sync for eager validation
+    const syncedRecords: LegacyStoreRecordType[] = []
 
     for (const name in data) {
       if (name === 'meta' || name === 'links') {
@@ -209,13 +225,22 @@ class LegacyStoreClass<S extends SchemaRegistry = SchemaRegistry> {
       const add = (d: Record<string, unknown>): void => {
         const type = this.types[name] || name
         this.remove(type, String(d.id))
-        this.records.push({ type, data: d })
+        const rec = { type, data: d }
+        this.records.push(rec)
+        syncedRecords.push(rec)
       }
 
       if (Array.isArray(value)) {
         value.forEach(add)
       } else if (typeof value === 'object' && value !== null) {
         add(value)
+      }
+    }
+
+    // Eager validation: build and validate only newly synced records when schemas are configured
+    if (this.schemas) {
+      for (const rec of syncedRecords) {
+        this.toModel(rec, rec.type, this.models)
       }
     }
   }

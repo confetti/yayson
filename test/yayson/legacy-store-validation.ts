@@ -78,10 +78,9 @@ describe('LegacyStore', function () {
         })
         const store = new Store()
 
-        store.sync({ event: { id: '1', name: 'Invalid Event' } })
-
+        // With eager validation, exception is thrown during sync()
         expect(() => {
-          store.find('event', '1')
+          store.sync({ event: { id: '1', name: 'Invalid Event' } })
         }).to.throw()
       })
 
