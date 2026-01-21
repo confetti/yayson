@@ -140,6 +140,28 @@ describe('LegacyStore', function () {
         expect(store.validationErrors[0].error).to.exist
       })
 
+      it('should validate during sync, not during find', function () {
+        const eventSchema = z.object({
+          id: z.string(),
+          type: z.string(),
+          name: z.string(),
+          requiredField: z.string(),
+        })
+
+        const Store = createLegacyStore({
+          schemas: { event: eventSchema },
+          strict: false,
+        })
+        const store = new Store()
+
+        store.sync({ event: { id: '1', name: 'Invalid Event' } })
+
+        // Validation errors should be collected during sync, not find
+        expect(store.validationErrors.length).to.equal(1)
+        expect(store.validationErrors[0].type).to.equal('event')
+        expect(store.validationErrors[0].id).to.equal('1')
+      })
+
       it('should validate array of items and collect multiple errors', function () {
         const eventSchema = z.object({
           id: z.string(),
