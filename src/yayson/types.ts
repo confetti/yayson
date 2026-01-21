@@ -146,3 +146,10 @@ export interface ValidationError {
   id: string
   error: unknown
 }
+
+export interface LegacyStoreOptions<S extends SchemaRegistry = SchemaRegistry> {
+  types?: Record<string, string>
+  schemas?: S
+  schemaAdapter?: SchemaAdapterConstructor
+  strict?: boolean
+}

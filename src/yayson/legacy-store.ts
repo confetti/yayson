@@ -1,12 +1,17 @@
-import type { StoreModel, StoreModels } from './types.js'
+import DefaultSchemaAdapter from './schema-adapter.js'
+import type {
+  StoreModel,
+  StoreModels,
+  SchemaRegistry,
+  SchemaAdapterConstructor,
+  ValidationError,
+  InferModelType,
+  LegacyStoreOptions,
+} from './types.js'
 
 interface LegacyStoreRecordType {
   type: string
   data: Record<string, unknown>
-}
-
-interface LegacyStoreOptions {
-  types?: Record<string, string>
 }
 
 interface LegacyLinks {
@@ -23,20 +28,29 @@ interface LegacyData {
   [key: string]: LegacyDataValue | LegacyLinks | Record<string, unknown> | undefined
 }
 
-class LegacyStoreClass {
+class LegacyStoreClass<S extends SchemaRegistry = SchemaRegistry> {
   types: Record<string, string>
   records: LegacyStoreRecordType[]
   relations: Record<string, Record<string, string>>
+  schemas?: S
+  schemaAdapter: SchemaAdapterConstructor
+  strict: boolean
+  validationErrors: ValidationError[]
 
-  constructor(options?: LegacyStoreOptions) {
+  constructor(options?: LegacyStoreOptions<S>) {
     this.types = options?.types || {}
+    this.schemas = options?.schemas
+    this.schemaAdapter = options?.schemaAdapter ?? DefaultSchemaAdapter
+    this.strict = options?.strict ?? false
     this.records = []
     this.relations = {}
+    this.validationErrors = []
   }
 
   reset(): void {
     this.records = []
     this.relations = {}
+    this.validationErrors = []
   }
 
   toModel(rec: LegacyStoreRecordType, type: string, models: StoreModels): StoreModel {
@@ -62,6 +76,24 @@ class LegacyStoreClass {
           ? value.map((id: unknown) => this.find(relationType, String(id), models))
           : this.find(relationType, String(value), models)
       }
+    }
+
+    // Validate with schema if provided
+    if (this.schemas && this.schemas[type]) {
+      const schema = this.schemas[type]
+      const result = this.schemaAdapter.validate(schema, model, this.strict)
+
+      if (!result.valid) {
+        this.validationErrors.push({
+          type,
+          id: idStr,
+          error: result.error,
+        })
+      }
+
+      // Return validated/transformed data
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Schema validation returns unknown but produces valid StoreModel-compatible data
+      return result.data as unknown as StoreModel
     }
 
     return model
@@ -90,11 +122,11 @@ class LegacyStoreClass {
   }
 
   // @deprecated Use retrieve() instead.
-  retrive(type: string, data: LegacyData): StoreModel | null {
+  retrive<T extends string>(type: T, data: LegacyData): InferModelType<S, T> | null {
     return this.retrieve(type, data)
   }
 
-  retrieve(type: string, data: LegacyData): StoreModel | null {
+  retrieve<T extends string>(type: T, data: LegacyData): InferModelType<S, T> | null {
     this.sync(data)
     const typeData = data[type]
     if (!typeData || typeof typeData !== 'object' || Array.isArray(typeData)) {
@@ -103,10 +135,11 @@ class LegacyStoreClass {
     if (!('id' in typeData)) {
       throw new Error(`Data for type ${type} is missing an id`)
     }
-    return this.find(type, String(typeData.id))
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Type inference: retrieve delegates to find with inferred type
+    return this.find(type, String(typeData.id)) as InferModelType<S, T> | null
   }
 
-  find(type: string, id: string, models?: StoreModels): StoreModel | null {
+  find<T extends string>(type: T, id: string, models?: StoreModels): InferModelType<S, T> | null {
     const modelsObj = models ?? {}
     const idStr = String(id)
     const rec = this.findRecord(type, idStr)
@@ -116,10 +149,11 @@ class LegacyStoreClass {
     if (!modelsObj[type]) {
       modelsObj[type] = {}
     }
-    return modelsObj[type]![idStr] || this.toModel(rec, type, modelsObj)
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Type inference: maps string literal type parameter to schema type
+    return (modelsObj[type]![idStr] || this.toModel(rec, type, modelsObj)) as unknown as InferModelType<S, T>
   }
 
-  findAll(type: string, models?: StoreModels): StoreModel[] {
+  findAll<T extends string>(type: T, models?: StoreModels): InferModelType<S, T>[] {
     const modelsObj = models ?? {}
     const recs = this.findRecords(type)
     if (recs.length === 0) {
@@ -131,7 +165,8 @@ class LegacyStoreClass {
       }
       return this.toModel(rec, type, modelsObj)
     })
-    return Object.values(modelsObj[type] || {})
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Type inference: maps string literal type parameter to schema type
+    return Object.values(modelsObj[type] || {}) as unknown as InferModelType<S, T>[]
   }
 
   remove(type: string, id?: string): void {
@@ -157,6 +192,9 @@ class LegacyStoreClass {
   }
 
   sync(data: LegacyData): void {
+    // Clear validation errors from previous sync
+    this.validationErrors = []
+
     if (data.links) {
       this.setupRelations(data.links)
     }
@@ -183,6 +221,18 @@ class LegacyStoreClass {
   }
 }
 
-export default function createLegacyStore(): typeof LegacyStoreClass {
-  return LegacyStoreClass
+export default function createLegacyStore<S extends SchemaRegistry = SchemaRegistry>(
+  options?: LegacyStoreOptions<S>,
+): typeof LegacyStoreClass<S> {
+  if (options) {
+    // Capture options in closure for type inference
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Factory pattern with generic schema registry
+    return class extends LegacyStoreClass<S> {
+      constructor() {
+        super(options)
+      }
+    } as unknown as typeof LegacyStoreClass<S>
+  }
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Return base class typed with schema registry S for type inference
+  return LegacyStoreClass as unknown as typeof LegacyStoreClass<S>
 }

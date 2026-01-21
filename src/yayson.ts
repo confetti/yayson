@@ -1,5 +1,6 @@
 import Adapter from './yayson/adapter.js'
 import * as adapters from './yayson/adapters/index.js'
+import createLegacyStore from './yayson/legacy-store.js'
 import createPresenter from './yayson/presenter.js'
 import SchemaAdapter from './yayson/schema-adapter.js'
 import createStore from './yayson/store.js'
@@ -7,6 +8,7 @@ import type {
   AdapterConstructor,
   InferModelType,
   InferSchemaType,
+  LegacyStoreOptions,
   PresenterConstructor,
   SchemaAdapterConstructor,
   SchemaAdapterInstance,
@@ -53,10 +55,11 @@ export default function yayson(options?: YaysonOptions): YaysonResult {
   }
 }
 
-export { Adapter, adapters, createPresenter, createStore, SchemaAdapter }
+export { Adapter, adapters, createLegacyStore, createPresenter, createStore, SchemaAdapter }
 export type {
   InferModelType,
   InferSchemaType,
+  LegacyStoreOptions,
   SchemaAdapterConstructor,
   SchemaAdapterInstance,
   SchemaRegistry,
