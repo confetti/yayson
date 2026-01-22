@@ -2,26 +2,61 @@
 
 A library for serializing and reading [JSON API](http://jsonapi.org) data in JavaScript.
 
-From version 3 we now support native JavaScript classes. YAYSON has zero dependencies and works in the browser and in node 14 and up.
+YAYSON supports both ESM and CommonJS, has zero dependencies, and works in the browser and in Node.js 18+.
 
 [![NPM](https://nodei.co/npm/yayson.png?downloads=true)](https://nodei.co/npm/yayson/)
 
 ## Installing
 
-Install yayson by running:
-
+```
+npm install yayson
 ```
 
-$ npm i yayson
+## Upgrading from 3.x
 
+Version 4.x includes several breaking changes:
+
+### Import syntax changed
+
+**CommonJS** - use named imports instead of default:
+
+```javascript
+// 3.x
+const yayson = require('yayson')
+const { Presenter } = yayson()
+
+// 4.x
+const { yayson } = require('yayson')
+const { Presenter } = yayson()
 ```
+
+**Legacy module:**
+
+```javascript
+// 3.x
+const yayson = require('yayson/legacy')
+const { Store } = yayson()
+
+// 4.x
+const { yayson } = require('yayson/legacy')
+const { Store } = yayson()
+```
+
+### Node.js version
+
+Node.js 18+ is now required (was 14+).
 
 ## Presenting data
 
 A basic `Presenter` can look like this:
 
 ```javascript
-const yayson = require('yayson')
+// ESM
+import { yayson } from 'yayson'
+const { Presenter } = yayson()
+
+// CommonJS
+const { yayson } = require('yayson')
 const { Presenter } = yayson()
 
 class BikePresenter extends Presenter {
@@ -59,7 +94,7 @@ be an array.
 A bit more advanced example:
 
 ```javascript
-const yayson = require('yayson')
+import { yayson } from 'yayson'
 const { Presenter } = yayson()
 
 class WheelPresenter extends Presenter {
@@ -84,14 +119,14 @@ By default it is set up to handle standard JS objects. You can also make
 it handle Sequelize.js models like this:
 
 ```javascript
-const yayson = require('yayson')
+import { yayson } from 'yayson'
 const { Presenter } = yayson({ adapter: 'sequelize' })
 ```
 
 You can also define your own adapter globally:
 
 ```javascript
-const yayson = require('yayson')
+import { yayson } from 'yayson'
 const { Presenter } = yayson({
   adapter: {
     id: function (model) {
@@ -138,10 +173,11 @@ This would produce:
 
 ## Parsing data
 
-You can use a `Store` can like this:
+You can use a `Store` like this:
 
 ```javascript
-const { Store } = require('yayson')()
+import { yayson } from 'yayson'
+const { Store } = yayson()
 const store = new Store()
 
 const data = await adapter.get({ path: '/events/' + id })
@@ -275,9 +311,16 @@ Earlier versions of JSON API worked a bit different from 1.0. Therefore YAYSON p
 ### Basic Usage
 
 ```javascript
-const yayson = require('yayson/legacy')
+// ESM
+import { yayson } from 'yayson/legacy'
 const { Presenter, Store } = yayson()
 
+// CommonJS
+const { yayson } = require('yayson/legacy')
+const { Presenter, Store } = yayson()
+```
+
+```javascript
 const store = new Store({
   types: {
     events: 'event',
@@ -293,17 +336,31 @@ store.sync({
 const event = store.find('event', '1')
 ```
 
+You can also use `createLegacyStore` directly:
+
+```javascript
+// ESM
+import { createLegacyStore } from 'yayson/legacy'
+
+// CommonJS
+const { createLegacyStore } = require('yayson/legacy')
+
+const Store = createLegacyStore({
+  types: { events: 'event' },
+})
+const store = new Store()
+```
+
 ### Schema Validation for Legacy Store
 
 The legacy store also supports schema validation and type inference, maintaining full backward compatibility:
 
 ```typescript
-import { createLegacyStore } from 'yayson'
+import { createLegacyStore } from 'yayson/legacy'
 import { z } from 'zod'
 
 const eventSchema = z.object({
   id: z.string(),
-  type: z.string(),
   name: z.string(),
   date: z.string(),
 })
@@ -351,7 +408,6 @@ Schemas validate the complete model after relations are resolved:
 ```typescript
 const eventSchema = z.object({
   id: z.string(),
-  type: z.string(),
   name: z.string(),
   images: z.array(
     z.object({
@@ -359,6 +415,11 @@ const eventSchema = z.object({
       url: z.string(),
     }),
   ),
+})
+
+const imageSchema = z.object({
+  id: z.string(),
+  url: z.string(),
 })
 
 const Store = createLegacyStore({
@@ -380,4 +441,4 @@ const event = store.find('event', '1')
 // event.images is an array of validated image objects
 ```
 
-**Note**: In the legacy store, validation happens lazily when you call `find()`, `findAll()`, or `retrieve()`, not during `sync()`. This is different from the modern store where validation happens immediately during sync.
+**Note**: Validation happens eagerly during `sync()` when schemas are configured. This allows you to check `store.validationErrors` immediately after syncing.
