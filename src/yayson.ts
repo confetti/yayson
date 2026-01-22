@@ -43,7 +43,7 @@ function lookupAdapter(nameOrAdapter?: AdapterOption): AdapterConstructor {
   return nameOrAdapter
 }
 
-export default function yayson(options?: YaysonOptions): YaysonResult {
+export function yayson(options?: YaysonOptions): YaysonResult {
   const adapter = lookupAdapter(options?.adapter)
   const Presenter = createPresenter(adapter)
   const Store = createStore()
@@ -55,6 +55,7 @@ export default function yayson(options?: YaysonOptions): YaysonResult {
   }
 }
 
+export default yayson
 export { Adapter, adapters, createLegacyStore, createPresenter, createStore, SchemaAdapter }
 export type {
   InferModelType,

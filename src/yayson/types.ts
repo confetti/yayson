@@ -90,7 +90,7 @@ export interface StoreRecord {
 
 export interface StoreModel extends Record<string, unknown> {
   id: string
-  type: string
+  type?: string
   meta?: Record<string, unknown>
   links?: JsonApiLink
   _links?: JsonApiLinks

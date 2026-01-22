@@ -69,10 +69,9 @@ class LegacyStoreClass<S extends SchemaRegistry = SchemaRegistry> {
       return models[type]![idStr]!
     }
 
-    const model: StoreModel = { ...rec.data, type, id: idStr }
-    // Preserve original id type from data (could be number or string)
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Legacy format preserves original id type
-    model.id = rec.data.id as string
+    // Don't add 'type' to model - preserve original data shape for backwards compatibility
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Legacy format: rec.data has id, spread creates StoreModel-compatible object
+    const model: StoreModel = { ...rec.data, id: rec.data.id as string }
 
     // Store placeholder to handle circular relations
     models[type]![idStr] = model

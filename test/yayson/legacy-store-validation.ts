@@ -43,7 +43,6 @@ describe('LegacyStore', function () {
       it('should validate data with schema in strict mode', function () {
         const eventSchema = z.object({
           id: z.string(),
-          type: z.string(),
           name: z.string(),
         })
 
@@ -67,7 +66,6 @@ describe('LegacyStore', function () {
       it('should throw error with invalid data in strict mode', function () {
         const eventSchema = z.object({
           id: z.string(),
-          type: z.string(),
           name: z.string(),
           requiredField: z.string(),
         })
@@ -87,7 +85,6 @@ describe('LegacyStore', function () {
       it('should validate with schema transforms in strict mode', function () {
         const eventSchema = z.object({
           id: z.string(),
-          type: z.string(),
           name: z.string(),
           count: z.string().transform((val) => parseInt(val, 10)),
         })
@@ -115,7 +112,6 @@ describe('LegacyStore', function () {
       it('should collect validation errors in safe mode', function () {
         const eventSchema = z.object({
           id: z.string(),
-          type: z.string(),
           name: z.string(),
           requiredField: z.string(),
         })
@@ -143,7 +139,6 @@ describe('LegacyStore', function () {
       it('should validate during sync, not during find', function () {
         const eventSchema = z.object({
           id: z.string(),
-          type: z.string(),
           name: z.string(),
           requiredField: z.string(),
         })
@@ -165,7 +160,6 @@ describe('LegacyStore', function () {
       it('should validate array of items and collect multiple errors', function () {
         const eventSchema = z.object({
           id: z.string(),
-          type: z.string(),
           name: z.string(),
           requiredField: z.string(),
         })
@@ -195,7 +189,6 @@ describe('LegacyStore', function () {
       it('should clear validation errors on each sync', function () {
         const eventSchema = z.object({
           id: z.string(),
-          type: z.string(),
           name: z.string(),
           requiredField: z.string(),
         })
@@ -218,7 +211,6 @@ describe('LegacyStore', function () {
       it('should clear validation errors on reset', function () {
         const eventSchema = z.object({
           id: z.string(),
-          type: z.string(),
           name: z.string(),
           requiredField: z.string(),
         })
@@ -243,7 +235,6 @@ describe('LegacyStore', function () {
       it('should validate only types with schemas', function () {
         const eventSchema = z.object({
           id: z.string(),
-          type: z.string(),
           name: z.string(),
         })
 
@@ -277,12 +268,10 @@ describe('LegacyStore', function () {
       it('should validate after relations are resolved', function () {
         const eventSchema = z.object({
           id: z.string(),
-          type: z.string(),
           name: z.string(),
           images: z.array(
             z.object({
               id: z.string(),
-              type: z.string(),
               url: z.string(),
             }),
           ),
@@ -290,7 +279,6 @@ describe('LegacyStore', function () {
 
         const imageSchema = z.object({
           id: z.string(),
-          type: z.string(),
           url: z.string(),
         })
 
@@ -327,14 +315,12 @@ describe('LegacyStore', function () {
       it('should handle circular relations with validation', function () {
         const eventSchema = z.object({
           id: z.string(),
-          type: z.string(),
           name: z.string(),
           images: z.array(z.any()),
         })
 
         const imageSchema = z.object({
           id: z.string(),
-          type: z.string(),
           url: z.string(),
           event: z.any(),
         })
@@ -371,7 +357,6 @@ describe('LegacyStore', function () {
       it('should validate with type mapping', function () {
         const eventSchema = z.object({
           id: z.string(),
-          type: z.string(),
           name: z.string(),
         })
 
@@ -398,13 +383,11 @@ describe('LegacyStore', function () {
       it('should validate with multiple type mappings', function () {
         const eventSchema = z.object({
           id: z.string(),
-          type: z.string(),
           name: z.string(),
         })
 
         const imageSchema = z.object({
           id: z.string(),
-          type: z.string(),
           url: z.string(),
         })
 
@@ -476,7 +459,7 @@ describe('LegacyStore', function () {
 
         const Store = createLegacyStore({
           schemas: {
-            event: { requiredFields: ['id', 'type', 'name'] },
+            event: { requiredFields: ['id', 'name'] },
           },
           schemaAdapter: CustomSchemaAdapter,
           strict: false,
@@ -507,7 +490,6 @@ describe('LegacyStore', function () {
       it('should validate when using retrieve()', function () {
         const eventSchema = z.object({
           id: z.string(),
-          type: z.string(),
           name: z.string(),
         })
 
@@ -532,7 +514,6 @@ describe('LegacyStore', function () {
       it('should validate with retrieve() in safe mode', function () {
         const eventSchema = z.object({
           id: z.string(),
-          type: z.string(),
           name: z.string(),
           requiredField: z.string(),
         })
@@ -562,7 +543,6 @@ describe('LegacyStore', function () {
       it('should validate when using deprecated retrive()', function () {
         const eventSchema = z.object({
           id: z.string(),
-          type: z.string(),
           name: z.string(),
         })
 
@@ -590,14 +570,12 @@ describe('LegacyStore', function () {
     it('should infer types from Zod schemas', function () {
       const eventSchema = z.object({
         id: z.string(),
-        type: z.literal('event'),
         name: z.string(),
         date: z.string(),
       })
 
       const imageSchema = z.object({
         id: z.string(),
-        type: z.literal('image'),
         url: z.string(),
         width: z.number(),
         height: z.number(),
@@ -651,13 +629,11 @@ describe('LegacyStore', function () {
     it('should infer types from custom schema functions', function () {
       class Ticket {
         id!: string
-        type!: string
         title!: string
         priority!: number
 
-        constructor(data: { id: string; type: string; title?: string; priority?: number }) {
+        constructor(data: { id: string; title?: string; priority?: number }) {
           this.id = data.id
-          this.type = data.type
           this.title = data.title || 'Untitled'
           this.priority = data.priority || 0
         }
@@ -694,7 +670,7 @@ describe('LegacyStore', function () {
       const schemas = {
         ticket: (data: unknown) =>
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test schema function, data validated at runtime
-          new Ticket(data as unknown as { id: string; type: string; title?: string; priority?: number }),
+          new Ticket(data as unknown as { id: string; title?: string; priority?: number }),
       } as const
 
       const Store = createLegacyStore({ schemas, schemaAdapter: FunctionSchemaAdapter })
@@ -714,7 +690,6 @@ describe('LegacyStore', function () {
       expect(tickets[0].title).to.equal('Fix bug')
       expect(tickets[0].priority).to.equal(5)
       expect(tickets[0].id).to.equal('1')
-      expect(tickets[0].type).to.equal('ticket')
 
       const ticket = store.find('ticket', '1')
       expect(ticket).to.not.be.null
@@ -727,7 +702,6 @@ describe('LegacyStore', function () {
     it('should work with retrieve() and type inference', function () {
       const eventSchema = z.object({
         id: z.string(),
-        type: z.literal('event'),
         name: z.string(),
       })
 
@@ -745,7 +719,6 @@ describe('LegacyStore', function () {
       expect(event).to.not.be.null
       if (event) {
         expect(event.name).to.equal('Event')
-        expect(event.type).to.equal('event')
       }
     })
 
