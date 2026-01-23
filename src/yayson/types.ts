@@ -64,9 +64,6 @@ export interface PresenterConstructor {
 
 export interface PresenterInstance {
   scope: JsonApiDocument
-  constructor: PresenterConstructor
-  _adapter: AdapterConstructor
-  _type: string
   id(instance: ModelLike): string | undefined
   selfLinks(instance: ModelLike): JsonApiLink | string | undefined
   links(instance?: ModelLike): JsonApiLinks | undefined

@@ -427,12 +427,12 @@ describe('Presenter', function (): void {
 
   it('should serialize in pure JS', function (): void {
     class EventPresenter extends Presenter {
+      static type = 'events'
       attributes(instance: ModelLike | null): Record<string, unknown> | null {
         super.attributes(instance)
         return { hej: 'test' }
       }
     }
-    EventPresenter.prototype._type = 'events'
     const presenter = new EventPresenter()
     const json = presenter.toJSON({ id: 1 })
     assertSingleResource(json.data)
