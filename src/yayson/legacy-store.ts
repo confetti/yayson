@@ -161,7 +161,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
       modelsObj[type] = {}
     }
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Type inference: maps string literal type parameter to schema type
-    return (modelsObj[type]![idStr] || this.toModel(rec, type, modelsObj)) as unknown as InferModelType<S, T>
+    return (modelsObj[type]![idStr] || this.toModel(rec, type, modelsObj)) as InferModelType<S, T>
   }
 
   findAll<T extends string>(type: T, models?: StoreModels): InferModelType<S, T>[] {
@@ -177,7 +177,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
       return this.toModel(rec, type, modelsObj)
     })
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Type inference: maps string literal type parameter to schema type
-    return Object.values(modelsObj[type] || {}) as unknown as InferModelType<S, T>[]
+    return Object.values(modelsObj[type] || {}) as InferModelType<S, T>[]
   }
 
   remove(type: string, id?: string): void {

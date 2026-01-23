@@ -159,7 +159,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     // toModel returns StoreModel, but type system needs to look up actual type from schema registry S using type parameter T
     // TypeScript cannot automatically map string literal T to schema type - this enables type-safe store.find('events') → Event
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return (modelsObj[type][id] || this.toModel(rec, type, modelsObj)) as unknown as InferModelType<S, T>
+    return (modelsObj[type][id] || this.toModel(rec, type, modelsObj)) as InferModelType<S, T>
   }
 
   findAll<T extends string>(type: T, models?: StoreModels): InferModelType<S, T>[] {
@@ -178,7 +178,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     // Object.values returns StoreModel[], but type system needs to infer actual type from schema registry
     // Enables type-safe store.findAll('events') → Event[] without manual type annotations
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return Object.values(modelsObj[type] || {}) as unknown as InferModelType<S, T>[]
+    return Object.values(modelsObj[type] || {}) as InferModelType<S, T>[]
   }
 
   remove(type: string, id?: string): void | void[] {
@@ -271,9 +271,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
         return this.toModel(rec, rec.type, models)
       })
       if (filterType) {
-        // Type assertion necessary: toModel returns StoreModel, need to access .type property for filtering
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        modelArray = modelArray.filter((model) => (model as unknown as StoreModel).type === filterType)
+        modelArray = modelArray.filter((model) => model.type === filterType)
       }
       // Type assertion necessary for type inference feature:
       // sync<FT>(body, filterType: FT) needs to infer return type from filterType parameter
