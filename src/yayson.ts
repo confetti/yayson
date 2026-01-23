@@ -1,9 +1,7 @@
 import Adapter from './yayson/adapter.js'
 import * as adapters from './yayson/adapters/index.js'
-import createLegacyStore from './yayson/legacy-store.js'
 import createPresenter from './yayson/presenter.js'
-import SchemaAdapter from './yayson/schema-adapter.js'
-import createStore from './yayson/store.js'
+import Store from './yayson/store.js'
 import type {
   AdapterConstructor,
   InferModelType,
@@ -25,7 +23,7 @@ interface YaysonOptions {
 }
 
 interface YaysonResult {
-  Store: ReturnType<typeof createStore>
+  Store: typeof Store
   Presenter: PresenterConstructor
   Adapter: typeof Adapter
 }
@@ -43,10 +41,9 @@ function lookupAdapter(nameOrAdapter?: AdapterOption): AdapterConstructor {
   return nameOrAdapter
 }
 
-export function yayson(options?: YaysonOptions): YaysonResult {
+function yayson(options?: YaysonOptions): YaysonResult {
   const adapter = lookupAdapter(options?.adapter)
   const Presenter = createPresenter(adapter)
-  const Store = createStore()
 
   return {
     Store,
@@ -56,7 +53,6 @@ export function yayson(options?: YaysonOptions): YaysonResult {
 }
 
 export default yayson
-export { Adapter, adapters, createLegacyStore, createPresenter, createStore, SchemaAdapter }
 export type {
   InferModelType,
   InferSchemaType,

@@ -573,7 +573,7 @@ describe('Store', function () {
 
       expect(result).to.not.be.null
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test validates runtime data shape
-      expect((result as { name: string }).name).to.equal('Valid Event')
+      expect((result as unknown as { name: string }).name).to.equal('Valid Event')
       expect(store.validationErrors.length).to.equal(0)
     })
 

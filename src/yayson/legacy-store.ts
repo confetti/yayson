@@ -28,7 +28,7 @@ interface LegacyData {
   [key: string]: LegacyDataValue | LegacyLinks | Record<string, unknown> | undefined
 }
 
-class LegacyStoreClass<S extends SchemaRegistry = SchemaRegistry> {
+export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
   types: Record<string, string>
   records: LegacyStoreRecordType[]
   relations: Record<string, Record<string, string>>
@@ -243,20 +243,4 @@ class LegacyStoreClass<S extends SchemaRegistry = SchemaRegistry> {
       }
     }
   }
-}
-
-export default function createLegacyStore<S extends SchemaRegistry = SchemaRegistry>(
-  options?: LegacyStoreOptions<S>,
-): typeof LegacyStoreClass<S> {
-  if (options) {
-    // Capture options in closure for type inference
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Factory pattern with generic schema registry
-    return class extends LegacyStoreClass<S> {
-      constructor() {
-        super(options)
-      }
-    } as unknown as typeof LegacyStoreClass<S>
-  }
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Return base class typed with schema registry S for type inference
-  return LegacyStoreClass as unknown as typeof LegacyStoreClass<S>
 }

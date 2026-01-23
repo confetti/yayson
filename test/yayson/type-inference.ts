@@ -1,6 +1,8 @@
 import { expect } from 'chai'
 import { z } from 'zod'
-import { createStore } from '../../src/yayson.js'
+import yayson from '../../src/yayson.js'
+
+const { Store } = yayson()
 
 describe('Type Inference', function () {
   it('should infer types from Zod schemas', function () {
@@ -24,8 +26,7 @@ describe('Type Inference', function () {
       images: imageSchema,
     } as const
 
-    const Store = createStore({ schemas, strict: true })
-    const store = new Store()
+    const store = new Store({ schemas, strict: true })
 
     store.sync({
       data: [
@@ -127,8 +128,7 @@ describe('Type Inference', function () {
         new Ticket(data as unknown as { id: string; type: string; title?: string; priority?: number }),
     } as const
 
-    const Store = createStore({ schemas, schemaAdapter: FunctionSchemaAdapter })
-    const store = new Store()
+    const store = new Store({ schemas, schemaAdapter: FunctionSchemaAdapter })
 
     store.sync({
       data: {
@@ -176,8 +176,7 @@ describe('Type Inference', function () {
       comments: commentSchema,
     } as const
 
-    const Store = createStore({ schemas, strict: true })
-    const store = new Store()
+    const store = new Store({ schemas, strict: true })
 
     // TypeScript should infer the correct type from filterType
     const events = store.sync(
@@ -206,7 +205,6 @@ describe('Type Inference', function () {
   })
 
   it('should work without schemas (backward compatibility)', function () {
-    const Store = createStore()
     const store = new Store()
 
     store.sync({

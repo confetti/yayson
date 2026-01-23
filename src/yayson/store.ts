@@ -31,7 +31,7 @@ class StoreRecord {
   }
 }
 
-class Store<S extends SchemaRegistry = SchemaRegistry> {
+export default class Store<S extends SchemaRegistry = SchemaRegistry> {
   records: StoreRecord[] = []
   schemas?: S
   schemaAdapter: SchemaAdapterConstructor
@@ -306,23 +306,4 @@ class Store<S extends SchemaRegistry = SchemaRegistry> {
 
     return result
   }
-}
-
-export default function createStore<S extends SchemaRegistry = SchemaRegistry>(
-  options?: StoreOptions<S>,
-): typeof Store<S> {
-  if (options) {
-    // Type assertion necessary: Factory pattern with generic schema registry
-    // Anonymous class extends Store<S> with captured options, must be cast to typeof Store<S>
-    // Enables const Store = createStore({ schemas }); new Store() with inferred schema types
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return class extends Store<S> {
-      constructor() {
-        super(options)
-      }
-    } as unknown as typeof Store<S>
-  }
-  // Type assertion necessary: Return base Store class typed with schema registry S for type inference
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return Store as unknown as typeof Store<S>
 }

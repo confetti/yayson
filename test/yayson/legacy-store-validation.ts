@@ -1,14 +1,13 @@
 import { expect } from 'chai'
 import { z } from 'zod'
-import { createLegacyStore } from '../../src/yayson.js'
+import LegacyStore from '../../src/yayson/legacy-store.js'
 import type { ValidationResult } from '../../src/yayson/types.js'
 
 describe('LegacyStore', function () {
   describe('Schema Validation', function () {
     describe('Backward Compatibility', function () {
       it('should work without schemas', function () {
-        const Store = createLegacyStore()
-        const store = new Store()
+        const store = new LegacyStore()
 
         store.sync({ event: { id: '1', name: 'Demo' } })
         const event = store.find('event', '1')
@@ -22,12 +21,11 @@ describe('LegacyStore', function () {
       })
 
       it('should work with type mapping but no schemas', function () {
-        const Store = createLegacyStore({
+        const store = new LegacyStore({
           types: {
             events: 'event',
           },
         })
-        const store = new Store()
 
         store.sync({ events: [{ id: '1', name: 'Event 1' }] })
         const events = store.findAll('event')
@@ -46,11 +44,10 @@ describe('LegacyStore', function () {
           name: z.string(),
         })
 
-        const Store = createLegacyStore({
+        const store = new LegacyStore({
           schemas: { event: eventSchema },
           strict: true,
         })
-        const store = new Store()
 
         store.sync({ event: { id: '1', name: 'Valid Event' } })
         const event = store.find('event', '1')
@@ -70,11 +67,10 @@ describe('LegacyStore', function () {
           requiredField: z.string(),
         })
 
-        const Store = createLegacyStore({
+        const store = new LegacyStore({
           schemas: { event: eventSchema },
           strict: true,
         })
-        const store = new Store()
 
         // With eager validation, exception is thrown during sync()
         expect(() => {
@@ -89,11 +85,10 @@ describe('LegacyStore', function () {
           count: z.string().transform((val) => parseInt(val, 10)),
         })
 
-        const Store = createLegacyStore({
+        const store = new LegacyStore({
           schemas: { event: eventSchema },
           strict: true,
         })
-        const store = new Store()
 
         store.sync({ event: { id: '1', name: 'Event', count: '42' } })
         const event = store.find('event', '1')
@@ -116,11 +111,10 @@ describe('LegacyStore', function () {
           requiredField: z.string(),
         })
 
-        const Store = createLegacyStore({
+        const store = new LegacyStore({
           schemas: { event: eventSchema },
           strict: false,
         })
-        const store = new Store()
 
         store.sync({ event: { id: '1', name: 'Invalid Event' } })
         const event = store.find('event', '1')
@@ -143,11 +137,10 @@ describe('LegacyStore', function () {
           requiredField: z.string(),
         })
 
-        const Store = createLegacyStore({
+        const store = new LegacyStore({
           schemas: { event: eventSchema },
           strict: false,
         })
-        const store = new Store()
 
         store.sync({ event: { id: '1', name: 'Invalid Event' } })
 
@@ -164,11 +157,10 @@ describe('LegacyStore', function () {
           requiredField: z.string(),
         })
 
-        const Store = createLegacyStore({
+        const store = new LegacyStore({
           schemas: { event: eventSchema },
           strict: false,
         })
-        const store = new Store()
 
         store.sync({
           event: [
@@ -193,11 +185,10 @@ describe('LegacyStore', function () {
           requiredField: z.string(),
         })
 
-        const Store = createLegacyStore({
+        const store = new LegacyStore({
           schemas: { event: eventSchema },
           strict: false,
         })
-        const store = new Store()
 
         store.sync({ event: { id: '1', name: 'Invalid Event' } })
         store.find('event', '1')
@@ -215,11 +206,10 @@ describe('LegacyStore', function () {
           requiredField: z.string(),
         })
 
-        const Store = createLegacyStore({
+        const store = new LegacyStore({
           schemas: { event: eventSchema },
           strict: false,
         })
-        const store = new Store()
 
         store.sync({ event: { id: '1', name: 'Invalid Event' } })
         store.find('event', '1')
@@ -238,11 +228,10 @@ describe('LegacyStore', function () {
           name: z.string(),
         })
 
-        const Store = createLegacyStore({
+        const store = new LegacyStore({
           schemas: { event: eventSchema },
           strict: false,
         })
-        const store = new Store()
 
         store.sync({
           event: { id: '1', name: 'Event' },
@@ -282,14 +271,13 @@ describe('LegacyStore', function () {
           url: z.string(),
         })
 
-        const Store = createLegacyStore({
+        const store = new LegacyStore({
           schemas: {
             event: eventSchema,
             image: imageSchema,
           },
           strict: true,
         })
-        const store = new Store()
 
         store.sync({
           links: {
@@ -325,14 +313,13 @@ describe('LegacyStore', function () {
           event: z.any(),
         })
 
-        const Store = createLegacyStore({
+        const store = new LegacyStore({
           schemas: {
             event: eventSchema,
             image: imageSchema,
           },
           strict: false,
         })
-        const store = new Store()
 
         store.sync({
           links: {
@@ -360,7 +347,7 @@ describe('LegacyStore', function () {
           name: z.string(),
         })
 
-        const Store = createLegacyStore({
+        const store = new LegacyStore({
           types: {
             events: 'event',
           },
@@ -369,7 +356,6 @@ describe('LegacyStore', function () {
           },
           strict: true,
         })
-        const store = new Store()
 
         store.sync({ events: [{ id: '1', name: 'Event' }] })
         const events = store.findAll('event')
@@ -391,7 +377,7 @@ describe('LegacyStore', function () {
           url: z.string(),
         })
 
-        const Store = createLegacyStore({
+        const store = new LegacyStore({
           types: {
             events: 'event',
             images: 'image',
@@ -402,7 +388,6 @@ describe('LegacyStore', function () {
           },
           strict: true,
         })
-        const store = new Store()
 
         store.sync({
           events: [{ id: '1', name: 'Event' }],
@@ -457,14 +442,13 @@ describe('LegacyStore', function () {
           }
         }
 
-        const Store = createLegacyStore({
+        const store = new LegacyStore({
           schemas: {
             event: { requiredFields: ['id', 'name'] },
           },
           schemaAdapter: CustomSchemaAdapter,
           strict: false,
         })
-        const store = new Store()
 
         store.sync({ event: { id: '1', name: 'Valid Event' } })
         const event = store.find('event', '1')
@@ -493,11 +477,10 @@ describe('LegacyStore', function () {
           name: z.string(),
         })
 
-        const Store = createLegacyStore({
+        const store = new LegacyStore({
           schemas: { event: eventSchema },
           strict: true,
         })
-        const store = new Store()
 
         const event = store.retrieve('event', {
           event: { id: '1', name: 'Event' },
@@ -518,11 +501,10 @@ describe('LegacyStore', function () {
           requiredField: z.string(),
         })
 
-        const Store = createLegacyStore({
+        const store = new LegacyStore({
           schemas: { event: eventSchema },
           strict: false,
         })
-        const store = new Store()
 
         const event = store.retrieve('event', {
           event: { id: '1', name: 'Event' },
@@ -546,11 +528,10 @@ describe('LegacyStore', function () {
           name: z.string(),
         })
 
-        const Store = createLegacyStore({
+        const store = new LegacyStore({
           schemas: { event: eventSchema },
           strict: true,
         })
-        const store = new Store()
 
         const event = store.retrive('event', {
           event: { id: '1', name: 'Event' },
@@ -586,8 +567,7 @@ describe('LegacyStore', function () {
         image: imageSchema,
       } as const
 
-      const Store = createLegacyStore({ schemas, strict: true })
-      const store = new Store()
+      const store = new LegacyStore({ schemas, strict: true })
 
       store.sync({
         event: [
@@ -673,8 +653,7 @@ describe('LegacyStore', function () {
           new Ticket(data as unknown as { id: string; title?: string; priority?: number }),
       } as const
 
-      const Store = createLegacyStore({ schemas, schemaAdapter: FunctionSchemaAdapter })
-      const store = new Store()
+      const store = new LegacyStore({ schemas, schemaAdapter: FunctionSchemaAdapter })
 
       store.sync({
         ticket: [
@@ -709,8 +688,7 @@ describe('LegacyStore', function () {
         event: eventSchema,
       } as const
 
-      const Store = createLegacyStore({ schemas, strict: true })
-      const store = new Store()
+      const store = new LegacyStore({ schemas, strict: true })
 
       const event = store.retrieve('event', {
         event: { id: '1', name: 'Event' },
@@ -723,8 +701,7 @@ describe('LegacyStore', function () {
     })
 
     it('should work without schemas (backward compatibility)', function () {
-      const Store = createLegacyStore()
-      const store = new Store()
+      const store = new LegacyStore()
 
       store.sync({ event: { id: '1', name: 'Event' } })
 
