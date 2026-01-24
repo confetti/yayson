@@ -14,12 +14,13 @@ npm run build         # Build with tsdown (outputs to build/)
 npm run lint          # Run tsc, eslint, and prettier concurrently
 npm run format        # Format code with prettier
 npm run test:build    # Test the built CJS/ESM outputs
+tsc --noEmit          # Type check only (don't use npx)
 ```
 
 Run a single test file:
 
 ```bash
-npx tsx node_modules/.bin/mocha test/yayson/presenter.ts
+tsx node_modules/.bin/mocha test/yayson/presenter.ts
 ```
 
 ## Architecture

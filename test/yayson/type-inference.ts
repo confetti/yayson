@@ -223,4 +223,422 @@ describe('Type Inference', function () {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test validates runtime data without schema
     expect((events[0] as { name: string }).name).to.equal('Event')
   })
+
+  describe('Relationship Type Inference', function () {
+    it('should infer types for array relationships', function () {
+      const imageSchema = z.object({
+        id: z.string(),
+        url: z.string(),
+        width: z.number().optional(),
+      })
+
+      const eventSchema = z.object({
+        id: z.string(),
+        name: z.string(),
+        images: z.array(imageSchema).optional(),
+      })
+
+      const schemas = {
+        events: eventSchema,
+        images: imageSchema,
+      } as const
+
+      const store = new Store({ schemas, strict: true })
+
+      store.sync({
+        data: {
+          type: 'events',
+          id: '1',
+          attributes: { name: 'Conference' },
+          relationships: {
+            images: {
+              data: [
+                { type: 'images', id: '10' },
+                { type: 'images', id: '11' },
+              ],
+            },
+          },
+        },
+        included: [
+          {
+            type: 'images',
+            id: '10',
+            attributes: { url: 'https://example.com/a.jpg', width: 800 },
+          },
+          {
+            type: 'images',
+            id: '11',
+            attributes: { url: 'https://example.com/b.jpg', width: 1200 },
+          },
+        ],
+      })
+
+      const event = store.find('events', '1')
+      expect(event).to.not.be.null
+      if (event) {
+        expect(event.name).to.equal('Conference')
+        // TypeScript infers event.images as { id: string; url: string; width?: number }[] | undefined
+        expect(event.images).to.be.an('array')
+        expect(event.images).to.have.length(2)
+        if (event.images) {
+          expect(event.images[0].url).to.equal('https://example.com/a.jpg')
+          expect(event.images[0].width).to.equal(800)
+          expect(event.images[1].url).to.equal('https://example.com/b.jpg')
+        }
+      }
+    })
+
+    it('should infer types for single relationships', function () {
+      const authorSchema = z.object({
+        id: z.string(),
+        name: z.string(),
+        email: z.string().optional(),
+      })
+
+      const articleSchema = z.object({
+        id: z.string(),
+        title: z.string(),
+        author: authorSchema.optional(),
+      })
+
+      const schemas = {
+        articles: articleSchema,
+        authors: authorSchema,
+      } as const
+
+      const store = new Store({ schemas, strict: true })
+
+      store.sync({
+        data: {
+          type: 'articles',
+          id: '1',
+          attributes: { title: 'TypeScript Tips' },
+          relationships: {
+            author: {
+              data: { type: 'authors', id: '5' },
+            },
+          },
+        },
+        included: [
+          {
+            type: 'authors',
+            id: '5',
+            attributes: { name: 'Jane Doe', email: 'jane@example.com' },
+          },
+        ],
+      })
+
+      const article = store.find('articles', '1')
+      expect(article).to.not.be.null
+      if (article) {
+        expect(article.title).to.equal('TypeScript Tips')
+        // TypeScript infers article.author as { id: string; name: string; email?: string } | undefined
+        expect(article.author).to.not.be.undefined
+        if (article.author) {
+          expect(article.author.name).to.equal('Jane Doe')
+          expect(article.author.email).to.equal('jane@example.com')
+        }
+      }
+    })
+
+    it('should handle nullable relationships', function () {
+      const authorSchema = z.object({
+        id: z.string(),
+        name: z.string(),
+      })
+
+      const articleSchema = z.object({
+        id: z.string(),
+        title: z.string(),
+        author: authorSchema.nullable(),
+      })
+
+      const schemas = {
+        articles: articleSchema,
+        authors: authorSchema,
+      } as const
+
+      const store = new Store({ schemas, strict: true })
+
+      // Article with null author relationship
+      store.sync({
+        data: {
+          type: 'articles',
+          id: '1',
+          attributes: { title: 'Anonymous Post' },
+          relationships: {
+            author: {
+              data: null,
+            },
+          },
+        },
+      })
+
+      const article = store.find('articles', '1')
+      expect(article).to.not.be.null
+      if (article) {
+        expect(article.title).to.equal('Anonymous Post')
+        // TypeScript infers article.author as { id: string; name: string } | null
+        expect(article.author).to.be.null
+      }
+    })
+
+    it('should handle unresolved relationships (referenced but not included)', function () {
+      const imageSchema = z.object({
+        id: z.string(),
+        url: z.string(),
+      })
+
+      // Use array of nullable items to handle unresolved references
+      const eventSchema = z.object({
+        id: z.string(),
+        name: z.string(),
+        images: z.array(imageSchema.nullable()).optional(),
+      })
+
+      const schemas = {
+        events: eventSchema,
+        images: imageSchema,
+      } as const
+
+      const store = new Store({ schemas, strict: true })
+
+      // Event references images that are NOT in included
+      store.sync({
+        data: {
+          type: 'events',
+          id: '1',
+          attributes: { name: 'Broken References Event' },
+          relationships: {
+            images: {
+              data: [
+                { type: 'images', id: '99' }, // Not in included
+                { type: 'images', id: '100' }, // Not in included
+              ],
+            },
+          },
+        },
+        // No included array - images won't resolve
+      })
+
+      const event = store.find('events', '1')
+      expect(event).to.not.be.null
+      if (event) {
+        expect(event.name).to.equal('Broken References Event')
+        // Unresolved references become null
+        expect(event.images).to.be.an('array')
+        if (event.images) {
+          expect(event.images).to.have.length(2)
+          expect(event.images[0]).to.be.null
+          expect(event.images[1]).to.be.null
+        }
+      }
+    })
+
+    it('should handle circular references with z.lazy()', function () {
+      interface Comment {
+        id: string
+        text: string
+        replies?: Comment[]
+        _links?: unknown
+        _meta?: unknown
+      }
+
+      const commentSchema: z.ZodType<Comment> = z.object({
+        id: z.string(),
+        text: z.string(),
+        replies: z.lazy(() => z.array(commentSchema)).optional(),
+        _links: z.unknown().optional(),
+        _meta: z.unknown().optional(),
+      })
+
+      const schemas = {
+        comments: commentSchema,
+      } as const
+
+      const store = new Store({ schemas, strict: true })
+
+      store.sync({
+        data: {
+          type: 'comments',
+          id: '1',
+          attributes: { text: 'Top-level comment' },
+          relationships: {
+            replies: {
+              data: [{ type: 'comments', id: '2' }],
+            },
+          },
+        },
+        included: [
+          {
+            type: 'comments',
+            id: '2',
+            attributes: { text: 'Reply to top-level' },
+            relationships: {
+              replies: {
+                data: [{ type: 'comments', id: '3' }],
+              },
+            },
+          },
+          {
+            type: 'comments',
+            id: '3',
+            attributes: { text: 'Nested reply' },
+          },
+        ],
+      })
+
+      const comment = store.find('comments', '1')
+      expect(comment).to.not.be.null
+      if (comment) {
+        expect(comment.text).to.equal('Top-level comment')
+        // TypeScript infers comment.replies as Comment[] | undefined
+        expect(comment.replies).to.be.an('array')
+        if (comment.replies) {
+          expect(comment.replies).to.have.length(1)
+          expect(comment.replies[0].text).to.equal('Reply to top-level')
+          // Nested replies
+          expect(comment.replies[0].replies).to.be.an('array')
+          if (comment.replies[0].replies) {
+            expect(comment.replies[0].replies[0].text).to.equal('Nested reply')
+          }
+        }
+      }
+    })
+
+    it('should handle mixed resolved and unresolved relationships', function () {
+      const imageSchema = z.object({
+        id: z.string(),
+        url: z.string(),
+      })
+
+      const eventSchema = z.object({
+        id: z.string(),
+        name: z.string(),
+        images: z.array(imageSchema.nullable()).optional(),
+      })
+
+      const schemas = {
+        events: eventSchema,
+        images: imageSchema,
+      } as const
+
+      const store = new Store({ schemas, strict: true })
+
+      store.sync({
+        data: {
+          type: 'events',
+          id: '1',
+          attributes: { name: 'Partial Event' },
+          relationships: {
+            images: {
+              data: [
+                { type: 'images', id: '10' }, // Included
+                { type: 'images', id: '99' }, // Not included
+                { type: 'images', id: '11' }, // Included
+              ],
+            },
+          },
+        },
+        included: [
+          {
+            type: 'images',
+            id: '10',
+            attributes: { url: 'https://example.com/a.jpg' },
+          },
+          {
+            type: 'images',
+            id: '11',
+            attributes: { url: 'https://example.com/b.jpg' },
+          },
+        ],
+      })
+
+      const event = store.find('events', '1')
+      expect(event).to.not.be.null
+      if (event) {
+        expect(event.images).to.be.an('array')
+        if (event.images) {
+          expect(event.images).to.have.length(3)
+          expect(event.images[0]).to.not.be.null
+          expect(event.images[0]?.url).to.equal('https://example.com/a.jpg')
+          expect(event.images[1]).to.be.null // Unresolved
+          expect(event.images[2]).to.not.be.null
+          expect(event.images[2]?.url).to.equal('https://example.com/b.jpg')
+        }
+      }
+    })
+
+    it('should handle deeply nested relationships', function () {
+      const categorySchema = z.object({
+        id: z.string(),
+        name: z.string(),
+      })
+
+      const tagSchema = z.object({
+        id: z.string(),
+        label: z.string(),
+        category: categorySchema.optional(),
+      })
+
+      const postSchema = z.object({
+        id: z.string(),
+        title: z.string(),
+        tags: z.array(tagSchema).optional(),
+      })
+
+      const schemas = {
+        posts: postSchema,
+        tags: tagSchema,
+        categories: categorySchema,
+      } as const
+
+      const store = new Store({ schemas, strict: true })
+
+      store.sync({
+        data: {
+          type: 'posts',
+          id: '1',
+          attributes: { title: 'Deep Nesting' },
+          relationships: {
+            tags: {
+              data: [{ type: 'tags', id: '10' }],
+            },
+          },
+        },
+        included: [
+          {
+            type: 'tags',
+            id: '10',
+            attributes: { label: 'tech' },
+            relationships: {
+              category: {
+                data: { type: 'categories', id: '20' },
+              },
+            },
+          },
+          {
+            type: 'categories',
+            id: '20',
+            attributes: { name: 'Technology' },
+          },
+        ],
+      })
+
+      const post = store.find('posts', '1')
+      expect(post).to.not.be.null
+      if (post) {
+        expect(post.title).to.equal('Deep Nesting')
+        expect(post.tags).to.be.an('array')
+        if (post.tags) {
+          expect(post.tags[0].label).to.equal('tech')
+          expect(post.tags[0].category).to.not.be.undefined
+          if (post.tags[0].category) {
+            // TypeScript infers category type correctly through nesting
+            expect(post.tags[0].category.name).to.equal('Technology')
+          }
+        }
+      }
+    })
+  })
 })
