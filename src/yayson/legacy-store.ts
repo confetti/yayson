@@ -100,9 +100,8 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
         })
       }
 
-      // Store and return validated/transformed data
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Schema validation returns unknown but produces valid StoreModel-compatible data
-      const validatedModel = result.data as unknown as StoreModel
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Schema validation returns unknown, cast to StoreModel after validation
+      const validatedModel = result.data as StoreModel
       models[type]![idStr] = validatedModel
       return validatedModel
     }

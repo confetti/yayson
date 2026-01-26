@@ -13,14 +13,10 @@ function isSequelizeModel(model: unknown): model is SequelizeModel {
 class SequelizeAdapter extends Adapter {
   static override get<T = unknown>(model: ModelLike, key?: string): T {
     if (isSequelizeModel(model)) {
-      // Type assertion necessary: Sequelize .get() returns unknown, must cast to generic T
-      // This bridges Sequelize's untyped API to the adapter's generic interface
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Sequelize .get() returns unknown, cast to generic T
       return model.get(key) as unknown as T
     }
-    // Type assertion necessary: Generic method signature requires return type T for all code paths
-    // Non-Sequelize models return undefined, must cast to T
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Non-Sequelize models return undefined, cast to T for generic signature
     return undefined as unknown as T
   }
 
@@ -28,9 +24,7 @@ class SequelizeAdapter extends Adapter {
     // Retain backwards compatibility with older sequelize versions
     const hasPrimaryKeys = model.constructor && 'primaryKeys' in model.constructor
     const pkFields = hasPrimaryKeys
-      ? // Type assertion necessary: Guard checks for primaryKeys existence, but constructor type is unknown
-        // Must cast to access primaryKeys property for Sequelize v3/v4 compatibility
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Access primaryKeys for Sequelize v3/v4 compatibility
         Object.keys((model.constructor as unknown as { primaryKeys: Record<string, unknown> }).primaryKeys)
       : ['id']
 

@@ -93,10 +93,8 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
         }
         const resolve = ({ type, id }: JsonApiResourceIdentifier): StoreModel | null => {
           const result = this.find(type, id, models)
-          // Type assertion necessary: Runtime type string cannot be type-checked at compile time
-          // find<T>(type: T) uses type parameter, but here type is dynamic from relationship data
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          return result as unknown as StoreModel | null
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Runtime type string cannot use type parameter
+          return result as StoreModel | null
         }
         if (Array.isArray(data)) {
           model[key] = data.map(resolve)
@@ -129,10 +127,8 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
         })
       }
 
-      // Type assertion necessary: Schema validation returns unknown but produces valid StoreModel-compatible data
-      // This bridges the schema validation system with the store's type system
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return result.data as unknown as StoreModel
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Schema validation returns unknown, cast to StoreModel after validation
+      return result.data as StoreModel
     }
 
     return model
@@ -155,10 +151,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     if (!modelsObj[type]) {
       modelsObj[type] = {}
     }
-    // Type assertion necessary for type inference feature:
-    // toModel returns StoreModel, but type system needs to look up actual type from schema registry S using type parameter T
-    // TypeScript cannot automatically map string literal T to schema type - this enables type-safe store.find('events') → Event
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from schema registry
     return (modelsObj[type][id] || this.toModel(rec, type, modelsObj)) as InferModelType<S, T>
   }
 
@@ -174,10 +167,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
       }
       return this.toModel(rec, type, modelsObj)
     })
-    // Type assertion necessary for type inference feature:
-    // Object.values returns StoreModel[], but type system needs to infer actual type from schema registry
-    // Enables type-safe store.findAll('events') → Event[] without manual type annotations
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from schema registry
     return Object.values(modelsObj[type] || {}) as InferModelType<S, T>[]
   }
 
@@ -273,21 +263,14 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
       if (filterType) {
         modelArray = modelArray.filter((model) => model.type === filterType)
       }
-      // Type assertion necessary for type inference feature:
-      // sync<FT>(body, filterType: FT) needs to infer return type from filterType parameter
-      // Enables type-safe store.sync(data, 'events') → Event[] without manual annotations
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      result = Object.assign(modelArray, { links: undefined, meta: undefined }) as unknown as InferModelType<
-        S,
-        FT
-      >[] & {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from filterType parameter
+      result = Object.assign(modelArray, { links: undefined, meta: undefined }) as InferModelType<S, FT>[] & {
         links?: unknown
         meta?: unknown
       }
     } else {
       const model = this.toModel(recs, recs.type, models)
-      // Type assertion necessary for type inference feature (see array case above)
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from filterType parameter
       result = Object.assign(model, { links: undefined, meta: undefined }) as unknown as InferModelType<S, FT> & {
         links?: unknown
         meta?: unknown

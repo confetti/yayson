@@ -108,7 +108,7 @@ describe('LegacyPresenter', function () {
     const obj = {
       id: 1,
       get(attr: unknown): unknown {
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        // eslint-disable-next-line @typescript-eslint/no-this-alias -- Need to capture outer this for nested object
         const car = this
         const tire = {
           id: 2,

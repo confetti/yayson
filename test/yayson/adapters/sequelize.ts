@@ -33,7 +33,7 @@ describe('SequelizeAdapter', function () {
     let args: IArguments | null = null
     const model: SequelizeModelMock = {
       get(...passedArgs: unknown[]): string {
-        // eslint-disable-next-line prefer-rest-params
+        // eslint-disable-next-line prefer-rest-params -- Need arguments object to test that args are passed correctly
         args = arguments
         return 'Abraham'
       },
