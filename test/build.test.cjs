@@ -8,7 +8,7 @@ const assert = require('assert')
 async function testCJS() {
   console.log('Testing CommonJS imports...')
 
-  // Test yayson main entry (CJS exports default directly)
+  // Test yayson main entry
   const yayson = require('../build/yayson.cjs')
   assert.strictEqual(typeof yayson, 'function', 'yayson should be a function')
 
@@ -20,7 +20,7 @@ async function testCJS() {
 
   console.log('  yayson CJS imports OK')
 
-  // Test legacy entry (CJS exports default directly)
+  // Test legacy entry
   const legacy = require('../build/legacy.cjs')
   assert.strictEqual(typeof legacy, 'function', 'legacy should be a function')
 
@@ -38,6 +38,16 @@ async function testCJS() {
   assert.strictEqual(event.name, 'Test', 'Store should preserve event name')
 
   console.log('  legacy CJS imports OK')
+
+  // Test symbols entry
+  const symbols = require('../build/symbols.cjs')
+  assert.strictEqual(typeof symbols.TYPE, 'symbol', 'TYPE should be a symbol')
+  assert.strictEqual(typeof symbols.LINKS, 'symbol', 'LINKS should be a symbol')
+  assert.strictEqual(typeof symbols.META, 'symbol', 'META should be a symbol')
+  assert.strictEqual(typeof symbols.REL_LINKS, 'symbol', 'REL_LINKS should be a symbol')
+  assert.strictEqual(typeof symbols.REL_META, 'symbol', 'REL_META should be a symbol')
+
+  console.log('  symbols CJS imports OK')
 }
 
 async function testESM() {
@@ -66,6 +76,16 @@ async function testESM() {
   assert.strictEqual(typeof LegacyAdapter, 'function', 'legacy().Adapter should be a function')
 
   console.log('  legacy ESM imports OK')
+
+  // Test symbols entry
+  const symbols = await import('../build/symbols.mjs')
+  assert.strictEqual(typeof symbols.TYPE, 'symbol', 'TYPE should be a symbol')
+  assert.strictEqual(typeof symbols.LINKS, 'symbol', 'LINKS should be a symbol')
+  assert.strictEqual(typeof symbols.META, 'symbol', 'META should be a symbol')
+  assert.strictEqual(typeof symbols.REL_LINKS, 'symbol', 'REL_LINKS should be a symbol')
+  assert.strictEqual(typeof symbols.REL_META, 'symbol', 'REL_META should be a symbol')
+
+  console.log('  symbols ESM imports OK')
 }
 
 async function main() {

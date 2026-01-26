@@ -11,6 +11,7 @@ import type {
   StoreRecord as StoreRecordType,
   ValidationError,
 } from './types.js'
+import { TYPE, LINKS, META, REL_LINKS, REL_META } from './symbols.js'
 import DefaultSchemaAdapter from './schema-adapter.js'
 
 class StoreRecord {
@@ -51,15 +52,10 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
   }
 
   toModel(rec: StoreRecord, type: string, models: StoreModels): StoreModel {
-    let typeAttribute: string | undefined
-    const model: StoreModel = { ...(rec.attributes || {}), id: '', type: '' }
-
-    if (rec.attributes && 'type' in rec.attributes && typeof rec.attributes.type === 'string') {
-      typeAttribute = rec.attributes.type
-    }
+    const model: StoreModel = { ...(rec.attributes || {}), id: '' }
 
     model.id = rec.id
-    model.type = rec.type
+    model[TYPE] = rec.type
     if (!models[type]) {
       models[type] = {}
     }
@@ -67,17 +63,12 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
       models[type][rec.id] = model
     }
 
-    if (Object.prototype.hasOwnProperty.call(model, 'meta')) {
-      model.attributes = { meta: model.meta }
-      delete model.meta
-    }
-
     if (rec.meta != null) {
-      model.meta = rec.meta
+      model[META] = rec.meta
     }
 
     if (rec.links != null) {
-      model.links = rec.links
+      model[LINKS] = rec.links
     }
 
     if (rec.relationships != null) {
@@ -99,19 +90,15 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
         if (Array.isArray(data)) {
           model[key] = data.map(resolve)
         } else {
-          const relModel: Record<string, unknown> | null = data != null ? resolve(data) : {}
+          const relModel: StoreModel | null = data != null ? resolve(data) : { id: '' }
 
           if (relModel) {
-            relModel._links = links || {}
-            relModel._meta = meta || {}
+            relModel[REL_LINKS] = links || {}
+            relModel[REL_META] = meta || {}
             model[key] = relModel
           }
         }
       }
-    }
-
-    if (typeAttribute) {
-      model.type = typeAttribute
     }
 
     // Validate with schema if provided
@@ -128,7 +115,14 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
       }
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Schema validation returns unknown, cast to StoreModel after validation
-      return result.data as StoreModel
+      const validatedModel = result.data as StoreModel
+
+      // Preserve symbol keys from original model (schema validation may not preserve them)
+      validatedModel[TYPE] = model[TYPE]
+      validatedModel[LINKS] = model[LINKS]
+      validatedModel[META] = model[META]
+
+      return validatedModel
     }
 
     return model
@@ -261,7 +255,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
         return this.toModel(rec, rec.type, models)
       })
       if (filterType) {
-        modelArray = modelArray.filter((model) => model.type === filterType)
+        modelArray = modelArray.filter((model) => model[TYPE] === filterType)
       }
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from filterType parameter
       result = Object.assign(modelArray, { links: undefined, meta: undefined }) as InferModelType<S, FT>[] & {

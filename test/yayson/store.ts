@@ -1,5 +1,7 @@
 import { expect } from 'chai'
 import { z } from 'zod'
+import yayson from '../../src/yayson.js'
+import { TYPE, REL_LINKS, META } from '../../src/symbols.js'
 import type { ValidationResult } from '../../src/yayson/types.js'
 
 const { Store } = yayson()
@@ -56,7 +58,7 @@ describe('Store', function () {
 
     const event = this.store.find('events', 1)
     expect(event.id).to.equal(1)
-    expect(event.type).to.equal('events')
+    expect(event[TYPE]).to.equal('events')
     expect(event.name).to.equal('Demo')
   })
 
@@ -377,7 +379,7 @@ describe('Store', function () {
     const event = this.store.find('events', 1)
 
     expect(event.name).to.equal('Demo')
-    expect(event.images._links).to.deep.equal({
+    expect(event.images[REL_LINKS]).to.deep.equal({
       self: 'http://example.com/events/1/relationships/images',
     })
   })
@@ -460,12 +462,12 @@ describe('Store', function () {
       date: '2017-06-26',
     })
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
-    expect((result as any)[0].comment.meta).to.deep.equal({
+    expect((result as any)[0].comment[META]).to.deep.equal({
       author: 'John Doe',
       date: '2017-06-26',
     })
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
-    expect((result as any)[0].comment._links).to.deep.equal({
+    expect((result as any)[0].comment[REL_LINKS]).to.deep.equal({
       self: 'http://example.com/events/1/relationships/comment',
       related: 'http://example.com/events/1/comment',
     })
@@ -552,11 +554,12 @@ describe('Store', function () {
 
   describe('Schema Validation', function () {
     it('should validate data with schema in strict mode', function () {
-      const eventSchema = z.object({
-        id: z.string(),
-        type: z.string(),
-        name: z.string(),
-      })
+      const eventSchema = z
+        .object({
+          id: z.string(),
+          name: z.string(),
+        })
+        .passthrough()
 
       const store = new Store({
         schemas: { events: eventSchema },
@@ -578,12 +581,13 @@ describe('Store', function () {
     })
 
     it('should throw error with invalid data in strict mode', function () {
-      const eventSchema = z.object({
-        id: z.string(),
-        type: z.string(),
-        name: z.string(),
-        requiredField: z.string(),
-      })
+      const eventSchema = z
+        .object({
+          id: z.string(),
+          name: z.string(),
+          requiredField: z.string(),
+        })
+        .passthrough()
 
       const store = new Store({
         schemas: { events: eventSchema },
@@ -602,12 +606,13 @@ describe('Store', function () {
     })
 
     it('should collect validation errors in safe mode', function () {
-      const eventSchema = z.object({
-        id: z.string(),
-        type: z.string(),
-        name: z.string(),
-        requiredField: z.string(),
-      })
+      const eventSchema = z
+        .object({
+          id: z.string(),
+          name: z.string(),
+          requiredField: z.string(),
+        })
+        .passthrough()
 
       const store = new Store({
         schemas: { events: eventSchema },
@@ -631,11 +636,12 @@ describe('Store', function () {
     })
 
     it('should validate only specified types', function () {
-      const eventSchema = z.object({
-        id: z.string(),
-        type: z.string(),
-        name: z.string(),
-      })
+      const eventSchema = z
+        .object({
+          id: z.string(),
+          name: z.string(),
+        })
+        .passthrough()
 
       const store = new Store({
         schemas: { events: eventSchema },
@@ -663,12 +669,13 @@ describe('Store', function () {
     })
 
     it('should validate array of items and collect multiple errors', function () {
-      const eventSchema = z.object({
-        id: z.string(),
-        type: z.string(),
-        name: z.string(),
-        requiredField: z.string(),
-      })
+      const eventSchema = z
+        .object({
+          id: z.string(),
+          name: z.string(),
+          requiredField: z.string(),
+        })
+        .passthrough()
 
       const store = new Store({
         schemas: { events: eventSchema },
@@ -704,12 +711,13 @@ describe('Store', function () {
     })
 
     it('should clear validation errors on each sync', function () {
-      const eventSchema = z.object({
-        id: z.string(),
-        type: z.string(),
-        name: z.string(),
-        requiredField: z.string(),
-      })
+      const eventSchema = z
+        .object({
+          id: z.string(),
+          name: z.string(),
+          requiredField: z.string(),
+        })
+        .passthrough()
 
       const store = new Store({
         schemas: { events: eventSchema },
@@ -740,15 +748,15 @@ describe('Store', function () {
     it('should work with type-safe sync and filtered results', function () {
       interface Event {
         id: string
-        type: string
         name: string
       }
 
-      const eventSchema = z.object({
-        id: z.string(),
-        type: z.string(),
-        name: z.string(),
-      })
+      const eventSchema = z
+        .object({
+          id: z.string(),
+          name: z.string(),
+        })
+        .passthrough()
 
       const store = new Store({
         schemas: { events: eventSchema },
@@ -789,15 +797,15 @@ describe('Store', function () {
     it('should validate with pagination scenario', function () {
       interface Event {
         id: string
-        type: string
         name: string
       }
 
-      const eventSchema = z.object({
-        id: z.string(),
-        type: z.string(),
-        name: z.string(),
-      })
+      const eventSchema = z
+        .object({
+          id: z.string(),
+          name: z.string(),
+        })
+        .passthrough()
 
       const store = new Store({
         schemas: { events: eventSchema },
@@ -866,7 +874,7 @@ describe('Store', function () {
 
       const store = new Store({
         schemas: {
-          events: { requiredFields: ['id', 'type', 'name'] },
+          events: { requiredFields: ['id', 'name'] },
         },
         schemaAdapter: CustomSchemaAdapter,
         strict: false,

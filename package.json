@@ -26,6 +26,16 @@
         "types": "./build/legacy.d.cts",
         "default": "./build/legacy.cjs"
       }
+    },
+    "./symbols": {
+      "import": {
+        "types": "./build/symbols.d.mts",
+        "default": "./build/symbols.mjs"
+      },
+      "require": {
+        "types": "./build/symbols.d.cts",
+        "default": "./build/symbols.cjs"
+      }
     }
   },
   "files": [

@@ -6,20 +6,22 @@ const { Store } = yayson()
 
 describe('Type Inference', function () {
   it('should infer types from Zod schemas', function () {
-    const eventSchema = z.object({
-      id: z.string(),
-      type: z.literal('events'),
-      name: z.string(),
-      date: z.string(),
-    })
+    const eventSchema = z
+      .object({
+        id: z.string(),
+        name: z.string(),
+        date: z.string(),
+      })
+      .passthrough()
 
-    const imageSchema = z.object({
-      id: z.string(),
-      type: z.literal('images'),
-      url: z.string(),
-      width: z.number(),
-      height: z.number(),
-    })
+    const imageSchema = z
+      .object({
+        id: z.string(),
+        url: z.string(),
+        width: z.number(),
+        height: z.number(),
+      })
+      .passthrough()
 
     const schemas = {
       events: eventSchema,
@@ -149,17 +151,19 @@ describe('Type Inference', function () {
   })
 
   it('should infer types with sync filterType', function () {
-    const eventSchema = z.object({
-      id: z.string(),
-      type: z.literal('events'),
-      name: z.string(),
-    })
+    const eventSchema = z
+      .object({
+        id: z.string(),
+        name: z.string(),
+      })
+      .passthrough()
 
-    const commentSchema = z.object({
-      id: z.string(),
-      type: z.literal('comments'),
-      text: z.string(),
-    })
+    const commentSchema = z
+      .object({
+        id: z.string(),
+        text: z.string(),
+      })
+      .passthrough()
 
     const schemas = {
       events: eventSchema,
@@ -430,17 +434,15 @@ describe('Type Inference', function () {
         id: string
         text: string
         replies?: Comment[]
-        _links?: unknown
-        _meta?: unknown
       }
 
-      const commentSchema: z.ZodType<Comment> = z.object({
-        id: z.string(),
-        text: z.string(),
-        replies: z.lazy(() => z.array(commentSchema)).optional(),
-        _links: z.unknown().optional(),
-        _meta: z.unknown().optional(),
-      })
+      const commentSchema: z.ZodType<Comment> = z
+        .object({
+          id: z.string(),
+          text: z.string(),
+          replies: z.lazy(() => z.array(commentSchema)).optional(),
+        })
+        .passthrough()
 
       const schemas = {
         comments: commentSchema,

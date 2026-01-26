@@ -1,4 +1,7 @@
 import type { ModelLike } from './adapter.js'
+import { TYPE, LINKS, META, REL_LINKS, REL_META } from './symbols.js'
+
+export { TYPE, LINKS, META, REL_LINKS, REL_META }
 
 export interface JsonApiLink extends Record<string, unknown> {
   self?: string
@@ -87,11 +90,11 @@ export interface StoreRecord {
 
 export interface StoreModel extends Record<string, unknown> {
   id: string
-  type?: string
-  meta?: Record<string, unknown>
-  links?: JsonApiLink
-  _links?: JsonApiLinks
-  _meta?: Record<string, unknown>
+  [TYPE]?: string
+  [LINKS]?: JsonApiLink
+  [META]?: Record<string, unknown>
+  [REL_LINKS]?: JsonApiLink
+  [REL_META]?: Record<string, unknown>
 }
 
 export interface StoreModels {
