@@ -104,16 +104,14 @@ export interface SchemaRegistry {
   [type: string]: unknown
 }
 
-// Type inference helpers for extracting model types from schemas
-export type InferSchemaType<T> = T extends { parse: (data: unknown) => infer R }
-  ? R
-  : T extends (data: unknown) => infer R
-    ? R
-    : unknown
+// Type inference helper for extracting model types from schemas (Zod-style with .parse() method)
+export type InferSchemaType<Schema> = Schema extends { parse: (data: unknown) => infer ParsedType }
+  ? ParsedType
+  : unknown
 
-export type InferModelType<S, T extends string> = S extends SchemaRegistry
-  ? T extends keyof S
-    ? InferSchemaType<S[T]>
+export type InferModelType<Registry, TypeName extends string> = Registry extends SchemaRegistry
+  ? TypeName extends keyof Registry
+    ? InferSchemaType<Registry[TypeName]>
     : StoreModel
   : StoreModel
 

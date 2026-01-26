@@ -606,7 +606,7 @@ describe('LegacyStore', function () {
       }
     })
 
-    it('should infer types from custom schema functions', function () {
+    it('should infer types from custom schema with parse method', function () {
       class Ticket {
         id!: string
         title!: string
@@ -619,41 +619,35 @@ describe('LegacyStore', function () {
         }
       }
 
-      // Custom schema adapter for function-based schemas
-      class FunctionSchemaAdapter {
+      // Custom schema with parse method (like Zod)
+      const ticketSchema = {
+        parse: (data: unknown): Ticket =>
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test schema, data validated at runtime
+          new Ticket(data as { id: string; title?: string; priority?: number }),
+      }
+
+      // Custom schema adapter that uses parse method
+      class CustomSchemaAdapter {
         static validate(schema: unknown, data: unknown, strict: boolean) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test adapter for function-based schemas
-          const fn = schema as unknown as (data: unknown) => unknown
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test adapter
+          const s = schema as { parse: (data: unknown) => unknown }
           try {
-            const result = fn(data)
-            return {
-              valid: true,
-              data: result,
-            }
+            const result = s.parse(data)
+            return { valid: true, data: result }
           } catch (error) {
-            if (strict) {
-              throw error
-            }
-            return {
-              valid: false,
-              data,
-              error,
-            }
+            if (strict) throw error
+            return { valid: false, data, error }
           }
         }
 
         validate(schema: unknown, data: unknown, strict: boolean) {
-          return FunctionSchemaAdapter.validate(schema, data, strict)
+          return CustomSchemaAdapter.validate(schema, data, strict)
         }
       }
 
-      const schemas = {
-        ticket: (data: unknown) =>
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test schema function, data validated at runtime
-          new Ticket(data as unknown as { id: string; title?: string; priority?: number }),
-      } as const
+      const schemas = { ticket: ticketSchema } as const
 
-      const store = new LegacyStore({ schemas, schemaAdapter: FunctionSchemaAdapter })
+      const store = new LegacyStore({ schemas, schemaAdapter: CustomSchemaAdapter })
 
       store.sync({
         ticket: [
@@ -662,10 +656,9 @@ describe('LegacyStore', function () {
         ],
       })
 
-      // TypeScript should infer Ticket type
+      // TypeScript infers Ticket type from parse method return type
       const tickets = store.findAll('ticket')
       expect(tickets.length).to.equal(2)
-      // Check properties instead of instanceof since the transformed object should have the right shape
       expect(tickets[0].title).to.equal('Fix bug')
       expect(tickets[0].priority).to.equal(5)
       expect(tickets[0].id).to.equal('1')
