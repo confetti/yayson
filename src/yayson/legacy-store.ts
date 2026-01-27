@@ -1,13 +1,12 @@
-import DefaultSchemaAdapter from './schema-adapter.js'
 import type {
   StoreModel,
   StoreModels,
   SchemaRegistry,
-  SchemaAdapterConstructor,
   ValidationError,
   InferModelType,
   LegacyStoreOptions,
 } from './types.js'
+import { validate } from './schema.js'
 
 interface LegacyStoreRecordType {
   type: string
@@ -33,7 +32,6 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
   records: LegacyStoreRecordType[]
   relations: Record<string, Record<string, string>>
   schemas?: S
-  schemaAdapter: SchemaAdapterConstructor
   strict: boolean
   validationErrors: ValidationError[]
   models: StoreModels
@@ -41,7 +39,6 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
   constructor(options?: LegacyStoreOptions<S>) {
     this.types = options?.types || {}
     this.schemas = options?.schemas
-    this.schemaAdapter = options?.schemaAdapter ?? DefaultSchemaAdapter
     this.strict = options?.strict ?? false
     this.records = []
     this.relations = {}
@@ -90,7 +87,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     // Validate with schema if provided
     if (this.schemas && this.schemas[type]) {
       const schema = this.schemas[type]
-      const result = this.schemaAdapter.validate(schema, model, this.strict)
+      const result = validate(schema, model, this.strict)
 
       if (!result.valid) {
         this.validationErrors.push({

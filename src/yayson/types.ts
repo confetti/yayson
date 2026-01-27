@@ -116,24 +116,8 @@ export type InferModelType<Registry, TypeName extends string> = Registry extends
     : StoreModel
   : StoreModel
 
-export interface ValidationResult<T = unknown> {
-  valid: boolean
-  data: T
-  error?: unknown
-}
-
-export interface SchemaAdapterConstructor {
-  new (): SchemaAdapterInstance
-  validate(schema: unknown, data: unknown, strict: boolean): ValidationResult
-}
-
-export interface SchemaAdapterInstance {
-  validate(schema: unknown, data: unknown, strict: boolean): ValidationResult
-}
-
 export interface StoreOptions<S extends SchemaRegistry = SchemaRegistry> {
   schemas?: S
-  schemaAdapter?: SchemaAdapterConstructor
   strict?: boolean
 }
 
@@ -146,6 +130,5 @@ export interface ValidationError {
 export interface LegacyStoreOptions<S extends SchemaRegistry = SchemaRegistry> {
   types?: Record<string, string>
   schemas?: S
-  schemaAdapter?: SchemaAdapterConstructor
   strict?: boolean
 }

@@ -8,13 +8,11 @@ import type {
   InferSchemaType,
   LegacyStoreOptions,
   PresenterConstructor,
-  SchemaAdapterConstructor,
-  SchemaAdapterInstance,
   SchemaRegistry,
   StoreOptions,
   ValidationError,
-  ValidationResult,
 } from './yayson/types.js'
+import type { ZodLikeSchema } from './yayson/schema.js'
 
 type AdapterOption = string | AdapterConstructor
 
@@ -57,12 +55,10 @@ export type {
   InferModelType,
   InferSchemaType,
   LegacyStoreOptions,
-  SchemaAdapterConstructor,
-  SchemaAdapterInstance,
   SchemaRegistry,
   StoreOptions,
   ValidationError,
-  ValidationResult,
   YaysonOptions,
   YaysonResult,
+  ZodLikeSchema,
 }

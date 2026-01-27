@@ -3,7 +3,6 @@ import type {
   JsonApiDocument,
   JsonApiRelationship,
   JsonApiResourceIdentifier,
-  SchemaAdapterConstructor,
   SchemaRegistry,
   StoreModel,
   StoreModels,
@@ -12,7 +11,7 @@ import type {
   ValidationError,
 } from './types.js'
 import { TYPE, LINKS, META, REL_LINKS, REL_META } from './symbols.js'
-import DefaultSchemaAdapter from './schema-adapter.js'
+import { validate } from './schema.js'
 
 class StoreRecord {
   id: string
@@ -35,13 +34,11 @@ class StoreRecord {
 export default class Store<S extends SchemaRegistry = SchemaRegistry> {
   records: StoreRecord[] = []
   schemas?: S
-  schemaAdapter: SchemaAdapterConstructor
   strict: boolean
   validationErrors: ValidationError[] = []
 
   constructor(options?: StoreOptions<S>) {
     this.schemas = options?.schemas
-    this.schemaAdapter = options?.schemaAdapter ?? DefaultSchemaAdapter
     this.strict = options?.strict ?? false
     this.reset()
   }
@@ -104,7 +101,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     // Validate with schema if provided
     if (this.schemas && this.schemas[rec.type]) {
       const schema = this.schemas[rec.type]
-      const result = this.schemaAdapter.validate(schema, model, this.strict)
+      const result = validate(schema, model, this.strict)
 
       if (!result.valid) {
         this.validationErrors.push({

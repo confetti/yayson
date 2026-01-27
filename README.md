@@ -256,27 +256,7 @@ if (store.validationErrors.length > 0) {
 }
 ```
 
-#### Custom Schema Adapters
-
-You can use any validation library by providing a custom schema adapter:
-
-```typescript
-class CustomSchemaAdapter {
-  static validate(schema, data, strict) {
-    // Your validation logic here
-    return {
-      valid: true, // or false
-      data: validatedData,
-      error: undefined, // or error details
-    }
-  }
-}
-
-const Store = createStore({
-  schemas: mySchemas,
-  schemaAdapter: CustomSchemaAdapter,
-})
-```
+Schemas must be Zod-like objects with `parse()` and `safeParse()` methods. Any library that provides this interface will work.
 
 ## Use in the browser
 

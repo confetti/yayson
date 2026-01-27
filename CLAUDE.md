@@ -42,7 +42,7 @@ tsx node_modules/.bin/mocha test/yayson/presenter.ts
 **Store** (`src/yayson/store.ts`)
 
 - Parses JSON API documents, resolves relationships
-- Supports schema validation with Zod (or custom adapters)
+- Supports schema validation with Zod-like schemas (requires `parse`/`safeParse` methods)
 - Generic `Store<S>` for type inference from schema registry
 
 **LegacyStore** (`src/yayson/legacy-store.ts`)
@@ -54,11 +54,6 @@ tsx node_modules/.bin/mocha test/yayson/presenter.ts
 
 - Abstract data access (get properties, get id)
 - Default adapter for plain objects, Sequelize adapter for ORM models
-
-**Schema Adapter** (`src/yayson/schema-adapter.ts`)
-
-- Default uses Zod's `safeParse`/`parse`
-- Custom adapters implement `validate(schema, data, strict)`
 
 ### Type System
 

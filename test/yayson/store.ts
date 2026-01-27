@@ -2,7 +2,6 @@ import { expect } from 'chai'
 import { z } from 'zod'
 import yayson from '../../src/yayson.js'
 import { TYPE, REL_LINKS, META } from '../../src/symbols.js'
-import type { ValidationResult } from '../../src/yayson/types.js'
 
 const { Store } = yayson()
 
@@ -836,74 +835,6 @@ describe('Store', function () {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
       expect((page2 as any)[1].name).to.equal('Page 2 Event 2')
       expect(store.validationErrors.length).to.equal(0)
-    })
-
-    it('should work with custom schema adapter', function () {
-      // Custom schema adapter that validates based on custom rules
-      class CustomSchemaAdapter {
-        static validate(schema: unknown, data: unknown, strict: boolean): ValidationResult {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test adapter, schema is known to have requiredFields
-          const customSchema = schema as unknown as { requiredFields: string[] }
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test adapter, data is known to be a record
-          const model = data as unknown as Record<string, unknown>
-
-          // Check if all required fields are present
-          const missingFields = customSchema.requiredFields.filter((field) => !(field in model))
-
-          if (missingFields.length > 0) {
-            if (strict) {
-              throw new Error(`Missing required fields: ${missingFields.join(', ')}`)
-            }
-            return {
-              valid: false,
-              data,
-              error: { message: `Missing required fields: ${missingFields.join(', ')}` },
-            }
-          }
-
-          return {
-            valid: true,
-            data,
-          }
-        }
-
-        validate(schema: unknown, data: unknown, strict: boolean): ValidationResult {
-          return CustomSchemaAdapter.validate(schema, data, strict)
-        }
-      }
-
-      const store = new Store({
-        schemas: {
-          events: { requiredFields: ['id', 'name'] },
-        },
-        schemaAdapter: CustomSchemaAdapter,
-        strict: false,
-      })
-
-      const result = store.sync({
-        data: {
-          type: 'events',
-          id: '1',
-          attributes: { name: 'Valid Event' },
-        },
-      })
-
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
-      expect((result as any).name).to.equal('Valid Event')
-      expect(store.validationErrors.length).to.equal(0)
-
-      // Sync invalid data
-      store.sync({
-        data: {
-          type: 'events',
-          id: '2',
-          attributes: {},
-        },
-      })
-
-      expect(store.validationErrors.length).to.equal(1)
-      expect(store.validationErrors[0].type).to.equal('events')
-      expect(store.validationErrors[0].id).to.equal('2')
     })
   })
 })

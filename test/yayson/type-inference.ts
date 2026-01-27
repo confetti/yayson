@@ -81,7 +81,7 @@ describe('Type Inference', function () {
     }
   })
 
-  it('should infer types from custom schema with parse method', function () {
+  it('should infer types from custom Zod-like schema', function () {
     class Ticket {
       id!: string
       title!: string
@@ -94,35 +94,26 @@ describe('Type Inference', function () {
       }
     }
 
-    // Custom schema with parse method (like Zod)
+    // Custom Zod-like schema with parse and safeParse methods
     const ticketSchema = {
       parse: (data: unknown): Ticket =>
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test schema, data validated at runtime
         new Ticket(data as { id: string; title?: string; priority?: number }),
-    }
-
-    // Custom schema adapter that uses parse method
-    class CustomSchemaAdapter {
-      static validate(schema: unknown, data: unknown, strict: boolean) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test adapter
-        const s = schema as { parse: (data: unknown) => unknown }
+      safeParse: (data: unknown): { success: true; data: Ticket } | { success: false; error: Error } => {
         try {
-          const result = s.parse(data)
-          return { valid: true, data: result }
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test schema, data validated at runtime
+          const ticket = new Ticket(data as { id: string; title?: string; priority?: number })
+          return { success: true, data: ticket }
         } catch (error) {
-          if (strict) throw error
-          return { valid: false, data, error }
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test schema, error is always Error
+          return { success: false, error: error as Error }
         }
-      }
-
-      validate(schema: unknown, data: unknown, strict: boolean) {
-        return CustomSchemaAdapter.validate(schema, data, strict)
-      }
+      },
     }
 
     const schemas = { tickets: ticketSchema } as const
 
-    const store = new Store({ schemas, schemaAdapter: CustomSchemaAdapter })
+    const store = new Store({ schemas })
 
     store.sync({
       data: {

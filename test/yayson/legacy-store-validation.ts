@@ -1,7 +1,6 @@
 import { expect } from 'chai'
 import { z } from 'zod'
 import LegacyStore from '../../src/yayson/legacy-store.js'
-import type { ValidationResult } from '../../src/yayson/types.js'
 
 describe('LegacyStore', function () {
   describe('Schema Validation', function () {
@@ -407,69 +406,6 @@ describe('LegacyStore', function () {
       })
     })
 
-    describe('Custom Schema Adapter', function () {
-      it('should work with custom schema adapter', function () {
-        // Custom schema adapter that validates based on custom rules
-        class CustomSchemaAdapter {
-          static validate(schema: unknown, data: unknown, strict: boolean): ValidationResult {
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test adapter, schema is known to have requiredFields
-            const customSchema = schema as unknown as { requiredFields: string[] }
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test adapter, data is known to be a record
-            const model = data as unknown as Record<string, unknown>
-
-            // Check if all required fields are present
-            const missingFields = customSchema.requiredFields.filter((field) => !(field in model))
-
-            if (missingFields.length > 0) {
-              if (strict) {
-                throw new Error(`Missing required fields: ${missingFields.join(', ')}`)
-              }
-              return {
-                valid: false,
-                data,
-                error: { message: `Missing required fields: ${missingFields.join(', ')}` },
-              }
-            }
-
-            return {
-              valid: true,
-              data,
-            }
-          }
-
-          validate(schema: unknown, data: unknown, strict: boolean): ValidationResult {
-            return CustomSchemaAdapter.validate(schema, data, strict)
-          }
-        }
-
-        const store = new LegacyStore({
-          schemas: {
-            event: { requiredFields: ['id', 'name'] },
-          },
-          schemaAdapter: CustomSchemaAdapter,
-          strict: false,
-        })
-
-        store.sync({ event: { id: '1', name: 'Valid Event' } })
-        const event = store.find('event', '1')
-
-        expect(event).to.not.be.null
-        if (event) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
-          expect((event as any).name).to.equal('Valid Event')
-        }
-        expect(store.validationErrors.length).to.equal(0)
-
-        // Sync invalid data
-        store.sync({ event: { id: '2' } })
-        store.find('event', '2')
-
-        expect(store.validationErrors.length).to.equal(1)
-        expect(store.validationErrors[0].type).to.equal('event')
-        expect(store.validationErrors[0].id).to.equal('2')
-      })
-    })
-
     describe('retrieve() method', function () {
       it('should validate when using retrieve()', function () {
         const eventSchema = z.object({
@@ -606,7 +542,7 @@ describe('LegacyStore', function () {
       }
     })
 
-    it('should infer types from custom schema with parse method', function () {
+    it('should infer types from custom Zod-like schema', function () {
       class Ticket {
         id!: string
         title!: string
@@ -619,35 +555,26 @@ describe('LegacyStore', function () {
         }
       }
 
-      // Custom schema with parse method (like Zod)
+      // Custom Zod-like schema with parse and safeParse methods
       const ticketSchema = {
         parse: (data: unknown): Ticket =>
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test schema, data validated at runtime
           new Ticket(data as { id: string; title?: string; priority?: number }),
-      }
-
-      // Custom schema adapter that uses parse method
-      class CustomSchemaAdapter {
-        static validate(schema: unknown, data: unknown, strict: boolean) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test adapter
-          const s = schema as { parse: (data: unknown) => unknown }
+        safeParse: (data: unknown): { success: true; data: Ticket } | { success: false; error: Error } => {
           try {
-            const result = s.parse(data)
-            return { valid: true, data: result }
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test schema, data validated at runtime
+            const ticket = new Ticket(data as { id: string; title?: string; priority?: number })
+            return { success: true, data: ticket }
           } catch (error) {
-            if (strict) throw error
-            return { valid: false, data, error }
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test schema, error is always Error
+            return { success: false, error: error as Error }
           }
-        }
-
-        validate(schema: unknown, data: unknown, strict: boolean) {
-          return CustomSchemaAdapter.validate(schema, data, strict)
-        }
+        },
       }
 
       const schemas = { ticket: ticketSchema } as const
 
-      const store = new LegacyStore({ schemas, schemaAdapter: CustomSchemaAdapter })
+      const store = new LegacyStore({ schemas })
 
       store.sync({
         ticket: [
