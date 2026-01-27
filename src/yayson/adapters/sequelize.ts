@@ -14,10 +14,10 @@ class SequelizeAdapter extends Adapter {
   static override get<T = unknown>(model: ModelLike, key?: string): T {
     if (isSequelizeModel(model)) {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Sequelize .get() returns unknown, cast to generic T
-      return model.get(key) as unknown as T
+      return model.get(key) as T
     }
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Non-Sequelize models return undefined, cast to T for generic signature
-    return undefined as unknown as T
+    return undefined as T
   }
 
   static override id(model: ModelLike): string | undefined {
