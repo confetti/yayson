@@ -1,6 +1,7 @@
 import { expect } from 'chai'
 import { z } from 'zod'
 import yayson from '../../src/yayson.js'
+import type { ZodLikeSchema } from '../../src/yayson.js'
 
 const { Store } = yayson()
 
@@ -622,6 +623,83 @@ describe('Type Inference', function () {
           }
         }
       }
+    })
+  })
+
+  describe('ZodLikeSchema interface', function () {
+    it('should work with custom ZodLikeSchema implementation', function () {
+      interface Event {
+        id: string
+        name: string
+        count: number
+      }
+
+      // Custom schema implementing ZodLikeSchema interface
+      const eventSchema: ZodLikeSchema = {
+        parse(data: unknown): Event {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test validates at runtime
+          const obj = data as Record<string, unknown>
+          if (typeof obj.id !== 'string') throw new Error('id must be string')
+          if (typeof obj.name !== 'string') throw new Error('name must be string')
+          return {
+            id: obj.id,
+            name: obj.name,
+            count: typeof obj.count === 'number' ? obj.count : 0,
+          }
+        },
+        safeParse(data: unknown) {
+          try {
+            return { success: true, data: this.parse(data) }
+          } catch (error) {
+            return { success: false, error }
+          }
+        },
+      }
+
+      const store = new Store({
+        schemas: { events: eventSchema },
+        strict: true,
+      })
+
+      store.sync({
+        data: {
+          type: 'events',
+          id: '1',
+          attributes: { name: 'Custom Schema Event', count: 42 },
+        },
+      })
+
+      const event = store.find('events', '1')
+      expect(event).to.not.be.null
+      if (event) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test validates runtime data shape
+        expect((event as Event).name).to.equal('Custom Schema Event')
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test validates runtime data shape
+        expect((event as Event).count).to.equal(42)
+      }
+    })
+
+    it('should throw with invalid schema missing required methods', function () {
+      const invalidSchema = {
+        // Missing safeParse method
+        parse: () => ({}),
+      }
+
+      const store = new Store({
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Testing invalid schema
+        schemas: { events: invalidSchema as unknown },
+        strict: true,
+      })
+
+      expect(() => {
+        store.sync({
+          data: {
+            type: 'events',
+            id: '1',
+            attributes: { name: 'Test' },
+          },
+        })
+      }).to.throw('Invalid schema: must have parse and safeParse methods')
     })
   })
 })

@@ -52,7 +52,7 @@ A basic `Presenter` can look like this:
 
 ```javascript
 // ESM
-import { yayson } from 'yayson'
+import yayson from 'yayson'
 const { Presenter } = yayson()
 
 // CommonJS
@@ -94,7 +94,7 @@ be an array.
 A bit more advanced example:
 
 ```javascript
-import { yayson } from 'yayson'
+import yayson from 'yayson'
 const { Presenter } = yayson()
 
 class WheelPresenter extends Presenter {
@@ -119,14 +119,14 @@ By default it is set up to handle standard JS objects. You can also make
 it handle Sequelize.js models like this:
 
 ```javascript
-import { yayson } from 'yayson'
+import yayson from 'yayson'
 const { Presenter } = yayson({ adapter: 'sequelize' })
 ```
 
 You can also define your own adapter globally:
 
 ```javascript
-import { yayson } from 'yayson'
+import yayson from 'yayson'
 const { Presenter } = yayson({
   adapter: {
     id: function (model) {
@@ -176,7 +176,7 @@ This would produce:
 You can use a `Store` like this:
 
 ```javascript
-import { yayson } from 'yayson'
+import yayson from 'yayson'
 const { Store } = yayson()
 const store = new Store()
 
@@ -206,21 +206,23 @@ YAYSON supports optional schema validation using [Zod](https://github.com/colinh
 
 ```typescript
 import { z } from 'zod'
-import { createStore } from 'yayson'
+import yayson from 'yayson'
 
-const eventSchema = z.object({
-  id: z.string(),
-  type: z.literal('events'),
-  name: z.string(),
-  date: z.string(),
-})
+const { Store } = yayson()
+
+const eventSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    date: z.string(),
+  })
+  .passthrough()
 
 const schemas = {
   events: eventSchema,
 } as const
 
-const Store = createStore({ schemas, strict: true })
-const store = new Store()
+const store = new Store({ schemas, strict: true })
 
 store.sync({
   data: {
@@ -240,14 +242,13 @@ const event = store.find('events', '1')
 **Strict mode** (throws errors on validation failure):
 
 ```typescript
-const Store = createStore({ schemas, strict: true })
+const store = new Store({ schemas, strict: true })
 ```
 
 **Safe mode** (collects errors without throwing):
 
 ```typescript
-const Store = createStore({ schemas, strict: false })
-const store = new Store()
+const store = new Store({ schemas, strict: false })
 
 store.sync(invalidData)
 
@@ -262,28 +263,6 @@ Schemas must be Zod-like objects with `parse()` and `safeParse()` methods. Any l
 
 Recommended way is to use it via [webpack](https://github.com/webpack/webpack) or similar build system wich lets you just require the package as usual.
 
-If you just want to try it out, copy the file `dist/yayson.js` to your project. Then simply include it:
-
-```html
-<script src="./lib/yayson.js"></script>
-```
-
-Then you can `var yayson = window.yayson()` use the `yayson.Presenter` and `yayson.Store` as usual.
-
-### Browser support
-
-#### Tested
-
-- Chrome
-- Firefox
-- Safari
-- Safari iOS
-
-#### Untested, but should work
-
-- IE 11
-- Android
-
 ## Legacy support
 
 Earlier versions of JSON API worked a bit different from 1.0. Therefore YAYSON provides legacy presenters and stores in order to have interoperability between the versions.
@@ -292,7 +271,7 @@ Earlier versions of JSON API worked a bit different from 1.0. Therefore YAYSON p
 
 ```javascript
 // ESM
-import { yayson } from 'yayson/legacy'
+import yayson from 'yayson/legacy'
 const { Presenter, Store } = yayson()
 
 // CommonJS
@@ -316,19 +295,12 @@ store.sync({
 const event = store.find('event', '1')
 ```
 
-You can also use `createLegacyStore` directly:
+Options can be passed when creating the store:
 
 ```javascript
-// ESM
-import { createLegacyStore } from 'yayson/legacy'
-
-// CommonJS
-const { createLegacyStore } = require('yayson/legacy')
-
-const Store = createLegacyStore({
+const store = new Store({
   types: { events: 'event' },
 })
-const store = new Store()
 ```
 
 ### Schema Validation for Legacy Store
@@ -336,8 +308,10 @@ const store = new Store()
 The legacy store also supports schema validation and type inference, maintaining full backward compatibility:
 
 ```typescript
-import { createLegacyStore } from 'yayson/legacy'
+import yayson from 'yayson/legacy'
 import { z } from 'zod'
+
+const { Store } = yayson()
 
 const eventSchema = z.object({
   id: z.string(),
@@ -345,11 +319,10 @@ const eventSchema = z.object({
   date: z.string(),
 })
 
-const Store = createLegacyStore({
+const store = new Store({
   schemas: { event: eventSchema },
   strict: true,
 })
-const store = new Store()
 
 store.sync({ event: { id: '1', name: 'Event', date: '2025-01-15' } })
 
@@ -363,7 +336,7 @@ const event = store.find('event', '1')
 You can combine type mapping with schemas:
 
 ```typescript
-const Store = createLegacyStore({
+const store = new Store({
   types: {
     events: 'event', // Map plural to singular
   },
@@ -372,7 +345,6 @@ const Store = createLegacyStore({
   },
   strict: false, // Safe mode
 })
-const store = new Store()
 
 store.sync({ events: [{ id: '1', name: 'Event' }] })
 
@@ -402,11 +374,10 @@ const imageSchema = z.object({
   url: z.string(),
 })
 
-const Store = createLegacyStore({
+const store = new Store({
   schemas: { event: eventSchema, image: imageSchema },
   strict: true,
 })
-const store = new Store()
 
 store.sync({
   links: {
