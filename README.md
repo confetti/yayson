@@ -2,7 +2,7 @@
 
 A library for serializing and reading [JSON API](http://jsonapi.org) data in JavaScript.
 
-YAYSON supports both ESM and CommonJS, has zero dependencies, and works in the browser and in Node.js 18+.
+YAYSON supports both ESM and CommonJS, has zero dependencies, and works in the browser and in Node.js 20+.
 
 [![NPM](https://nodei.co/npm/yayson.png?downloads=true)](https://nodei.co/npm/yayson/)
 
@@ -44,7 +44,7 @@ const { Store } = yayson()
 
 ### Node.js version
 
-Node.js 18+ is now required (was 14+).
+Node.js 20+ is now required (was 14+).
 
 ## Presenting data
 
