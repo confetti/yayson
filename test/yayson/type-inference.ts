@@ -3,7 +3,7 @@ import { z } from 'zod'
 import yayson from '../../src/yayson.js'
 import type { ZodLikeSchema } from '../../src/yayson.js'
 
-const { Store } = yayson()
+const { Store, Presenter } = yayson()
 
 describe('Type Inference', function () {
   it('should infer types from Zod schemas', function () {
@@ -700,6 +700,233 @@ describe('Type Inference', function () {
           },
         })
       }).to.throw('Invalid schema: must have parse and safeParse methods')
+    })
+  })
+
+  describe('Presenting objects from Store', function () {
+    it('should present objects retrieved from store with Zod schema', function () {
+      const ticketSchema = z
+        .object({
+          id: z.string(),
+          title: z.string(),
+          priority: z.number(),
+        })
+        .passthrough()
+
+      const schemas = { tickets: ticketSchema } as const
+
+      const store = new Store({ schemas, strict: true })
+
+      store.sync({
+        data: {
+          type: 'tickets',
+          id: '1',
+          attributes: {
+            title: 'Fix bug',
+            priority: 5,
+          },
+        },
+      })
+
+      // Retrieve with type inference
+      const ticket = store.find('tickets', '1')
+      expect(ticket).to.not.be.null
+
+      if (ticket) {
+        // Present the schema-validated object
+        // This verifies ModelLike accepts objects with inferred types (not Record<string, unknown>)
+        const json = Presenter.toJSON(ticket)
+        // Compare JSON output (Symbol properties from Store are stripped during serialization)
+        expect(JSON.parse(JSON.stringify(json))).to.deep.equal({
+          data: {
+            type: 'objects',
+            id: '1',
+            attributes: {
+              title: 'Fix bug',
+              priority: 5,
+            },
+          },
+        })
+      }
+    })
+
+    it('should present array of objects from store with Zod schema', function () {
+      const eventSchema = z
+        .object({
+          id: z.string(),
+          name: z.string(),
+          date: z.string(),
+        })
+        .passthrough()
+
+      const schemas = { events: eventSchema } as const
+
+      const store = new Store({ schemas, strict: true })
+
+      store.sync({
+        data: [
+          {
+            type: 'events',
+            id: '1',
+            attributes: { name: 'Conference', date: '2025-06-01' },
+          },
+          {
+            type: 'events',
+            id: '2',
+            attributes: { name: 'Meetup', date: '2025-07-15' },
+          },
+        ],
+      })
+
+      // Retrieve array with type inference
+      const events = store.findAll('events')
+      expect(events).to.have.length(2)
+
+      // Present the array of schema-validated objects
+      const json = Presenter.toJSON(events)
+      // Compare JSON output (Symbol properties from Store are stripped during serialization)
+      expect(JSON.parse(JSON.stringify(json))).to.deep.equal({
+        data: [
+          {
+            type: 'objects',
+            id: '1',
+            attributes: { name: 'Conference', date: '2025-06-01' },
+          },
+          {
+            type: 'objects',
+            id: '2',
+            attributes: { name: 'Meetup', date: '2025-07-15' },
+          },
+        ],
+      })
+    })
+
+    it('should present objects from store with custom ZodLikeSchema', function () {
+      // Custom schema that returns a class instance (interface without index signature)
+      class Ticket {
+        id!: string
+        title!: string
+        status!: string
+
+        constructor(data: { id: string; title?: string; status?: string }) {
+          this.id = data.id
+          this.title = data.title || 'Untitled'
+          this.status = data.status || 'open'
+        }
+      }
+
+      const ticketSchema: ZodLikeSchema = {
+        parse: (data: unknown): Ticket =>
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test schema, data validated at runtime
+          new Ticket(data as { id: string; title?: string; status?: string }),
+        safeParse: (data: unknown) => {
+          try {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test schema, data validated at runtime
+            const ticket = new Ticket(data as { id: string; title?: string; status?: string })
+            return { success: true, data: ticket }
+          } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test schema, error is always Error
+            return { success: false, error: error as Error }
+          }
+        },
+      }
+
+      const store = new Store({
+        schemas: { tickets: ticketSchema },
+        strict: true,
+      })
+
+      store.sync({
+        data: {
+          type: 'tickets',
+          id: '42',
+          attributes: {
+            title: 'Implement feature',
+            status: 'in_progress',
+          },
+        },
+      })
+
+      // Retrieve with type inference - returns Ticket class instance
+      const ticket = store.find('tickets', '42')
+      expect(ticket).to.not.be.null
+
+      if (ticket) {
+        // Present the class instance (which doesn't have an index signature)
+        // This is the key test: Ticket class cannot be assigned to Record<string, unknown>
+        // but should work with ModelLike = object
+        const json = Presenter.toJSON(ticket)
+        // Compare JSON output (Symbol properties from Store are stripped during serialization)
+        expect(JSON.parse(JSON.stringify(json))).to.deep.equal({
+          data: {
+            type: 'objects',
+            id: '42',
+            attributes: {
+              title: 'Implement feature',
+              status: 'in_progress',
+            },
+          },
+        })
+      }
+    })
+
+    it('should present objects with custom presenter from store', function () {
+      const articleSchema = z
+        .object({
+          id: z.string(),
+          title: z.string(),
+          body: z.string(),
+          published: z.boolean(),
+        })
+        .passthrough()
+
+      const schemas = { articles: articleSchema } as const
+
+      class ArticlePresenter extends Presenter {
+        static type = 'articles'
+
+        attributes(instance: z.infer<typeof articleSchema> | null) {
+          if (!instance) return null
+          return {
+            title: instance.title,
+            body: instance.body,
+            published: instance.published,
+          }
+        }
+      }
+
+      const store = new Store({ schemas, strict: true })
+
+      store.sync({
+        data: {
+          type: 'articles',
+          id: '1',
+          attributes: {
+            title: 'Hello World',
+            body: 'This is the content.',
+            published: true,
+          },
+        },
+      })
+
+      const article = store.find('articles', '1')
+      expect(article).to.not.be.null
+
+      if (article) {
+        // Use typed presenter with schema-inferred object
+        const json = ArticlePresenter.toJSON(article)
+        expect(json).to.deep.equal({
+          data: {
+            type: 'articles',
+            id: '1',
+            attributes: {
+              title: 'Hello World',
+              body: 'This is the content.',
+              published: true,
+            },
+          },
+        })
+      }
     })
   })
 })
