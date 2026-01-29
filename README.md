@@ -181,17 +181,47 @@ const { Store } = yayson()
 const store = new Store()
 
 const data = await adapter.get({ path: '/events/' + id })
-const event = store.sync(data)
+const allSynced = store.sync(data)
 ```
 
-This will give you the parsed event with all its relationships.
+The `sync()` method returns all models synced in this call (from both `data` and `included`), with relationships resolved.
 
-Its also possible to find in the synched data:
+### Filtering by type with retrieveAll
+
+Use `retrieveAll()` to sync data and return only models of a specific type:
 
 ```javascript
-const event = this.store.find('events', id)
+const data = await adapter.get({ path: '/events/' })
 
-const images = this.store.findAll('images')
+// Sync and return only events (filters out included resources)
+const events = store.retrieveAll('events', data)
+```
+
+This is useful when the response contains multiple types but you only need the primary resources:
+
+```javascript
+// Response contains events and their related images
+const response = {
+  data: [
+    { type: 'events', id: '1', attributes: { name: 'Conference' } },
+    { type: 'events', id: '2', attributes: { name: 'Meetup' } },
+  ],
+  included: [{ type: 'images', id: '10', attributes: { url: 'http://example.com/img.jpg' } }],
+}
+
+// Get only the events, not the included images
+const events = store.retrieveAll('events', response)
+// events.length === 2
+```
+
+### Finding synced data
+
+You can also find in previously synced data:
+
+```javascript
+const event = store.find('events', id)
+
+const images = store.findAll('images')
 ```
 
 ### Schema Validation and Type Inference
@@ -287,12 +317,28 @@ const store = new Store({
   },
 })
 
-store.sync({
+const allSynced = store.sync({
   event: { id: '1', name: 'Demo Event' },
   images: [{ id: '2', url: 'http://example.com/image.jpg' }],
 })
+// allSynced contains both the event and images
 
 const event = store.find('event', '1')
+```
+
+#### Filtering by type with retrieveAll
+
+Use `retrieveAll()` to sync data and return only models of a specific type:
+
+```javascript
+const events = store.retrieveAll('event', {
+  event: [
+    { id: '1', name: 'Event 1' },
+    { id: '2', name: 'Event 2' },
+  ],
+  image: [{ id: '3', url: 'http://example.com/image.jpg' }],
+})
+// events.length === 2 (only events, not images)
 ```
 
 Options can be passed when creating the store:
