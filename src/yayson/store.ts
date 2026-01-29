@@ -181,23 +181,13 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     }
   }
 
-  sync<FT extends string = string>(
-    body: JsonApiDocument,
-    filterType?: FT,
-  ):
-    | ((InferModelType<S, FT> | InferModelType<S, FT>[] | StoreModel | StoreModel[] | null) & {
-        links?: unknown
-        meta?: unknown
-      })
-    | null {
+  sync(body: JsonApiDocument): StoreModel[] {
     // Clear previous validation errors
     this.validationErrors = []
 
-    const syncData = (
-      data: JsonApiDocument['data'] | JsonApiDocument['included'],
-    ): StoreRecord | StoreRecord[] | null => {
+    const syncData = (data: JsonApiDocument['data'] | JsonApiDocument['included']): StoreRecord[] => {
       if (data == null) {
-        return null
+        return []
       }
       const add = (obj: StoreRecordType): StoreRecord => {
         const { type, id } = obj
@@ -223,59 +213,26 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
         if (!data.id) {
           throw new Error(`Resource of type ${data.type} is missing an id`)
         }
-        return add({
-          ...data,
-          attributes: data.attributes ?? undefined,
-          relationships: data.relationships ?? undefined,
-          id: data.id,
-        })
+        return [
+          add({
+            ...data,
+            attributes: data.attributes ?? undefined,
+            relationships: data.relationships ?? undefined,
+            id: data.id,
+          }),
+        ]
       }
     }
 
     syncData(body.included)
     const recs = syncData(body.data)
 
-    if (recs == null) {
-      return null
-    }
-
     const models: StoreModels = {}
-    let result:
-      | ((InferModelType<S, FT> | InferModelType<S, FT>[] | StoreModel | StoreModel[]) & {
-          links?: unknown
-          meta?: unknown
-        })
-      | null
+    return recs.map((rec) => this.toModel(rec, rec.type, models))
+  }
 
-    if (Array.isArray(recs)) {
-      let modelArray = recs.map((rec) => {
-        return this.toModel(rec, rec.type, models)
-      })
-      if (filterType) {
-        modelArray = modelArray.filter((model) => model[TYPE] === filterType)
-      }
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from filterType parameter
-      result = Object.assign(modelArray, { links: undefined, meta: undefined }) as InferModelType<S, FT>[] & {
-        links?: unknown
-        meta?: unknown
-      }
-    } else {
-      const model = this.toModel(recs, recs.type, models)
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from filterType parameter
-      result = Object.assign(model, { links: undefined, meta: undefined }) as unknown as InferModelType<S, FT> & {
-        links?: unknown
-        meta?: unknown
-      }
-    }
-
-    if (Object.prototype.hasOwnProperty.call(body, 'links')) {
-      result.links = body.links
-    }
-
-    if (Object.prototype.hasOwnProperty.call(body, 'meta')) {
-      result.meta = body.meta
-    }
-
-    return result
+  retrieveAll<T extends string>(type: T, body: JsonApiDocument): InferModelType<S, T>[] {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from type parameter
+    return this.sync(body).filter((model) => model[TYPE] === type) as InferModelType<S, T>[]
   }
 }

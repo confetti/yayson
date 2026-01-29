@@ -6,6 +6,7 @@ import type {
   InferModelType,
   LegacyStoreOptions,
 } from './types.js'
+import { TYPE } from './symbols.js'
 import { validate } from './schema.js'
 
 interface LegacyStoreRecordType {
@@ -69,6 +70,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     // Don't add 'type' to model - preserve original data shape for backwards compatibility
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Legacy format: rec.data has id, spread creates StoreModel-compatible object
     const model: StoreModel = { ...rec.data, id: rec.data.id as string }
+    model[TYPE] = type
 
     // Store placeholder to handle circular relations
     models[type]![idStr] = model
@@ -99,6 +101,10 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Schema validation returns unknown, cast to StoreModel after validation
       const validatedModel = result.data as StoreModel
+
+      // Preserve TYPE symbol (schema validation may not preserve it)
+      validatedModel[TYPE] = model[TYPE]
+
       models[type]![idStr] = validatedModel
       return validatedModel
     }
@@ -198,7 +204,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     }
   }
 
-  sync(data: LegacyData): void {
+  sync(data: LegacyData): StoreModel[] {
     // Clear validation errors and models cache from previous sync
     this.validationErrors = []
     this.models = {}
@@ -207,7 +213,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
       this.setupRelations(data.links)
     }
 
-    // Track records added in this sync for eager validation
+    // Track records added in this sync
     const syncedRecords: LegacyStoreRecordType[] = []
 
     for (const name in data) {
@@ -216,9 +222,9 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
       }
 
       const value = data[name]!
+      const type = this.types[name] || name
 
       const add = (d: Record<string, unknown>): void => {
-        const type = this.types[name] || name
         this.remove(type, String(d.id))
         const rec = { type, data: d }
         this.records.push(rec)
@@ -232,11 +238,17 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
       }
     }
 
-    // Eager validation: build and validate only newly synced records when schemas are configured
-    if (this.schemas) {
-      for (const rec of syncedRecords) {
-        this.toModel(rec, rec.type, this.models)
-      }
+    // Build models for all synced records
+    for (const rec of syncedRecords) {
+      this.toModel(rec, rec.type, this.models)
     }
+
+    return syncedRecords.map((rec) => this.models[rec.type]![String(rec.data.id)]!)
+  }
+
+  retrieveAll<T extends string>(type: T, data: LegacyData): InferModelType<S, T>[] {
+    const normalizedType = this.types[type] || type
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from type parameter
+    return this.sync(data).filter((model) => model[TYPE] === normalizedType) as InferModelType<S, T>[]
   }
 }

@@ -142,7 +142,7 @@ describe('Type Inference', function () {
     }
   })
 
-  it('should infer types with sync filterType', function () {
+  it('should infer types with retrieveAll', function () {
     const eventSchema = z
       .object({
         id: z.string(),
@@ -164,24 +164,21 @@ describe('Type Inference', function () {
 
     const store = new Store({ schemas, strict: true })
 
-    // TypeScript should infer the correct type from filterType
-    const events = store.sync(
-      {
-        data: [
-          {
-            type: 'events',
-            id: '1',
-            attributes: { name: 'Event 1' },
-          },
-          {
-            type: 'comments',
-            id: '2',
-            attributes: { text: 'Comment 1' },
-          },
-        ],
-      },
-      'events',
-    )
+    // TypeScript should infer the correct type from retrieveAll type parameter
+    const events = store.retrieveAll('events', {
+      data: [
+        {
+          type: 'events',
+          id: '1',
+          attributes: { name: 'Event 1' },
+        },
+        {
+          type: 'comments',
+          id: '2',
+          attributes: { text: 'Comment 1' },
+        },
+      ],
+    })
 
     expect(Array.isArray(events)).to.be.true
     if (Array.isArray(events)) {

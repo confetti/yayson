@@ -14,7 +14,7 @@ describe('Store', function () {
   })
 
   it('should sync an event', function () {
-    const event = this.store.sync({
+    const events = this.store.sync({
       data: {
         type: 'events',
         id: 1,
@@ -24,7 +24,8 @@ describe('Store', function () {
       },
     })
 
-    expect(event.name).to.equal('Demo')
+    expect(events.length).to.equal(1)
+    expect(events[0].name).to.equal('Demo')
   })
 
   it('should allow an attribute namned type', function () {
@@ -383,16 +384,8 @@ describe('Store', function () {
     })
   })
 
-  it('should retain links and meta', function () {
+  it('should retain links and meta on models', function () {
     const result = this.store.sync({
-      links: {
-        self: 'http://example.com/events',
-        next: 'http://example.com/events?page[offset]=2',
-      },
-      meta: {
-        name: 'top level meta data',
-        value: 1,
-      },
       data: [
         {
           type: 'events',
@@ -453,18 +446,19 @@ describe('Store', function () {
       ],
     })
 
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
-    expect((result as any).meta).to.deep.equal({ name: 'top level meta data', value: 1 })
+    // Nested meta in attributes is preserved as-is
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
     expect((result as any)[0].article.meta).to.deep.equal({
       author: 'John Doe',
       date: '2017-06-26',
     })
+    // Model-level meta uses symbol
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
     expect((result as any)[0].comment[META]).to.deep.equal({
       author: 'John Doe',
       date: '2017-06-26',
     })
+    // Relationship links use symbol
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
     expect((result as any)[0].comment[REL_LINKS]).to.deep.equal({
       self: 'http://example.com/events/1/relationships/comment',
@@ -472,19 +466,16 @@ describe('Store', function () {
     })
   })
 
-  it('should sync and return only filtered type in order', function () {
-    const result = this.store.sync(
-      {
-        data: [
-          { type: 'events', id: '3', attributes: { name: 'Third' } },
-          { type: 'images', id: '5', attributes: { name: 'Image' } },
-          { type: 'events', id: '1', attributes: { name: 'First' } },
-          { type: 'images', id: '6', attributes: { name: 'Image 2' } },
-          { type: 'events', id: '2', attributes: { name: 'Second' } },
-        ],
-      },
-      'events',
-    )
+  it('should retrieveAll and return only filtered type in order', function () {
+    const result = this.store.retrieveAll('events', {
+      data: [
+        { type: 'events', id: '3', attributes: { name: 'Third' } },
+        { type: 'images', id: '5', attributes: { name: 'Image' } },
+        { type: 'events', id: '1', attributes: { name: 'First' } },
+        { type: 'images', id: '6', attributes: { name: 'Image 2' } },
+        { type: 'events', id: '2', attributes: { name: 'Second' } },
+      ],
+    })
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
     expect((result as any).length).to.equal(3)
@@ -502,39 +493,36 @@ describe('Store', function () {
     expect((result as any)[2].name).to.equal('Second')
   })
 
-  it('should sync mixed types with includes and filter correctly', function () {
-    const result = this.store.sync(
-      {
-        data: [
-          {
-            type: 'events',
-            id: '1',
-            attributes: { name: 'Event 1' },
-            relationships: {
-              image: {
-                data: { type: 'images', id: '10' },
-              },
+  it('should retrieveAll mixed types with includes and filter correctly', function () {
+    const result = this.store.retrieveAll('events', {
+      data: [
+        {
+          type: 'events',
+          id: '1',
+          attributes: { name: 'Event 1' },
+          relationships: {
+            image: {
+              data: { type: 'images', id: '10' },
             },
           },
-          { type: 'comments', id: '5', attributes: { text: 'Comment' } },
-          {
-            type: 'events',
-            id: '2',
-            attributes: { name: 'Event 2' },
-            relationships: {
-              image: {
-                data: { type: 'images', id: '11' },
-              },
+        },
+        { type: 'comments', id: '5', attributes: { text: 'Comment' } },
+        {
+          type: 'events',
+          id: '2',
+          attributes: { name: 'Event 2' },
+          relationships: {
+            image: {
+              data: { type: 'images', id: '11' },
             },
           },
-        ],
-        included: [
-          { type: 'images', id: '10', attributes: { name: 'Image 10' } },
-          { type: 'images', id: '11', attributes: { name: 'Image 11' } },
-        ],
-      },
-      'events',
-    )
+        },
+      ],
+      included: [
+        { type: 'images', id: '10', attributes: { name: 'Image 10' } },
+        { type: 'images', id: '11', attributes: { name: 'Image 11' } },
+      ],
+    })
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
     expect((result as any).length).to.equal(2)
@@ -573,9 +561,8 @@ describe('Store', function () {
         },
       })
 
-      expect(result).to.not.be.null
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test validates runtime data shape
-      expect((result as unknown as { name: string }).name).to.equal('Valid Event')
+      expect(result.length).to.equal(1)
+      expect(result[0].name).to.equal('Valid Event')
       expect(store.validationErrors.length).to.equal(0)
     })
 
@@ -626,8 +613,9 @@ describe('Store', function () {
         },
       })
 
+      expect(result.length).to.equal(1)
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
-      expect((result as any).name).to.equal('Invalid Event')
+      expect((result[0] as any).name).to.equal('Invalid Event')
       expect(store.validationErrors.length).to.equal(1)
       expect(store.validationErrors[0].type).to.equal('events')
       expect(store.validationErrors[0].id).to.equal('1')
@@ -744,7 +732,7 @@ describe('Store', function () {
       expect(store.validationErrors.length).to.equal(0)
     })
 
-    it('should work with type-safe sync and filtered results', function () {
+    it('should work with type-safe retrieveAll and filtered results', function () {
       interface Event {
         id: string
         name: string
@@ -762,28 +750,25 @@ describe('Store', function () {
         strict: true,
       })
 
-      const result = store.sync(
-        {
-          data: [
-            {
-              type: 'events',
-              id: '1',
-              attributes: { name: 'Event 1' },
-            },
-            {
-              type: 'images',
-              id: '2',
-              attributes: { url: 'image.jpg' },
-            },
-            {
-              type: 'events',
-              id: '3',
-              attributes: { name: 'Event 3' },
-            },
-          ],
-        },
-        'events',
-      )
+      const result = store.retrieveAll('events', {
+        data: [
+          {
+            type: 'events',
+            id: '1',
+            attributes: { name: 'Event 1' },
+          },
+          {
+            type: 'images',
+            id: '2',
+            attributes: { url: 'image.jpg' },
+          },
+          {
+            type: 'events',
+            id: '3',
+            attributes: { name: 'Event 3' },
+          },
+        ],
+      })
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
       expect((result as any).length).to.equal(2)
@@ -818,15 +803,12 @@ describe('Store', function () {
         ],
       })
 
-      const page2 = store.sync(
-        {
-          data: [
-            { type: 'events', id: '3', attributes: { name: 'Page 2 Event 1' } },
-            { type: 'events', id: '4', attributes: { name: 'Page 2 Event 2' } },
-          ],
-        },
-        'events',
-      )
+      const page2 = store.retrieveAll('events', {
+        data: [
+          { type: 'events', id: '3', attributes: { name: 'Page 2 Event 1' } },
+          { type: 'events', id: '4', attributes: { name: 'Page 2 Event 2' } },
+        ],
+      })
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
       expect((page2 as any).length).to.equal(2)

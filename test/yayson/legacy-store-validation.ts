@@ -1,6 +1,7 @@
 import { expect } from 'chai'
 import { z } from 'zod'
 import LegacyStore from '../../src/yayson/legacy-store.js'
+import { TYPE } from '../../src/symbols.js'
 
 describe('LegacyStore', function () {
   describe('Schema Validation', function () {
@@ -630,6 +631,237 @@ describe('LegacyStore', function () {
       expect(events.length).to.equal(1)
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test validates runtime data without schema
       expect((events[0] as { name: string }).name).to.equal('Event')
+    })
+  })
+
+  describe('retrieveAll', function () {
+    it('should return filtered results with retrieveAll', function () {
+      const eventSchema = z
+        .object({
+          id: z.string(),
+          name: z.string(),
+        })
+        .passthrough()
+
+      const imageSchema = z
+        .object({
+          id: z.string(),
+          url: z.string(),
+        })
+        .passthrough()
+
+      const schemas = {
+        event: eventSchema,
+        image: imageSchema,
+      } as const
+
+      const store = new LegacyStore({ schemas, strict: true })
+
+      // Sync both types but filter to only events
+      const events = store.retrieveAll('event', {
+        event: [
+          { id: '1', name: 'Event 1' },
+          { id: '2', name: 'Event 2' },
+        ],
+        image: [{ id: '3', url: 'https://example.com/img.jpg' }],
+      })
+
+      expect(Array.isArray(events)).to.be.true
+      if (Array.isArray(events)) {
+        expect(events.length).to.equal(2)
+        expect(events[0].name).to.equal('Event 1')
+        expect(events[1].name).to.equal('Event 2')
+      }
+    })
+
+    it('should return array even when retrieveAll matches one item', function () {
+      const eventSchema = z
+        .object({
+          id: z.string(),
+          name: z.string(),
+        })
+        .passthrough()
+
+      const schemas = { event: eventSchema } as const
+
+      const store = new LegacyStore({ schemas, strict: true })
+
+      const events = store.retrieveAll('event', {
+        event: { id: '1', name: 'Single Event' },
+      })
+
+      expect(Array.isArray(events)).to.be.true
+      expect(events.length).to.equal(1)
+      expect(events[0].name).to.equal('Single Event')
+      expect(events[0].id).to.equal('1')
+    })
+
+    it('should return empty array when retrieveAll matches nothing', function () {
+      const eventSchema = z
+        .object({
+          id: z.string(),
+          name: z.string(),
+        })
+        .passthrough()
+
+      const schemas = { event: eventSchema } as const
+
+      const store = new LegacyStore({ schemas, strict: true })
+
+      const events = store.retrieveAll('event', {
+        image: { id: '1', url: 'https://example.com/img.jpg' },
+      })
+
+      expect(Array.isArray(events)).to.be.true
+      if (Array.isArray(events)) {
+        expect(events.length).to.equal(0)
+      }
+    })
+
+    it('should work with type mapping and retrieveAll', function () {
+      const eventSchema = z
+        .object({
+          id: z.string(),
+          name: z.string(),
+        })
+        .passthrough()
+
+      const schemas = { event: eventSchema } as const
+
+      const store = new LegacyStore({
+        types: { events: 'event' },
+        schemas,
+        strict: true,
+      })
+
+      // Use plural name in data, singular in retrieveAll type
+      const events = store.retrieveAll('event', {
+        events: [
+          { id: '1', name: 'Event 1' },
+          { id: '2', name: 'Event 2' },
+        ],
+      })
+
+      expect(Array.isArray(events)).to.be.true
+      if (Array.isArray(events)) {
+        expect(events.length).to.equal(2)
+        expect(events[0].name).to.equal('Event 1')
+      }
+    })
+
+    it('should return all synced models from sync()', function () {
+      const store = new LegacyStore()
+
+      const result = store.sync({
+        event: [
+          { id: '1', name: 'Event 1' },
+          { id: '2', name: 'Event 2' },
+        ],
+        image: { id: '3', url: 'https://example.com/img.jpg' },
+      })
+
+      expect(Array.isArray(result)).to.be.true
+      if (Array.isArray(result)) {
+        expect(result.length).to.equal(3)
+      }
+    })
+
+    it('should infer correct types with retrieveAll', function () {
+      const eventSchema = z.object({
+        id: z.string(),
+        name: z.string(),
+        date: z.string(),
+      })
+
+      const imageSchema = z.object({
+        id: z.string(),
+        url: z.string(),
+        width: z.number(),
+      })
+
+      const schemas = {
+        event: eventSchema,
+        image: imageSchema,
+      } as const
+
+      const store = new LegacyStore({ schemas, strict: true })
+
+      // TypeScript should infer correct type from retrieveAll type parameter
+      const events = store.retrieveAll('event', {
+        event: [{ id: '1', name: 'Conference', date: '2025-06-01' }],
+        image: [{ id: '2', url: 'https://example.com/img.jpg', width: 800 }],
+      })
+
+      expect(Array.isArray(events)).to.be.true
+      if (Array.isArray(events)) {
+        expect(events.length).to.equal(1)
+        // Type inference should allow accessing .name and .date
+        expect(events[0].name).to.equal('Conference')
+        expect(events[0].date).to.equal('2025-06-01')
+      }
+
+      // RetrieveAll images
+      const images = store.retrieveAll('image', {
+        event: [{ id: '1', name: 'Conference', date: '2025-06-01' }],
+        image: [{ id: '2', url: 'https://example.com/img.jpg', width: 800 }],
+      })
+
+      expect(Array.isArray(images)).to.be.true
+      if (Array.isArray(images)) {
+        expect(images.length).to.equal(1)
+        // Type inference should allow accessing .url and .width
+        expect(images[0].url).to.equal('https://example.com/img.jpg')
+        expect(images[0].width).to.equal(800)
+      }
+    })
+  })
+
+  describe('TYPE symbol', function () {
+    it('should set TYPE symbol on models', function () {
+      const store = new LegacyStore()
+
+      store.sync({ event: { id: '1', name: 'Demo' } })
+      const event = store.find('event', '1')
+
+      expect(event).to.not.be.null
+      if (event) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+        expect((event as any)[TYPE]).to.equal('event')
+      }
+    })
+
+    it('should set TYPE symbol with type mapping', function () {
+      const store = new LegacyStore({
+        types: { events: 'event' },
+      })
+
+      store.sync({ events: [{ id: '1', name: 'Event 1' }] })
+      const events = store.findAll('event')
+
+      expect(events.length).to.equal(1)
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      expect((events[0] as any)[TYPE]).to.equal('event')
+    })
+
+    it('should preserve TYPE symbol after schema validation', function () {
+      const eventSchema = z.object({
+        id: z.string(),
+        name: z.string(),
+      })
+
+      const store = new LegacyStore({
+        schemas: { event: eventSchema },
+        strict: true,
+      })
+
+      store.sync({ event: { id: '1', name: 'Demo' } })
+      const event = store.find('event', '1')
+
+      expect(event).to.not.be.null
+      if (event) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+        expect((event as any)[TYPE]).to.equal('event')
+      }
     })
   })
 })
