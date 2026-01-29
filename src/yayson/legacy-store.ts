@@ -22,7 +22,7 @@ interface LegacyLinks {
 
 type LegacyDataValue = Record<string, unknown> | Array<Record<string, unknown>>
 
-interface LegacyData {
+export interface LegacyData {
   links?: LegacyLinks
   meta?: Record<string, unknown>
   [key: string]: LegacyDataValue | LegacyLinks | Record<string, unknown> | undefined

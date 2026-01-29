@@ -1,7 +1,10 @@
 import yaysonFactory from './yayson.js'
 import createLegacyPresenter from './yayson/legacy-presenter.js'
 import LegacyStore from './yayson/legacy-store.js'
+import type { LegacyData } from './yayson/legacy-store.js'
 import type { YaysonOptions } from './yayson.js'
+
+export type { LegacyData }
 
 interface LegacyYaysonResult {
   Store: typeof LegacyStore
