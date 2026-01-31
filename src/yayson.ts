@@ -4,10 +4,16 @@ import createPresenter from './yayson/presenter.js'
 import Store from './yayson/store.js'
 import type {
   AdapterConstructor,
-  InferModelType,
-  InferSchemaType,
+  JsonApiDocument,
+  JsonApiLink,
+  JsonApiLinks,
+  JsonApiRelationship,
+  JsonApiRelationships,
+  JsonApiResource,
   LegacyStoreOptions,
   PresenterConstructor,
+  PresenterInstance,
+  PresenterOptions,
   SchemaRegistry,
   StoreOptions,
   ValidationError,
@@ -52,9 +58,17 @@ function yayson(options?: YaysonOptions): YaysonResult {
 
 export default yayson
 export type {
-  InferModelType,
-  InferSchemaType,
+  AdapterConstructor,
+  JsonApiDocument,
+  JsonApiLink,
+  JsonApiLinks,
+  JsonApiRelationship,
+  JsonApiRelationships,
+  JsonApiResource,
   LegacyStoreOptions,
+  PresenterConstructor,
+  PresenterInstance,
+  PresenterOptions,
   SchemaRegistry,
   StoreOptions,
   ValidationError,

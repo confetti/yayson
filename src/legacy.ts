@@ -2,9 +2,33 @@ import yaysonFactory from './yayson.js'
 import createLegacyPresenter from './yayson/legacy-presenter.js'
 import LegacyStore from './yayson/legacy-store.js'
 import type { LegacyData } from './yayson/legacy-store.js'
+import type {
+  AdapterConstructor,
+  JsonApiDocument,
+  JsonApiLink,
+  JsonApiLinks,
+  JsonApiRelationship,
+  JsonApiRelationships,
+  JsonApiResource,
+  PresenterConstructor,
+  PresenterInstance,
+  PresenterOptions,
+} from './yayson/types.js'
 import type { YaysonOptions } from './yayson.js'
 
-export type { LegacyData }
+export type {
+  AdapterConstructor,
+  JsonApiDocument,
+  JsonApiLink,
+  JsonApiLinks,
+  JsonApiRelationship,
+  JsonApiRelationships,
+  JsonApiResource,
+  LegacyData,
+  PresenterConstructor,
+  PresenterInstance,
+  PresenterOptions,
+}
 
 interface LegacyYaysonResult {
   Store: typeof LegacyStore
