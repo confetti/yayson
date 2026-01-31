@@ -11,13 +11,13 @@ function isSequelizeModel(model: unknown): model is SequelizeModel {
 }
 
 class SequelizeAdapter extends Adapter {
-  static override get<T = unknown>(model: ModelLike, key?: string): T {
+  static override get(model: ModelLike): Record<string, unknown>
+  static override get(model: ModelLike, key: string): unknown
+  static override get(model: ModelLike, key?: string): unknown {
     if (isSequelizeModel(model)) {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Sequelize .get() returns unknown, cast to generic T
-      return model.get(key) as T
+      return model.get(key)
     }
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Non-Sequelize models return undefined, cast to T for generic signature
-    return undefined as T
+    return undefined
   }
 
   static override id(model: ModelLike): string | undefined {

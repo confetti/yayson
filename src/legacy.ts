@@ -2,8 +2,8 @@ import yaysonFactory from './yayson.js'
 import createLegacyPresenter from './yayson/legacy-presenter.js'
 import LegacyStore from './yayson/legacy-store.js'
 import type { LegacyData } from './yayson/legacy-store.js'
+import Adapter from './yayson/adapter.js'
 import type {
-  AdapterConstructor,
   JsonApiDocument,
   JsonApiLink,
   JsonApiLinks,
@@ -14,7 +14,7 @@ import type {
 import type { YaysonOptions } from './yayson.js'
 
 export type {
-  AdapterConstructor,
+  Adapter,
   JsonApiDocument,
   JsonApiLink,
   JsonApiLinks,

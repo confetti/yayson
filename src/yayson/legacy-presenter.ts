@@ -41,7 +41,7 @@ export default function createLegacyPresenter(Presenter: Presenter) {
       if (!instance) {
         return {}
       }
-      const attributes = { ...this.constructor.adapter.get<Record<string, unknown>>(instance) }
+      const attributes = { ...this.constructor.adapter.get(instance) }
       const relationships = this.relationships()
       if (relationships) {
         for (const key in relationships) {
@@ -81,7 +81,8 @@ export default function createLegacyPresenter(Presenter: Presenter) {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Factory returns PresenterInstance, we know it's LegacyPresenter
         const presenter = new factory(scope) as LegacyPresenter
 
-        const data = this.constructor.adapter.get<ModelLike | ModelLike[] | null>(instance, key)
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- unknown from adapter.get
+        const data = this.constructor.adapter.get(instance, key) as ModelLike | ModelLike[] | null
         if (data != null) {
           presenter.toJSON(data, { defaultPlural: true })
         }

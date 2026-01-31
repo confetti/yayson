@@ -1,6 +1,5 @@
-import type { ModelLike } from './adapter.js'
+import Adapter, { ModelLike } from './adapter.js'
 import type {
-  AdapterConstructor,
   JsonApiDocument,
   JsonApiLink,
   JsonApiLinks,
@@ -24,7 +23,7 @@ function buildLinks(link: JsonApiLink | string | null | undefined): JsonApiLink 
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is inferred from class
-export default function createPresenter(adapter: AdapterConstructor) {
+export default function createPresenter(adapter: typeof Adapter) {
   class Presenter {
     declare ['constructor']: typeof Presenter
 
@@ -58,7 +57,7 @@ export default function createPresenter(adapter: AdapterConstructor) {
       if (instance == null) {
         return {}
       }
-      const attributes = { ...this.constructor.adapter.get<Record<string, unknown>>(instance) }
+      const attributes = { ...this.constructor.adapter.get(instance) }
       delete attributes['id']
 
       const relationships = this.relationships()
@@ -84,7 +83,8 @@ export default function createPresenter(adapter: AdapterConstructor) {
 
         const presenter = new factory(scope)
 
-        const data = this.constructor.adapter.get<ModelLike | ModelLike[] | null>(instance, key)
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- unknown from adapter.get
+        const data = this.constructor.adapter.get(instance, key) as ModelLike | ModelLike[] | null
         result.push(presenter.toJSON(data, { include: true }))
       }
       return result
@@ -103,7 +103,8 @@ export default function createPresenter(adapter: AdapterConstructor) {
       }
 
       for (const key in rels) {
-        const data = this.constructor.adapter.get<ModelLike | ModelLike[] | null | undefined>(instance, key)
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- unknown from adapter.get
+        const data = this.constructor.adapter.get(instance, key) as ModelLike | ModelLike[] | null | undefined
         const presenter = rels[key]
         const buildData = (d: ModelLike): JsonApiResourceIdentifier => {
           const id = this.constructor.adapter.id(d)

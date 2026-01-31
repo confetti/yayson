@@ -23,7 +23,8 @@ describe('SequelizeAdapter', function () {
       },
     }
 
-    const attributes = SequelizeAdapter.get<{ name: string }>(model)
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- testing return type
+    const attributes = SequelizeAdapter.get(model) as { name: string }
     expect(attributes.name).to.eq('Abraham')
 
     delete model.constructor.primaryKeys
@@ -42,7 +43,8 @@ describe('SequelizeAdapter', function () {
       },
     }
 
-    const name = SequelizeAdapter.get<string>(model, 'name')
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- testing return type
+    const name = SequelizeAdapter.get(model, 'name') as string
 
     expect(name).to.eq('Abraham')
     expect(args![0]).to.eq('name')

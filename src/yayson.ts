@@ -3,7 +3,6 @@ import * as adapters from './yayson/adapters/index.js'
 import createPresenter, { Presenter } from './yayson/presenter.js'
 import Store from './yayson/store.js'
 import type {
-  AdapterConstructor,
   JsonApiDocument,
   JsonApiLink,
   JsonApiLinks,
@@ -18,7 +17,7 @@ import type {
 } from './yayson/types.js'
 import type { ZodLikeSchema } from './yayson/schema.js'
 
-type AdapterOption = string | AdapterConstructor
+type AdapterOption = string | typeof Adapter
 
 interface YaysonOptions {
   adapter?: AdapterOption
@@ -30,7 +29,7 @@ interface YaysonResult {
   Adapter: typeof Adapter
 }
 
-function lookupAdapter(nameOrAdapter?: AdapterOption): AdapterConstructor {
+function lookupAdapter(nameOrAdapter?: AdapterOption): typeof Adapter {
   if (nameOrAdapter === 'default' || !nameOrAdapter) {
     return Adapter
   } else if (typeof nameOrAdapter === 'string') {
@@ -56,7 +55,7 @@ function yayson(options?: YaysonOptions): YaysonResult {
 
 export default yayson
 export type {
-  AdapterConstructor,
+  Adapter,
   JsonApiDocument,
   JsonApiLink,
   JsonApiLinks,

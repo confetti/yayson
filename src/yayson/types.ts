@@ -1,4 +1,3 @@
-import type { ModelLike } from './adapter.js'
 import { TYPE, LINKS, META, REL_LINKS, REL_META } from './symbols.js'
 
 export interface JsonApiLink extends Record<string, unknown> {
@@ -46,12 +45,6 @@ export interface PresenterOptions {
   links?: JsonApiLinks
   include?: boolean
   defaultPlural?: boolean
-}
-
-export interface AdapterConstructor {
-  new (): unknown
-  get<T = unknown>(model: ModelLike, key?: string): T
-  id(model: ModelLike): string | undefined
 }
 
 export interface StoreRecord {
