@@ -48,6 +48,14 @@ async function testCJS() {
   assert.strictEqual(typeof symbols.REL_META, 'symbol', 'REL_META should be a symbol')
 
   console.log('  symbols CJS imports OK')
+
+  // Test adapter entry
+  const AdapterClass = require('../build/adapter.cjs')
+  assert.strictEqual(typeof AdapterClass, 'function', 'Adapter should be a function')
+  assert.strictEqual(typeof AdapterClass.get, 'function', 'Adapter.get should be a function')
+  assert.strictEqual(typeof AdapterClass.id, 'function', 'Adapter.id should be a function')
+
+  console.log('  adapter CJS imports OK')
 }
 
 async function testESM() {
@@ -86,6 +94,14 @@ async function testESM() {
   assert.strictEqual(typeof symbols.REL_META, 'symbol', 'REL_META should be a symbol')
 
   console.log('  symbols ESM imports OK')
+
+  // Test adapter entry
+  const adapterModule = await import('../build/adapter.mjs')
+  assert.strictEqual(typeof adapterModule.default, 'function', 'Adapter should be a function')
+  assert.strictEqual(typeof adapterModule.default.get, 'function', 'Adapter.get should be a function')
+  assert.strictEqual(typeof adapterModule.default.id, 'function', 'Adapter.id should be a function')
+
+  console.log('  adapter ESM imports OK')
 }
 
 async function main() {

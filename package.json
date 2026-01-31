@@ -36,6 +36,16 @@
         "types": "./build/symbols.d.cts",
         "default": "./build/symbols.cjs"
       }
+    },
+    "./adapter": {
+      "import": {
+        "types": "./build/adapter.d.mts",
+        "default": "./build/adapter.mjs"
+      },
+      "require": {
+        "types": "./build/adapter.d.cts",
+        "default": "./build/adapter.cjs"
+      }
     }
   },
   "files": [
