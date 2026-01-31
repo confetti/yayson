@@ -25,20 +25,17 @@ interface LegacyJsonApiDocument extends JsonApiDocument {
 export default function createLegacyPresenter(Presenter: PresenterConstructor): LegacyPresenterConstructor {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Factory pattern with class expression
   return class LegacyPresenter extends Presenter {
-    static type = 'object'
+    declare ['constructor']: PresenterClass
     declare scope: LegacyJsonApiDocument
-    #plural?: string
 
-    get #ctor(): PresenterClass {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Access static properties via constructor
-      return this.constructor as unknown as PresenterClass
-    }
+    static type = 'object'
+    #plural?: string
 
     constructor(scope?: JsonApiDocument) {
       // LegacyPresenter doesn't use the 'data' property, so pass an empty scope
       const emptyScope: JsonApiDocument = { data: null }
       super(scope || emptyScope)
-      this.#plural = this.#ctor.plural
+      this.#plural = this.constructor.plural
       // Remove the 'data' property that the parent constructor adds
       if (!scope) {
         // Legacy format doesn't include 'data' property
@@ -48,14 +45,14 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
     }
 
     pluralType(): string {
-      return this.#plural || this.#ctor.type + 's'
+      return this.#plural || this.constructor.type + 's'
     }
 
     attributes(instance: ModelLike | null): Record<string, unknown> {
       if (!instance) {
         return {}
       }
-      const attributes = { ...this.#ctor.adapter.get<Record<string, unknown>>(instance) }
+      const attributes = { ...this.constructor.adapter.get<Record<string, unknown>>(instance) }
       const relationships = this.relationships()
       if (relationships) {
         for (const key in relationships) {
@@ -74,7 +71,7 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
         }
       }
 
-      return filterByFields(attributes, this.#ctor.fields)
+      return filterByFields(attributes, this.constructor.fields)
     }
 
     includeRelationships(scope: LegacyJsonApiDocument, instance: ModelLike): unknown[] {
@@ -90,17 +87,17 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
 
       for (const key in relationships) {
         const factory = relationships[key]
-        if (!factory) throw new Error(`Presenter for ${key} in ${this.#ctor.type} is not defined`)
+        if (!factory) throw new Error(`Presenter for ${key} in ${this.constructor.type} is not defined`)
 
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Factory returns PresenterInstance, we know it's LegacyPresenter
         const presenter = new factory(scope) as LegacyPresenter
 
-        const data = this.#ctor.adapter.get<ModelLike | ModelLike[] | null>(instance, key)
+        const data = this.constructor.adapter.get<ModelLike | ModelLike[] | null>(instance, key)
         if (data != null) {
           presenter.toJSON(data, { defaultPlural: true })
         }
 
-        const type = scope[this.pluralType()] != null ? this.pluralType() : this.#ctor.type
+        const type = scope[this.pluralType()] != null ? this.pluralType() : this.constructor.type
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Access static type via constructor
         const presenterType = (presenter.constructor as unknown as PresenterClass).type
         const keyName = scope[presenter.pluralType()] != null ? presenter.pluralType() : presenterType
@@ -141,11 +138,11 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
           }
         }
         // If eg x.image already exists
-        if (this.scope[this.#ctor.type] && !this.scope[this.pluralType()]) {
-          const existingValue = this.scope[this.#ctor.type]
+        if (this.scope[this.constructor.type] && !this.scope[this.pluralType()]) {
+          const existingValue = this.scope[this.constructor.type]
           if (attrs && hasId(existingValue) && existingValue.id !== attrs.id) {
-            this.scope[this.pluralType()] = [this.scope[this.#ctor.type]]
-            delete this.scope[this.#ctor.type]
+            this.scope[this.pluralType()] = [this.scope[this.constructor.type]]
+            delete this.scope[this.constructor.type]
             const pluralArray = this.scope[this.pluralType()]
             if (Array.isArray(pluralArray)) {
               pluralArray.push(attrs)
@@ -167,7 +164,7 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
         } else if (opts.defaultPlural) {
           this.scope[this.pluralType()] = attrs ? [attrs] : []
         } else {
-          this.scope[this.#ctor.type] = attrs
+          this.scope[this.constructor.type] = attrs
         }
 
         if (added && instance) {

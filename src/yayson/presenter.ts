@@ -27,6 +27,8 @@ function buildLinks(link: JsonApiLink | string | null | undefined): JsonApiLink 
 
 export default function createPresenter(adapter: AdapterConstructor): PresenterConstructor {
   class Presenter implements PresenterInstance {
+    declare ['constructor']: typeof Presenter
+
     static adapter = adapter
     static type = 'objects'
     static fields?: string[]
@@ -37,13 +39,8 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
       this.scope = scope ?? { data: null }
     }
 
-    get #ctor(): PresenterConstructor & { fields?: string[] } {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Access static properties via constructor
-      return this.constructor as PresenterConstructor & { fields?: string[] }
-    }
-
     id(instance: ModelLike): string | undefined {
-      return this.#ctor.adapter.id(instance)
+      return this.constructor.adapter.id(instance)
     }
 
     selfLinks(_instance: ModelLike): JsonApiLink | string | undefined {
@@ -62,7 +59,7 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
       if (instance == null) {
         return {}
       }
-      const attributes = { ...this.#ctor.adapter.get<Record<string, unknown>>(instance) }
+      const attributes = { ...this.constructor.adapter.get<Record<string, unknown>>(instance) }
       delete attributes['id']
 
       const relationships = this.relationships()
@@ -72,7 +69,7 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
         }
       }
 
-      return filterByFields(attributes, this.#ctor.fields)
+      return filterByFields(attributes, this.constructor.fields)
     }
 
     includeRelationships(scope: JsonApiDocument, instance: ModelLike): unknown[] {
@@ -84,11 +81,11 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
 
       for (const key in relationships) {
         const factory = relationships[key]
-        if (!factory) throw new Error(`Presenter for ${key} in ${this.#ctor.type} is not defined`)
+        if (!factory) throw new Error(`Presenter for ${key} in ${this.constructor.type} is not defined`)
 
         const presenter = new factory(scope)
 
-        const data = this.#ctor.adapter.get<ModelLike | ModelLike[] | null>(instance, key)
+        const data = this.constructor.adapter.get<ModelLike | ModelLike[] | null>(instance, key)
         result.push(presenter.toJSON(data, { include: true }))
       }
       return result
@@ -107,10 +104,10 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
       }
 
       for (const key in rels) {
-        const data = this.#ctor.adapter.get<ModelLike | ModelLike[] | null | undefined>(instance, key)
+        const data = this.constructor.adapter.get<ModelLike | ModelLike[] | null | undefined>(instance, key)
         const presenter = rels[key]
         const buildData = (d: ModelLike): JsonApiResourceIdentifier => {
-          const id = this.#ctor.adapter.id(d)
+          const id = this.constructor.adapter.id(d)
           if (!id) {
             throw new Error(`Model of type ${presenter.type} is missing an id`)
           }
@@ -185,7 +182,7 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
         let added = true
         const model: JsonApiResource = {
           id: this.id(instance),
-          type: this.#ctor.type,
+          type: this.constructor.type,
           attributes: this.attributes(instance),
         }
         if (model.id === undefined) {
