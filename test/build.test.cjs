@@ -39,23 +39,16 @@ async function testCJS() {
 
   console.log('  legacy CJS imports OK')
 
-  // Test symbols entry
-  const symbols = require('../build/symbols.cjs')
-  assert.strictEqual(typeof symbols.TYPE, 'symbol', 'TYPE should be a symbol')
-  assert.strictEqual(typeof symbols.LINKS, 'symbol', 'LINKS should be a symbol')
-  assert.strictEqual(typeof symbols.META, 'symbol', 'META should be a symbol')
-  assert.strictEqual(typeof symbols.REL_LINKS, 'symbol', 'REL_LINKS should be a symbol')
-  assert.strictEqual(typeof symbols.REL_META, 'symbol', 'REL_META should be a symbol')
+  // Test utils entry
+  const utils = require('../build/utils.cjs')
+  assert.strictEqual(typeof utils.Adapter, 'function', 'Adapter should be a function')
+  assert.strictEqual(typeof utils.Adapter.get, 'function', 'Adapter.get should be a function')
+  assert.strictEqual(typeof utils.Adapter.id, 'function', 'Adapter.id should be a function')
+  assert.strictEqual(typeof utils.TYPE, 'symbol', 'TYPE should be a symbol')
+  assert.strictEqual(typeof utils.LINKS, 'symbol', 'LINKS should be a symbol')
+  assert.strictEqual(typeof utils.META, 'symbol', 'META should be a symbol')
 
-  console.log('  symbols CJS imports OK')
-
-  // Test adapter entry
-  const AdapterClass = require('../build/adapter.cjs')
-  assert.strictEqual(typeof AdapterClass, 'function', 'Adapter should be a function')
-  assert.strictEqual(typeof AdapterClass.get, 'function', 'Adapter.get should be a function')
-  assert.strictEqual(typeof AdapterClass.id, 'function', 'Adapter.id should be a function')
-
-  console.log('  adapter CJS imports OK')
+  console.log('  utils CJS imports OK')
 }
 
 async function testESM() {
@@ -85,23 +78,16 @@ async function testESM() {
 
   console.log('  legacy ESM imports OK')
 
-  // Test symbols entry
-  const symbols = await import('../build/symbols.mjs')
-  assert.strictEqual(typeof symbols.TYPE, 'symbol', 'TYPE should be a symbol')
-  assert.strictEqual(typeof symbols.LINKS, 'symbol', 'LINKS should be a symbol')
-  assert.strictEqual(typeof symbols.META, 'symbol', 'META should be a symbol')
-  assert.strictEqual(typeof symbols.REL_LINKS, 'symbol', 'REL_LINKS should be a symbol')
-  assert.strictEqual(typeof symbols.REL_META, 'symbol', 'REL_META should be a symbol')
+  // Test utils entry
+  const utils = await import('../build/utils.mjs')
+  assert.strictEqual(typeof utils.Adapter, 'function', 'Adapter should be a function')
+  assert.strictEqual(typeof utils.Adapter.get, 'function', 'Adapter.get should be a function')
+  assert.strictEqual(typeof utils.Adapter.id, 'function', 'Adapter.id should be a function')
+  assert.strictEqual(typeof utils.TYPE, 'symbol', 'TYPE should be a symbol')
+  assert.strictEqual(typeof utils.LINKS, 'symbol', 'LINKS should be a symbol')
+  assert.strictEqual(typeof utils.META, 'symbol', 'META should be a symbol')
 
-  console.log('  symbols ESM imports OK')
-
-  // Test adapter entry
-  const adapterModule = await import('../build/adapter.mjs')
-  assert.strictEqual(typeof adapterModule.default, 'function', 'Adapter should be a function')
-  assert.strictEqual(typeof adapterModule.default.get, 'function', 'Adapter.get should be a function')
-  assert.strictEqual(typeof adapterModule.default.id, 'function', 'Adapter.id should be a function')
-
-  console.log('  adapter ESM imports OK')
+  console.log('  utils ESM imports OK')
 }
 
 async function main() {

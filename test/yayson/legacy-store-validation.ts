@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { z } from 'zod'
 import LegacyStore from '../../src/yayson/legacy-store.js'
-import { TYPE } from '../../src/symbols.js'
+import { TYPE } from '../../src/utils.js'
 
 describe('LegacyStore', function () {
   describe('Schema Validation', function () {

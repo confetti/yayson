@@ -27,24 +27,14 @@
         "default": "./build/legacy.cjs"
       }
     },
-    "./symbols": {
+    "./utils": {
       "import": {
-        "types": "./build/symbols.d.mts",
-        "default": "./build/symbols.mjs"
+        "types": "./build/utils.d.mts",
+        "default": "./build/utils.mjs"
       },
       "require": {
-        "types": "./build/symbols.d.cts",
-        "default": "./build/symbols.cjs"
-      }
-    },
-    "./adapter": {
-      "import": {
-        "types": "./build/adapter.d.mts",
-        "default": "./build/adapter.mjs"
-      },
-      "require": {
-        "types": "./build/adapter.d.cts",
-        "default": "./build/adapter.cjs"
+        "types": "./build/utils.d.cts",
+        "default": "./build/utils.cjs"
       }
     }
   },

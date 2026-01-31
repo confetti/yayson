@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { z } from 'zod'
 import yayson from '../../src/yayson.js'
-import { TYPE, REL_LINKS, META } from '../../src/symbols.js'
+import { TYPE, REL_LINKS, META } from '../../src/utils.js'
 
 const { Store } = yayson()
 
