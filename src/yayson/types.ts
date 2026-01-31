@@ -69,8 +69,8 @@ export interface PresenterInstance {
   id(instance: ModelLike): string | undefined
   selfLinks(instance: ModelLike): JsonApiLink | string | undefined
   links(instance?: ModelLike): JsonApiLinks | undefined
-  relationships(): Record<string, PresenterConstructor> | undefined
-  attributes(instance: ModelLike | null): Record<string, unknown> | null
+  relationships(): Record<string, PresenterConstructor>
+  attributes(instance: ModelLike | null): Record<string, unknown>
   includeRelationships(scope: JsonApiDocument, instance: ModelLike): unknown[]
   buildRelationships(instance: ModelLike | null): JsonApiRelationships | null
   buildSelfLink(instance: ModelLike): JsonApiLink | undefined

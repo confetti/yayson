@@ -883,7 +883,7 @@ describe('Type Inference', function () {
         static type = 'articles'
 
         attributes(instance: z.infer<typeof articleSchema> | null) {
-          if (!instance) return null
+          if (!instance) return {}
           return {
             title: instance.title,
             body: instance.body,

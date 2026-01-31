@@ -428,7 +428,7 @@ describe('Presenter', function (): void {
   it('should serialize in pure JS', function (): void {
     class EventPresenter extends Presenter {
       static type = 'events'
-      attributes(instance: ModelLike | null): Record<string, unknown> | null {
+      attributes(instance: ModelLike | null): Record<string, unknown> {
         super.attributes(instance)
         return { hej: 'test' }
       }

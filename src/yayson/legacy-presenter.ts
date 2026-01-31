@@ -51,9 +51,9 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
       return this.#plural || this.#ctor.type + 's'
     }
 
-    attributes(instance: ModelLike | null): Record<string, unknown> | null {
+    attributes(instance: ModelLike | null): Record<string, unknown> {
       if (!instance) {
-        return null
+        return {}
       }
       const attributes = { ...this.#ctor.adapter.get<Record<string, unknown>>(instance) }
       const relationships = this.relationships()

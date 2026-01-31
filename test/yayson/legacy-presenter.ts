@@ -148,7 +148,7 @@ describe('LegacyPresenter', function () {
 
   it('should relationships with custom attributes method', function () {
     class EventPresenter extends LegacyPresenter {
-      attributes(instance: ModelLike | null): Record<string, unknown> | null {
+      attributes(instance: ModelLike | null): Record<string, unknown> {
         return { hej: 'test' }
       }
     }
