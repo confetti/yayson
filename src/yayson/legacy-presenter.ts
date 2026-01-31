@@ -1,5 +1,5 @@
 import type { ModelLike } from './adapter.js'
-import type { PresenterClass } from './presenter.js'
+import type { Presenter } from './presenter.js'
 import type { JsonApiDocument, JsonApiLinks, PresenterOptions } from './types.js'
 import { filterByFields } from './utils.js'
 
@@ -12,7 +12,7 @@ interface LegacyJsonApiDocument extends JsonApiDocument {
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is inferred from class
-export default function createLegacyPresenter(Presenter: PresenterClass) {
+export default function createLegacyPresenter(Presenter: Presenter) {
   return class LegacyPresenter extends Presenter {
     declare ['constructor']: typeof LegacyPresenter
     declare scope: LegacyJsonApiDocument

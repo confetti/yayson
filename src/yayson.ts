@@ -1,6 +1,6 @@
 import Adapter from './yayson/adapter.js'
 import * as adapters from './yayson/adapters/index.js'
-import createPresenter, { type PresenterClass, type PresenterInstance } from './yayson/presenter.js'
+import createPresenter, { Presenter } from './yayson/presenter.js'
 import Store from './yayson/store.js'
 import type {
   AdapterConstructor,
@@ -26,7 +26,7 @@ interface YaysonOptions {
 
 interface YaysonResult {
   Store: typeof Store
-  Presenter: PresenterClass
+  Presenter: Presenter
   Adapter: typeof Adapter
 }
 
@@ -64,8 +64,6 @@ export type {
   JsonApiRelationships,
   JsonApiResource,
   LegacyStoreOptions,
-  PresenterClass,
-  PresenterInstance,
   PresenterOptions,
   SchemaRegistry,
   StoreOptions,

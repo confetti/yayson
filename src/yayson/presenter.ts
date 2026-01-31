@@ -246,5 +246,4 @@ export default function createPresenter(adapter: AdapterConstructor) {
   return Presenter
 }
 
-export type PresenterClass = ReturnType<typeof createPresenter>
-export type PresenterInstance = InstanceType<PresenterClass>
+export type Presenter = ReturnType<typeof createPresenter>
