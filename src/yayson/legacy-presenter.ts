@@ -29,13 +29,11 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
     declare scope: LegacyJsonApiDocument
 
     static type = 'object'
-    #plural?: string
 
     constructor(scope?: JsonApiDocument) {
       // LegacyPresenter doesn't use the 'data' property, so pass an empty scope
       const emptyScope: JsonApiDocument = { data: null }
       super(scope || emptyScope)
-      this.#plural = this.constructor.plural
       // Remove the 'data' property that the parent constructor adds
       if (!scope) {
         // Legacy format doesn't include 'data' property
@@ -45,7 +43,7 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
     }
 
     pluralType(): string {
-      return this.#plural || this.constructor.type + 's'
+      return this.constructor.plural || this.constructor.type + 's'
     }
 
     attributes(instance: ModelLike | null): Record<string, unknown> {
