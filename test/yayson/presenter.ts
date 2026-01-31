@@ -518,4 +518,108 @@ describe('Presenter', function (): void {
     expect(idSpy).to.have.been.calledOnce
     expect(getSpy).to.have.been.calledOnce
   })
+
+  describe('static fields', function (): void {
+    it('should filter attributes to only include specified fields', function (): void {
+      class PostPresenter extends Presenter {
+        static type = 'posts'
+        static fields = ['title', 'body']
+      }
+
+      const post = { id: 1, title: 'Hello', body: 'World', secret: 'hidden', createdAt: '2024-01-01' }
+      const json = PostPresenter.toJSON(post)
+
+      assertSingleResource(json.data)
+      expect(json.data.attributes).to.deep.equal({
+        title: 'Hello',
+        body: 'World',
+      })
+    })
+
+    it('should handle empty fields array', function (): void {
+      class PostPresenter extends Presenter {
+        static type = 'posts'
+        static fields: string[] = []
+      }
+
+      const post = { id: 1, title: 'Hello', body: 'World' }
+      const json = PostPresenter.toJSON(post)
+
+      assertSingleResource(json.data)
+      expect(json.data.attributes).to.deep.equal({})
+    })
+
+    it('should ignore fields not present in instance', function (): void {
+      class PostPresenter extends Presenter {
+        static type = 'posts'
+        static fields = ['title', 'nonexistent']
+      }
+
+      const post = { id: 1, title: 'Hello', body: 'World' }
+      const json = PostPresenter.toJSON(post)
+
+      assertSingleResource(json.data)
+      expect(json.data.attributes).to.deep.equal({
+        title: 'Hello',
+      })
+    })
+
+    it('should work with relationships', function (): void {
+      class AuthorPresenter extends Presenter {
+        static type = 'authors'
+        static fields = ['name']
+      }
+
+      class PostPresenter extends Presenter {
+        static type = 'posts'
+        static fields = ['title']
+
+        relationships() {
+          return { author: AuthorPresenter }
+        }
+      }
+
+      const post = { id: 1, title: 'Hello', body: 'World', author: { id: 2, name: 'John', email: 'john@example.com' } }
+      const json = PostPresenter.toJSON(post)
+
+      assertSingleResource(json.data)
+      expect(json.data.attributes).to.deep.equal({
+        title: 'Hello',
+      })
+      expect(json.included![0].attributes).to.deep.equal({
+        name: 'John',
+      })
+    })
+
+    it('should not include id in fields output even if specified', function (): void {
+      class PostPresenter extends Presenter {
+        static type = 'posts'
+        static fields = ['id', 'title']
+      }
+
+      const post = { id: 1, title: 'Hello', body: 'World' }
+      const json = PostPresenter.toJSON(post)
+
+      assertSingleResource(json.data)
+      // id is already excluded before fields filter is applied
+      expect(json.data.attributes).to.deep.equal({
+        title: 'Hello',
+      })
+    })
+
+    it('should include all attributes when fields is not defined', function (): void {
+      class PostPresenter extends Presenter {
+        static type = 'posts'
+      }
+
+      const post = { id: 1, title: 'Hello', body: 'World' }
+      const json = PostPresenter.toJSON(post)
+
+      assertSingleResource(json.data)
+      expect(json.data.attributes).to.deep.equal({
+        title: 'Hello',
+        body: 'World',
+      })
+    })
+  })
 })

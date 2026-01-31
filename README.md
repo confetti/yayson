@@ -113,6 +113,45 @@ class BikePresenter extends Presenter {
 }
 ```
 
+### Filtering attributes with fields
+
+Use the static `fields` property to limit which attributes are included in the output:
+
+```javascript
+class UserPresenter extends Presenter {
+  static type = 'users'
+  static fields = ['name', 'email', 'createdAt']
+}
+
+const user = {
+  id: 1,
+  name: 'John',
+  email: 'john@example.com',
+  password: 'secret',
+  createdAt: '2024-01-01',
+}
+
+UserPresenter.render(user)
+```
+
+This would produce:
+
+```javascript
+{
+  data: {
+    id: 1,
+    type: 'users',
+    attributes: {
+      name: 'John',
+      email: 'john@example.com',
+      createdAt: '2024-01-01'
+    }
+  }
+}
+```
+
+The `password` field is excluded because it's not in the `fields` array. This is useful for hiding sensitive data or reducing payload size without overriding the `attributes()` method.
+
 ### Sequelize support
 
 By default it is set up to handle standard JS objects. You can also make

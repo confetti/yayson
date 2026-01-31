@@ -59,6 +59,7 @@ export interface PresenterConstructor {
   adapter: AdapterConstructor
   type: string
   plural?: string
+  fields?: string[]
   toJSON(instanceOrCollection: ModelLike | ModelLike[] | null, options?: PresenterOptions): JsonApiDocument
   render(instanceOrCollection: ModelLike | ModelLike[] | null, options?: PresenterOptions): JsonApiDocument
 }

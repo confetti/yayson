@@ -12,6 +12,7 @@ import type {
   PresenterInstance,
   PresenterOptions,
 } from './types.js'
+import { filterByFields } from './utils.js'
 
 function buildLinks(link: JsonApiLink | string | null | undefined): JsonApiLink | undefined {
   if (link == null) {
@@ -28,6 +29,7 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
   class Presenter implements PresenterInstance {
     static adapter = adapter
     static type = 'objects'
+    static fields?: string[]
 
     scope: JsonApiDocument
 
@@ -74,7 +76,8 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
           delete attributes[key]
         }
       }
-      return attributes
+
+      return filterByFields(attributes, (this.constructor as typeof Presenter).fields)
     }
 
     includeRelationships(scope: JsonApiDocument, instance: ModelLike): unknown[] {

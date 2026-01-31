@@ -158,4 +158,62 @@ describe('LegacyPresenter', function () {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Legacy format uses 'object' property not in standard JsonApiDocument
     expect((json as unknown as { object: Record<string, unknown> }).object.hej).to.eq('test')
   })
+
+  describe('static fields', function () {
+    it('should filter attributes to only include specified fields', function () {
+      class PostPresenter extends LegacyPresenter {
+        static type = 'post'
+        static fields = ['title', 'body']
+      }
+
+      const post = {
+        get(): unknown {
+          return { id: 1, title: 'Hello', body: 'World', secret: 'hidden' }
+        },
+      }
+      const json = PostPresenter.toJSON(post)
+
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Legacy format uses dynamic property names
+      expect((json as unknown as { post: Record<string, unknown> }).post).to.deep.equal({
+        title: 'Hello',
+        body: 'World',
+      })
+    })
+
+    it('should handle empty fields array', function () {
+      class PostPresenter extends LegacyPresenter {
+        static type = 'post'
+        static fields: string[] = []
+      }
+
+      const post = {
+        get(): unknown {
+          return { id: 1, title: 'Hello', body: 'World' }
+        },
+      }
+      const json = PostPresenter.toJSON(post)
+
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Legacy format uses dynamic property names
+      expect((json as unknown as { post: Record<string, unknown> }).post).to.deep.equal({})
+    })
+
+    it('should include all attributes when fields is not defined', function () {
+      class PostPresenter extends LegacyPresenter {
+        static type = 'post'
+      }
+
+      const post = {
+        get(): unknown {
+          return { title: 'Hello', body: 'World' }
+        },
+      }
+      const json = PostPresenter.toJSON(post)
+
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Legacy format uses dynamic property names
+      expect((json as unknown as { post: Record<string, unknown> }).post).to.deep.equal({
+        title: 'Hello',
+        body: 'World',
+      })
+    })
+  })
 })

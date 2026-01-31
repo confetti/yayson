@@ -6,12 +6,17 @@ import type {
   PresenterConstructor,
   PresenterOptions,
 } from './types.js'
+import { filterByFields } from './utils.js'
+
+function hasId(value: unknown): value is { id: unknown } {
+  return typeof value === 'object' && value !== null && 'id' in value
+}
 
 interface LegacyPresenterConstructor extends PresenterConstructor {
   plural?: string
 }
 
-type PresenterClass = { adapter: AdapterConstructor; type: string; plural?: string }
+type PresenterClass = { adapter: AdapterConstructor; type: string; plural?: string; fields?: string[] }
 
 interface LegacyJsonApiDocument extends JsonApiDocument {
   [key: string]: unknown
@@ -52,30 +57,24 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
       }
       const attributes = { ...this.#ctor.adapter.get<Record<string, unknown>>(instance) }
       const relationships = this.relationships()
-      if (!relationships) {
-        return attributes
-      }
-
-      for (const key in relationships) {
-        let id: unknown
-        const data = attributes[key]
-        if (data == null) {
-          id = attributes[key + 'Id']
-          if (id != null) {
-            attributes[key] = id
-          }
-        } else if (Array.isArray(data)) {
-          attributes[key] = data.map((obj) => {
-            if (typeof obj === 'object' && obj !== null && 'id' in obj) {
-              return obj.id
+      if (relationships) {
+        for (const key in relationships) {
+          let id: unknown
+          const data = attributes[key]
+          if (data == null) {
+            id = attributes[key + 'Id']
+            if (id != null) {
+              attributes[key] = id
             }
-            return obj
-          })
-        } else if (typeof data === 'object' && data !== null && 'id' in data) {
-          attributes[key] = data.id
+          } else if (Array.isArray(data)) {
+            attributes[key] = data.map((obj) => (hasId(obj) ? obj.id : obj))
+          } else if (hasId(data)) {
+            attributes[key] = data.id
+          }
         }
       }
-      return attributes
+
+      return filterByFields(attributes, this.#ctor.fields)
     }
 
     includeRelationships(scope: LegacyJsonApiDocument, instance: ModelLike): unknown[] {
@@ -144,13 +143,7 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
         // If eg x.image already exists
         if (this.scope[this.#ctor.type] && !this.scope[this.pluralType()]) {
           const existingValue = this.scope[this.#ctor.type]
-          if (
-            attrs &&
-            typeof existingValue === 'object' &&
-            existingValue !== null &&
-            'id' in existingValue &&
-            existingValue.id !== attrs.id
-          ) {
+          if (attrs && hasId(existingValue) && existingValue.id !== attrs.id) {
             this.scope[this.pluralType()] = [this.scope[this.#ctor.type]]
             delete this.scope[this.#ctor.type]
             const pluralArray = this.scope[this.pluralType()]
@@ -165,7 +158,7 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
         } else if (this.scope[this.pluralType()]) {
           const existing = this.scope[this.pluralType()]
           if (Array.isArray(existing)) {
-            if (attrs && !existing.some((i) => typeof i === 'object' && i !== null && 'id' in i && i.id === attrs.id)) {
+            if (attrs && !existing.some((i) => hasId(i) && i.id === attrs.id)) {
               existing.push(attrs)
             } else {
               added = false
