@@ -54,30 +54,6 @@ export interface AdapterConstructor {
   id(model: ModelLike): string | undefined
 }
 
-export interface PresenterConstructor {
-  new (scope?: JsonApiDocument): PresenterInstance
-  adapter: AdapterConstructor
-  type: string
-  plural?: string
-  fields?: string[]
-  toJSON(instanceOrCollection: ModelLike | ModelLike[] | null, options?: PresenterOptions): JsonApiDocument
-  render(instanceOrCollection: ModelLike | ModelLike[] | null, options?: PresenterOptions): JsonApiDocument
-}
-
-export interface PresenterInstance {
-  scope: JsonApiDocument
-  id(instance: ModelLike): string | undefined
-  selfLinks(instance: ModelLike): JsonApiLink | string | undefined
-  links(instance?: ModelLike): JsonApiLinks | undefined
-  relationships(): Record<string, PresenterConstructor>
-  attributes(instance: ModelLike | null): Record<string, unknown>
-  includeRelationships(scope: JsonApiDocument, instance: ModelLike): unknown[]
-  buildRelationships(instance: ModelLike | null): JsonApiRelationships | null
-  buildSelfLink(instance: ModelLike): JsonApiLink | undefined
-  toJSON(instanceOrCollection: ModelLike | ModelLike[] | null, options?: PresenterOptions): JsonApiDocument
-  render(instanceOrCollection: ModelLike | ModelLike[] | null, options?: PresenterOptions): JsonApiDocument
-}
-
 export interface StoreRecord {
   id: string
   type: string

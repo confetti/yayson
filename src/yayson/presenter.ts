@@ -8,8 +8,6 @@ import type {
   JsonApiRelationships,
   JsonApiResource,
   JsonApiResourceIdentifier,
-  PresenterConstructor,
-  PresenterInstance,
   PresenterOptions,
 } from './types.js'
 import { filterByFields } from './utils.js'
@@ -25,8 +23,9 @@ function buildLinks(link: JsonApiLink | string | null | undefined): JsonApiLink 
   }
 }
 
-export default function createPresenter(adapter: AdapterConstructor): PresenterConstructor {
-  class Presenter implements PresenterInstance {
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is inferred from class
+export default function createPresenter(adapter: AdapterConstructor) {
+  class Presenter {
     declare ['constructor']: typeof Presenter
 
     static adapter = adapter
@@ -51,7 +50,7 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
       return undefined
     }
 
-    relationships(): Record<string, PresenterConstructor> {
+    relationships(): Record<string, typeof Presenter> {
       return {}
     }
 
@@ -246,3 +245,6 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
 
   return Presenter
 }
+
+export type PresenterClass = ReturnType<typeof createPresenter>
+export type PresenterInstance = InstanceType<PresenterClass>

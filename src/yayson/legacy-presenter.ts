@@ -1,34 +1,25 @@
 import type { ModelLike } from './adapter.js'
-import type {
-  AdapterConstructor,
-  JsonApiDocument,
-  JsonApiLinks,
-  PresenterConstructor,
-  PresenterOptions,
-} from './types.js'
+import type { PresenterClass } from './presenter.js'
+import type { JsonApiDocument, JsonApiLinks, PresenterOptions } from './types.js'
 import { filterByFields } from './utils.js'
 
 function hasId(value: unknown): value is { id: unknown } {
   return typeof value === 'object' && value !== null && 'id' in value
 }
 
-interface LegacyPresenterConstructor extends PresenterConstructor {
-  plural?: string
-}
-
-type PresenterClass = { adapter: AdapterConstructor; type: string; plural?: string; fields?: string[] }
-
 interface LegacyJsonApiDocument extends JsonApiDocument {
   [key: string]: unknown
 }
 
-export default function createLegacyPresenter(Presenter: PresenterConstructor): LegacyPresenterConstructor {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Factory pattern with class expression
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is inferred from class
+export default function createLegacyPresenter(Presenter: PresenterClass) {
   return class LegacyPresenter extends Presenter {
-    declare ['constructor']: PresenterClass
+    declare ['constructor']: typeof LegacyPresenter
     declare scope: LegacyJsonApiDocument
 
     static type = 'object'
+    static plural?: string
+    static fields?: string[]
 
     constructor(scope?: JsonApiDocument) {
       // LegacyPresenter doesn't use the 'data' property, so pass an empty scope
@@ -96,8 +87,7 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
         }
 
         const type = scope[this.pluralType()] != null ? this.pluralType() : this.constructor.type
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Access static type via constructor
-        const presenterType = (presenter.constructor as unknown as PresenterClass).type
+        const presenterType = presenter.constructor.type
         const keyName = scope[presenter.pluralType()] != null ? presenter.pluralType() : presenterType
         const link = { type: keyName }
         if (scope.links) {
@@ -183,5 +173,5 @@ export default function createLegacyPresenter(Presenter: PresenterConstructor): 
     static render(instanceOrCollection: ModelLike | ModelLike[] | null, _options?: PresenterOptions): JsonApiDocument {
       return new this().render(instanceOrCollection)
     }
-  } as LegacyPresenterConstructor
+  }
 }
