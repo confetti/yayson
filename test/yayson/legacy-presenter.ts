@@ -215,5 +215,106 @@ describe('LegacyPresenter', function () {
         body: 'World',
       })
     })
+
+    it('should automatically include relationship keys even when not in fields', function () {
+      class TicketPresenter extends LegacyPresenter {
+        static type = 'ticket'
+        static fields = ['name', 'email']
+      }
+
+      class PostPresenter extends LegacyPresenter {
+        static type = 'post'
+        // Note: 'ticket' is not in fields, only 'ticketId' is
+        static fields = ['body', 'ticketId']
+
+        relationships() {
+          return { ticket: TicketPresenter }
+        }
+      }
+
+      const post = {
+        get(attr?: string): unknown {
+          const data = {
+            id: 1,
+            body: 'My post',
+            ticketId: 100,
+            ticket: {
+              id: 100,
+              get(): unknown {
+                return { id: 100, name: 'John', email: 'john@example.com', secret: 'hidden' }
+              },
+            },
+          }
+          if (attr) {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test helper needs dynamic key access
+            return data[attr as keyof typeof data]
+          }
+          return data
+        },
+      }
+      const json = PostPresenter.toJSON(post)
+
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Legacy format uses dynamic property names
+      const result = json as unknown as {
+        post: Record<string, unknown>
+        tickets: Array<Record<string, unknown>>
+        links: Record<string, unknown>
+      }
+
+      // The relationship key 'ticket' should be included with the ID value
+      expect(result.post).to.deep.equal({
+        body: 'My post',
+        ticketId: 100,
+        ticket: 100, // relationship ID should be included
+      })
+
+      // The related ticket should be sideloaded
+      expect(result.tickets).to.deep.equal([{ name: 'John', email: 'john@example.com' }])
+
+      // Links should be set up
+      expect(result.links['post.ticket']).to.deep.equal({ type: 'tickets' })
+    })
+
+    it('should fallback to {relation}Id when relation is null', function () {
+      class TicketPresenter extends LegacyPresenter {
+        static type = 'ticket'
+      }
+
+      class PostPresenter extends LegacyPresenter {
+        static type = 'post'
+        static fields = ['body', 'ticketId']
+
+        relationships() {
+          return { ticket: TicketPresenter }
+        }
+      }
+
+      const post = {
+        get(attr?: string): unknown {
+          const data = {
+            id: 1,
+            body: 'My post',
+            ticketId: 100,
+            ticket: null, // relation not loaded
+          }
+          if (attr) {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test helper needs dynamic key access
+            return data[attr as keyof typeof data]
+          }
+          return data
+        },
+      }
+      const json = PostPresenter.toJSON(post)
+
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Legacy format uses dynamic property names
+      const result = json as unknown as { post: Record<string, unknown> }
+
+      // Should fallback to ticketId value for the ticket key
+      expect(result.post).to.deep.equal({
+        body: 'My post',
+        ticketId: 100,
+        ticket: 100, // populated from ticketId fallback
+      })
+    })
   })
 })

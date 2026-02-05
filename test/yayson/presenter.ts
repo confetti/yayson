@@ -621,5 +621,50 @@ describe('Presenter', function (): void {
         body: 'World',
       })
     })
+
+    it('should serialize relationships even when not listed in fields', function (): void {
+      class TicketPresenter extends Presenter {
+        static type = 'tickets'
+        static fields = ['name', 'email']
+      }
+
+      class PostPresenter extends Presenter {
+        static type = 'posts'
+        // Note: relationship keys don't need to be in fields for standard presenter
+        // because relationships are handled separately from attributes
+        static fields = ['body']
+
+        relationships() {
+          return { ticket: TicketPresenter }
+        }
+      }
+
+      const post = {
+        id: 1,
+        body: 'My post',
+        ticketId: 100,
+        ticket: { id: 100, name: 'John', email: 'john@example.com', secret: 'hidden' },
+      }
+      const json = PostPresenter.toJSON(post)
+
+      assertSingleResource(json.data)
+
+      // Attributes should only contain fields listed
+      expect(json.data.attributes).to.deep.equal({
+        body: 'My post',
+      })
+
+      // Relationships should still be serialized
+      expect(json.data.relationships).to.deep.equal({
+        ticket: {
+          data: { type: 'tickets', id: '100' },
+        },
+      })
+
+      // Included resources should have filtered fields
+      expect(json.included![0].type).to.equal('tickets')
+      expect(json.included![0].id).to.equal('100')
+      expect(json.included![0].attributes).to.deep.equal({ name: 'John', email: 'john@example.com' })
+    })
   })
 })

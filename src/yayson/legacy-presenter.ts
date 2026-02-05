@@ -60,7 +60,11 @@ export default function createLegacyPresenter(Presenter: Presenter) {
         }
       }
 
-      return filterByFields(attributes, this.constructor.fields)
+      // Include relationship keys in allowed fields (so users don't need to list them twice)
+      const relationshipKeys = relationships ? Object.keys(relationships) : []
+      const allowedFields = this.constructor.fields ? [...this.constructor.fields, ...relationshipKeys] : undefined
+
+      return filterByFields(attributes, allowedFields)
     }
 
     includeRelationships(scope: LegacyJsonApiDocument, instance: ModelLike): unknown[] {
