@@ -86,6 +86,10 @@ export type InferModelType<Registry, TypeName extends string> = Registry extends
     : StoreModel
   : StoreModel
 
+export interface StoreResult<T = StoreModel> extends Array<T> {
+  [META]?: Record<string, unknown>
+}
+
 export interface StoreOptions<S extends SchemaRegistry = SchemaRegistry> {
   schemas?: S
   strict?: boolean

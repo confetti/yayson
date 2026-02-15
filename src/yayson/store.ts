@@ -8,6 +8,7 @@ import type {
   StoreModels,
   StoreOptions,
   StoreRecord as StoreRecordType,
+  StoreResult,
   ValidationError,
 } from './types.js'
 import { TYPE, LINKS, META, REL_LINKS, REL_META } from './symbols.js'
@@ -181,7 +182,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     }
   }
 
-  sync(body: JsonApiDocument): StoreModel[] {
+  sync(body: JsonApiDocument): StoreResult {
     // Clear previous validation errors
     this.validationErrors = []
 
@@ -228,11 +229,20 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     const recs = syncData(body.data)
 
     const models: StoreModels = {}
-    return recs.map((rec) => this.toModel(rec, rec.type, models))
+    const result: StoreResult = recs.map((rec) => this.toModel(rec, rec.type, models))
+    if (body.meta != null) {
+      result[META] = body.meta
+    }
+    return result
   }
 
-  retrieveAll<T extends string>(type: T, body: JsonApiDocument): InferModelType<S, T>[] {
+  retrieveAll<T extends string>(type: T, body: JsonApiDocument): StoreResult<InferModelType<S, T>> {
+    const synced = this.sync(body)
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from type parameter
-    return this.sync(body).filter((model) => model[TYPE] === type) as InferModelType<S, T>[]
+    const result: StoreResult<InferModelType<S, T>> = synced.filter((model) => model[TYPE] === type) as StoreResult<
+      InferModelType<S, T>
+    >
+    result[META] = synced[META]
+    return result
   }
 }

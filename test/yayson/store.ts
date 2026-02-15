@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { z } from 'zod'
 import yayson from '../../src/yayson.js'
-import { TYPE, REL_LINKS, META } from '../../src/utils.js'
+import { TYPE, LINKS, REL_LINKS, REL_META, META } from '../../src/utils.js'
 
 const { Store } = yayson()
 
@@ -466,6 +466,33 @@ describe('Store', function () {
     })
   })
 
+  it('should preserve document-level meta on sync result', function () {
+    const result = this.store.sync({
+      data: [
+        { type: 'events', id: '1', attributes: { name: 'Event 1' } },
+        { type: 'events', id: '2', attributes: { name: 'Event 2' } },
+      ],
+      meta: { total: 100, page: 1 },
+    })
+
+    expect(result.length).to.equal(2)
+    expect(result[META]).to.deep.equal({ total: 100, page: 1 })
+  })
+
+  it('should preserve document-level meta on retrieveAll result', function () {
+    const result = this.store.retrieveAll('events', {
+      data: [
+        { type: 'events', id: '1', attributes: { name: 'Event 1' } },
+        { type: 'images', id: '2', attributes: { name: 'Image' } },
+        { type: 'events', id: '3', attributes: { name: 'Event 2' } },
+      ],
+      meta: { total: 50, page: 2 },
+    })
+
+    expect(result.length).to.equal(2)
+    expect(result[META]).to.deep.equal({ total: 50, page: 2 })
+  })
+
   it('should retrieveAll and return only filtered type in order', function () {
     const result = this.store.retrieveAll('events', {
       data: [
@@ -776,6 +803,133 @@ describe('Store', function () {
       expect((result as any)[0].name).to.equal('Event 1')
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
       expect((result as any)[1].name).to.equal('Event 3')
+    })
+
+    it('should preserve META symbol after schema validation', function () {
+      const eventSchema = z
+        .object({
+          id: z.string(),
+          name: z.string(),
+        })
+        .passthrough()
+
+      const store = new Store({
+        schemas: { events: eventSchema },
+        strict: true,
+      })
+
+      const result = store.sync({
+        data: {
+          type: 'events',
+          id: '1',
+          meta: {
+            reactorTicketId: '42',
+            total: 100,
+          },
+          attributes: { name: 'Event' },
+        },
+      })
+
+      expect(result.length).to.equal(1)
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      expect((result[0] as any)[META]).to.deep.equal({
+        reactorTicketId: '42',
+        total: 100,
+      })
+    })
+
+    it('should preserve LINKS symbol after schema validation', function () {
+      const eventSchema = z
+        .object({
+          id: z.string(),
+          name: z.string(),
+        })
+        .passthrough()
+
+      const store = new Store({
+        schemas: { events: eventSchema },
+        strict: true,
+      })
+
+      const result = store.sync({
+        data: {
+          type: 'events',
+          id: '1',
+          links: {
+            self: 'http://example.com/events/1',
+          },
+          attributes: { name: 'Event' },
+        },
+      })
+
+      expect(result.length).to.equal(1)
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      expect((result[0] as any)[LINKS]).to.deep.equal({
+        self: 'http://example.com/events/1',
+      })
+    })
+
+    it('should preserve REL_LINKS and REL_META on relationships after schema validation', function () {
+      const eventSchema = z
+        .object({
+          id: z.string(),
+          name: z.string(),
+        })
+        .passthrough()
+
+      const commentSchema = z
+        .object({
+          id: z.string(),
+          body: z.string(),
+        })
+        .passthrough()
+
+      const store = new Store({
+        schemas: { events: eventSchema, comments: commentSchema },
+        strict: true,
+      })
+
+      const result = store.sync({
+        data: {
+          type: 'events',
+          id: '1',
+          attributes: { name: 'Event' },
+          relationships: {
+            comment: {
+              links: {
+                self: 'http://example.com/events/1/relationships/comment',
+              },
+              meta: {
+                reactorTicketId: '42',
+              },
+              data: { type: 'comments', id: '2' },
+            },
+          },
+        },
+        included: [
+          {
+            type: 'comments',
+            id: '2',
+            attributes: { body: 'Great event' },
+            meta: {
+              author: 'John Doe',
+            },
+          },
+        ],
+      })
+
+      expect(result.length).to.equal(1)
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      const event = result[0] as any
+      expect(event.comment[REL_LINKS]).to.deep.equal({
+        self: 'http://example.com/events/1/relationships/comment',
+      })
+      expect(event.comment[REL_META]).to.deep.equal({
+        reactorTicketId: '42',
+      })
+      expect(event.comment[META]).to.deep.equal({
+        author: 'John Doe',
+      })
     })
 
     it('should validate with pagination scenario', function () {

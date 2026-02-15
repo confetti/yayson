@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { z } from 'zod'
 import LegacyStore from '../../src/yayson/legacy-store.js'
-import { TYPE } from '../../src/utils.js'
+import { TYPE, META } from '../../src/utils.js'
 
 describe('LegacyStore', function () {
   describe('Schema Validation', function () {
@@ -431,6 +431,21 @@ describe('LegacyStore', function () {
         }
       })
 
+      it('should attach document-level meta to model via retrieve()', function () {
+        const store = new LegacyStore()
+
+        const event = store.retrieve('event', {
+          meta: { total: 100, page: 1 },
+          event: { id: '1', name: 'Event' },
+        })
+
+        expect(event).to.not.be.null
+        if (event) {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+          expect((event as any)[META]).to.deep.equal({ total: 100, page: 1 })
+        }
+      })
+
       it('should validate with retrieve() in safe mode', function () {
         const eventSchema = z.object({
           id: z.string(),
@@ -481,6 +496,118 @@ describe('LegacyStore', function () {
           expect(store.validationErrors.length).to.equal(0)
         }
       })
+    })
+  })
+
+  describe('Meta Preservation', function () {
+    it('should preserve META symbol after schema validation with passthrough', function () {
+      const postSchema = z
+        .object({
+          id: z.string(),
+          title: z.string(),
+        })
+        .passthrough()
+
+      const store = new LegacyStore({
+        schemas: { post: postSchema },
+        strict: true,
+      })
+
+      store.sync({
+        post: {
+          id: '1',
+          title: 'Hello',
+          meta: { reactorTicketId: '42', total: 100 },
+        },
+      })
+
+      const post = store.find('post', '1')
+      expect(post).to.not.be.null
+      if (post) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+        expect((post as any)[META]).to.deep.equal({
+          reactorTicketId: '42',
+          total: 100,
+        })
+      }
+    })
+
+    it('should preserve META symbol after schema validation without passthrough', function () {
+      const postSchema = z.object({
+        id: z.string(),
+        title: z.string(),
+      })
+
+      const store = new LegacyStore({
+        schemas: { post: postSchema },
+        strict: true,
+      })
+
+      store.sync({
+        post: {
+          id: '1',
+          title: 'Hello',
+          meta: { reactorTicketId: '42', total: 100 },
+        },
+      })
+
+      const post = store.find('post', '1')
+      expect(post).to.not.be.null
+      if (post) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+        expect((post as any)[META]).to.deep.equal({
+          reactorTicketId: '42',
+          total: 100,
+        })
+      }
+    })
+
+    it('should preserve top-level meta on legacy data', function () {
+      const store = new LegacyStore()
+
+      const data = {
+        meta: { total: 100, page: 1 },
+        post: [
+          { id: '1', title: 'First' },
+          { id: '2', title: 'Second' },
+        ],
+      }
+
+      store.sync(data)
+
+      // Top-level meta is accessible directly on the data object
+      expect(data.meta).to.deep.equal({ total: 100, page: 1 })
+    })
+
+    it('should preserve document-level meta on sync result', function () {
+      const store = new LegacyStore()
+
+      const result = store.sync({
+        meta: { total: 100, page: 1 },
+        post: [
+          { id: '1', title: 'First' },
+          { id: '2', title: 'Second' },
+        ],
+      })
+
+      expect(result.length).to.equal(2)
+      expect(result[META]).to.deep.equal({ total: 100, page: 1 })
+    })
+
+    it('should preserve document-level meta on retrieveAll result', function () {
+      const store = new LegacyStore()
+
+      const result = store.retrieveAll('post', {
+        meta: { total: 50, page: 2 },
+        post: [
+          { id: '1', title: 'First' },
+          { id: '2', title: 'Second' },
+        ],
+        image: [{ id: '3', url: 'https://example.com/img.jpg' }],
+      })
+
+      expect(result.length).to.equal(2)
+      expect(result[META]).to.deep.equal({ total: 50, page: 2 })
     })
   })
 
