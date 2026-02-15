@@ -425,6 +425,36 @@ describe('Presenter', function (): void {
     })
   })
 
+  it('should not dedup data entries of different types with the same id', function (): void {
+    class CarPresenter extends Presenter {
+      static type = 'cars'
+    }
+
+    class DriverPresenter extends Presenter {
+      static type = 'drivers'
+    }
+
+    const scope = { data: null }
+    const carPresenter = new CarPresenter(scope)
+    carPresenter.toJSON([{ id: 1 }])
+
+    const driverPresenter = new DriverPresenter(scope)
+    driverPresenter.toJSON([{ id: 1 }])
+
+    expect(scope.data).to.deep.equal([
+      {
+        type: 'cars',
+        id: '1',
+        attributes: {},
+      },
+      {
+        type: 'drivers',
+        id: '1',
+        attributes: {},
+      },
+    ])
+  })
+
   it('should serialize in pure JS', function (): void {
     class EventPresenter extends Presenter {
       static type = 'events'

@@ -20,7 +20,7 @@ tsc --noEmit          # Type check only (don't use npx)
 Run a single test file:
 
 ```bash
-tsx node_modules/.bin/mocha test/yayson/presenter.ts
+mocha test/yayson/presenter.ts
 ```
 
 ## Architecture

@@ -328,6 +328,36 @@ if (store.validationErrors.length > 0) {
 
 Schemas must be Zod-like objects with `parse()` and `safeParse()` methods. Any library that provides this interface will work.
 
+### Utilities
+
+YAYSON stores metadata on models using Symbol keys. The `yayson/utils` entry point provides helpers for reading them:
+
+```javascript
+import { getType, getLinks, getMeta, getRelationshipLinks, getRelationshipMeta } from 'yayson/utils'
+
+const events = store.sync(data)
+const event = events[0]
+
+getType(event) // 'events'
+getLinks(event) // { self: 'http://...' }
+getMeta(event) // { createdBy: 'admin' }
+getRelationshipLinks(event.image) // { self: 'http://.../relationships/image' }
+getRelationshipMeta(event.image) // { permission: 'read' }
+```
+
+The raw symbols (`TYPE`, `LINKS`, `META`, `REL_LINKS`, `REL_META`) are also exported from `yayson/utils` if you prefer direct access.
+
+Note that `sync()` and `retrieveAll()` return arrays with a `META` symbol property for document-level metadata. Array methods like `.filter()` and `.map()` return plain arrays without this property, so extract it before transforming:
+
+```javascript
+import { META } from 'yayson/utils'
+
+const result = store.sync(data)
+const meta = result[META] // { total: 100, page: 1 }
+const filtered = result.filter((e) => e.name === 'Demo')
+// filtered[META] is undefined — use the extracted `meta` instead
+```
+
 ## Use in the browser
 
 Recommended way is to use it via [webpack](https://github.com/webpack/webpack) or similar build system wich lets you just require the package as usual.

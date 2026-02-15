@@ -57,8 +57,25 @@ describe('Store', function () {
     })
 
     const event = this.store.find('events', 1)
-    expect(event.id).to.equal(1)
+    expect(event.id).to.equal('1')
     expect(event[TYPE]).to.equal('events')
+    expect(event.name).to.equal('Demo')
+  })
+
+  it('should coerce numeric ids to strings', function () {
+    this.store.sync({
+      data: {
+        type: 'events',
+        id: 1,
+        attributes: {
+          name: 'Demo',
+        },
+      },
+    })
+
+    const event = this.store.find('events', '1')
+    expect(event).to.not.be.null
+    expect(event.id).to.equal('1')
     expect(event.name).to.equal('Demo')
   })
 
@@ -172,7 +189,7 @@ describe('Store', function () {
     const event = this.store.find('events', 1)
     expect(event.name).to.equal('Demo')
     expect(event.images[0].name).to.equal('Header')
-    expect(event.images[0].event.id).to.equal(1)
+    expect(event.images[0].event.id).to.equal('1')
   })
 
   it('should return a event with all associated objects', function () {
@@ -273,7 +290,7 @@ describe('Store', function () {
     const event = this.store.find('events', 1)
     expect(event.organisers.length).to.equal(2)
     expect(event.images.length).to.equal(3)
-    expect(event.organisers[0].image.id).to.equal(2)
+    expect(event.organisers[0].image.id).to.equal('2')
   })
 
   it('should remove an event', function () {
@@ -285,7 +302,7 @@ describe('Store', function () {
     })
 
     let event = this.store.find('events', 1)
-    expect(event.id).to.eq(1)
+    expect(event.id).to.eq('1')
     this.store.remove('events', 1)
     event = this.store.find('events', 1)
     expect(event).to.eq(null)
@@ -591,6 +608,47 @@ describe('Store', function () {
       expect(result.length).to.equal(1)
       expect(result[0].name).to.equal('Valid Event')
       expect(store.validationErrors.length).to.equal(0)
+    })
+
+    it('should not leave store in inconsistent state when strict validation throws', function () {
+      const eventSchema = z
+        .object({
+          id: z.string(),
+          name: z.string(),
+          requiredField: z.string(),
+        })
+        .passthrough()
+
+      const store = new Store({
+        schemas: { events: eventSchema },
+        strict: true,
+      })
+
+      // Pre-populate store with valid data
+      store.sync({
+        data: {
+          type: 'events',
+          id: '1',
+          attributes: { name: 'Original', requiredField: 'value' },
+        },
+      })
+
+      expect(store.findAll('events').length).to.equal(1)
+
+      // Sync invalid data that will throw
+      expect(() => {
+        store.sync({
+          data: {
+            type: 'events',
+            id: '2',
+            attributes: { name: 'Invalid Event' },
+          },
+        })
+      }).to.throw()
+
+      // Store should have rolled back - the invalid record should not be persisted
+      const record = store.findRecord('events', '2')
+      expect(record).to.equal(undefined)
     })
 
     it('should throw error with invalid data in strict mode', function () {

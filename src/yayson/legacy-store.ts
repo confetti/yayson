@@ -146,7 +146,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     return this.records.filter((r) => r.type === type)
   }
 
-  // @deprecated Use retrieve() instead.
+  /** @deprecated Use retrieve() instead. */
   retrive<T extends string>(type: T, data: LegacyData): InferModelType<S, T> | null {
     return this.retrieve(type, data)
   }

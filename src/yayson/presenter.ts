@@ -109,7 +109,9 @@ export default function createPresenter(adapter: typeof Adapter) {
         const buildData = (d: ModelLike): JsonApiResourceIdentifier => {
           const id = this.constructor.adapter.id(d)
           if (!id) {
-            throw new Error(`Model of type ${presenter.type} is missing an id`)
+            throw new Error(
+              `Model of type ${presenter.type} is missing an id (relationship '${key}' of ${this.constructor.type})`,
+            )
           }
           return {
             id,
@@ -211,7 +213,7 @@ export default function createPresenter(adapter: typeof Adapter) {
           }
         } else if (this.scope.data != null) {
           if (Array.isArray(this.scope.data)) {
-            if (!this.scope.data.some((i) => i.id === model.id)) {
+            if (!this.scope.data.some((i) => i.id === model.id && i.type === model.type)) {
               this.scope.data.push(model)
             } else {
               added = false

@@ -1,7 +1,8 @@
 import type {
   InferModelType,
   JsonApiDocument,
-  JsonApiRelationship,
+  JsonApiLink,
+  JsonApiRelationships,
   JsonApiResourceIdentifier,
   SchemaRegistry,
   StoreModel,
@@ -14,12 +15,12 @@ import type {
 import { TYPE, LINKS, META, REL_LINKS, REL_META } from './symbols.js'
 import { validate } from './schema.js'
 
-class StoreRecord {
+class StoreRecord implements StoreRecordType {
   id: string
   type: string
   attributes?: Record<string, unknown>
-  relationships?: Record<string, JsonApiRelationship>
-  links?: Record<string, unknown>
+  relationships?: JsonApiRelationships
+  links?: JsonApiLink
   meta?: Record<string, unknown>
 
   constructor(options: StoreRecordType) {
@@ -136,7 +137,8 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
 
   find<T extends string>(type: T, id: string, models?: StoreModels): InferModelType<S, T> | null {
     const modelsObj = models ?? {}
-    const rec = this.findRecord(type, id)
+    const idStr = String(id)
+    const rec = this.findRecord(type, idStr)
     if (rec == null) {
       return null
     }
@@ -144,7 +146,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
       modelsObj[type] = {}
     }
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from schema registry
-    return (modelsObj[type][id] || this.toModel(rec, type, modelsObj)) as InferModelType<S, T>
+    return (modelsObj[type][idStr] || this.toModel(rec, type, modelsObj)) as InferModelType<S, T>
   }
 
   findAll<T extends string>(type: T, models?: StoreModels): InferModelType<S, T>[] {
@@ -163,7 +165,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     return Object.values(modelsObj[type] || {}) as InferModelType<S, T>[]
   }
 
-  remove(type: string, id?: string): void | void[] {
+  remove(type: string, id?: string): void {
     const removeOne = (record: StoreRecord): void => {
       const index = this.records.indexOf(record)
       if (!(index < 0)) {
@@ -172,19 +174,21 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     }
 
     if (id != null) {
-      const record = this.findRecord(type, id)
+      const record = this.findRecord(type, String(id))
       if (record) {
-        return removeOne(record)
+        removeOne(record)
       }
     } else {
-      const records = this.findRecords(type)
-      return records.map(removeOne)
+      this.findRecords(type).forEach(removeOne)
     }
   }
 
   sync(body: JsonApiDocument): StoreResult {
     // Clear previous validation errors
     this.validationErrors = []
+
+    // Snapshot for rollback if strict validation throws
+    const previousRecords = [...this.records]
 
     const syncData = (data: JsonApiDocument['data'] | JsonApiDocument['included']): StoreRecord[] => {
       if (data == null) {
@@ -207,7 +211,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
             ...item,
             attributes: item.attributes ?? undefined,
             relationships: item.relationships ?? undefined,
-            id: item.id,
+            id: String(item.id),
           })
         })
       } else {
@@ -219,21 +223,26 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
             ...data,
             attributes: data.attributes ?? undefined,
             relationships: data.relationships ?? undefined,
-            id: data.id,
+            id: String(data.id),
           }),
         ]
       }
     }
 
-    syncData(body.included)
-    const recs = syncData(body.data)
+    try {
+      syncData(body.included)
+      const recs = syncData(body.data)
 
-    const models: StoreModels = {}
-    const result: StoreResult = recs.map((rec) => this.toModel(rec, rec.type, models))
-    if (body.meta != null) {
-      result[META] = body.meta
+      const models: StoreModels = {}
+      const result: StoreResult = recs.map((rec) => this.toModel(rec, rec.type, models))
+      if (body.meta != null) {
+        result[META] = body.meta
+      }
+      return result
+    } catch (e) {
+      this.records = previousRecords
+      throw e
     }
-    return result
   }
 
   retrieveAll<T extends string>(type: T, body: JsonApiDocument): StoreResult<InferModelType<S, T>> {

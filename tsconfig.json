@@ -19,7 +19,6 @@
     /* Interop */
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
 
     /* Source Maps */

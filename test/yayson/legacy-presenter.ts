@@ -1,11 +1,3 @@
-// TODO: This file was created by bulk-decaffeinate.
-// Sanity-check the conversion and remove this comment.
-/*
- * decaffeinate suggestions:
- * DS102: Remove unnecessary code created because of implicit returns
- * DS206: Consider reworking classes to avoid initClass
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
- */
 import { expect } from 'chai'
 import type { ModelLike } from '../../src/yayson/adapter.js'
 
@@ -14,7 +6,7 @@ const { Presenter: LegacyPresenter } = yaysonLegacy({ adapter: 'sequelize' })
 describe('LegacyPresenter', function () {
   it('handles null', function () {
     const json = LegacyPresenter.toJSON(null)
-    return expect(json).to.deep.equal({ object: null, links: {} })
+    expect(json).to.deep.equal({ object: null, links: {} })
   })
 
   it('create json structure of an object', function () {
@@ -24,7 +16,7 @@ describe('LegacyPresenter', function () {
       },
     }
     const json = LegacyPresenter.toJSON(obj)
-    return expect(json).to.deep.equal({ object: { foo: 'bar' }, links: {} })
+    expect(json).to.deep.equal({ object: { foo: 'bar' }, links: {} })
   })
 
   it('create json structure of two objects', function () {
@@ -41,7 +33,7 @@ describe('LegacyPresenter', function () {
       },
     ]
     const json = LegacyPresenter.toJSON(obj)
-    return expect(json).to.deep.equal({
+    expect(json).to.deep.equal({
       objects: [
         { id: 1, foo: 'bar' },
         { id: 2, foo: 'bar' },
@@ -64,7 +56,7 @@ describe('LegacyPresenter', function () {
       },
     ]
     const json = LegacyPresenter.toJSON(obj)
-    return expect(json).to.deep.equal({ objects: [{ id: 1 }], links: {} })
+    expect(json).to.deep.equal({ objects: [{ id: 1 }], links: {} })
   })
 
   it('should use plural type', function () {
@@ -85,7 +77,7 @@ describe('LegacyPresenter', function () {
       },
     ]
     const json = CactusPresenter.toJSON(obj)
-    return expect(json).to.deep.equal({ cacti: [{ id: 1 }, { id: 2 }], links: {} })
+    expect(json).to.deep.equal({ cacti: [{ id: 1 }, { id: 2 }], links: {} })
   })
 
   it('should serialize relations', function () {
@@ -136,7 +128,7 @@ describe('LegacyPresenter', function () {
     }
 
     const json = CarPresenter.toJSON(obj)
-    return expect(json).to.deep.equal({
+    expect(json).to.deep.equal({
       car: { id: 1, tire: 2 },
       links: {
         'tires.car': { type: 'car' },

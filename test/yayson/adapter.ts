@@ -13,7 +13,7 @@ describe('Adapter', function () {
     expect(name).to.eq('Abraham')
   })
 
-  return it('should get the id', function () {
+  it('should get the id', function () {
     const id = Adapter.id({ id: 5 })
     expect(id).to.eq('5')
   })
