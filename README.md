@@ -408,6 +408,18 @@ const filtered = result.filter((e) => e.name === 'Demo')
 // filtered[META] is undefined — use the extracted `meta` instead
 ```
 
+## Claude Code skill
+
+YAYSON includes a [Claude Code skill](https://docs.anthropic.com/en/docs/claude-code/skills) that helps you write Presenters and set up Stores. To install it, copy the `skill/yayson` directory to your project's `.claude/skills/` or your personal `~/.claude/skills/`:
+
+```bash
+# Project-level (available to everyone working on that project)
+cp -r node_modules/yayson/skill/yayson .claude/skills/
+
+# Personal (available across all your projects)
+cp -r node_modules/yayson/skill/yayson ~/.claude/skills/
+```
+
 ## Use in the browser
 
 Recommended way is to use it via [webpack](https://github.com/webpack/webpack) or similar build system wich lets you just require the package as usual.
