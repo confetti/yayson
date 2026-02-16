@@ -71,7 +71,7 @@ describe('Utils', function () {
       },
       included: [{ type: 'images', id: '2', attributes: { url: 'img.png' } }],
     })
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access on relationship model
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access on relationship model
     const image = (event as any).image
     expect(getRelationshipLinks(image)).to.deep.equal({
       self: 'http://example.com/events/1/relationships/image',
@@ -94,7 +94,7 @@ describe('Utils', function () {
       },
       included: [{ type: 'images', id: '2', attributes: { url: 'img.png' } }],
     })
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access on relationship model
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access on relationship model
     const image = (event as any).image
     expect(getRelationshipMeta(image)).to.deep.equal({ permission: 'read' })
   })

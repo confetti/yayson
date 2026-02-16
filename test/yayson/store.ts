@@ -465,19 +465,19 @@ describe('Store', function () {
     })
 
     // Nested meta in attributes is preserved as-is
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
     expect((result as any)[0].article.meta).to.deep.equal({
       author: 'John Doe',
       date: '2017-06-26',
     })
     // Model-level meta uses symbol
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
     expect((result as any)[0].comment[META]).to.deep.equal({
       author: 'John Doe',
       date: '2017-06-26',
     })
     // Relationship links use symbol
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
     expect((result as any)[0].comment[REL_LINKS]).to.deep.equal({
       self: 'http://example.com/events/1/relationships/comment',
       related: 'http://example.com/events/1/comment',
@@ -600,19 +600,19 @@ describe('Store', function () {
       ],
     })
 
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
     expect((result as any).length).to.equal(3)
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
     expect((result as any)[0].id).to.equal('3')
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
     expect((result as any)[0].name).to.equal('Third')
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
     expect((result as any)[1].id).to.equal('1')
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
     expect((result as any)[1].name).to.equal('First')
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
     expect((result as any)[2].id).to.equal('2')
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
     expect((result as any)[2].name).to.equal('Second')
   })
 
@@ -647,15 +647,15 @@ describe('Store', function () {
       ],
     })
 
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
     expect((result as any).length).to.equal(2)
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
     expect((result as any)[0].id).to.equal('1')
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
     expect((result as any)[0].name).to.equal('Event 1')
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
     expect((result as any)[1].id).to.equal('2')
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
     expect((result as any)[1].name).to.equal('Event 2')
 
     const allImages = this.store.findAll('images')
@@ -778,7 +778,7 @@ describe('Store', function () {
       })
 
       expect(result.length).to.equal(1)
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
       expect((result[0] as any).name).to.equal('Invalid Event')
       expect(store.validationErrors.length).to.equal(1)
       expect(store.validationErrors[0].type).to.equal('events')
@@ -814,7 +814,7 @@ describe('Store', function () {
         ],
       })
 
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
       expect((result as any).length).to.equal(2)
       expect(store.validationErrors.length).to.equal(0)
     })
@@ -853,7 +853,7 @@ describe('Store', function () {
         ],
       })
 
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
       expect((result as any).length).to.equal(3)
       expect(store.validationErrors.length).to.equal(3)
       expect(store.validationErrors[0].id).to.equal('1')
@@ -934,11 +934,11 @@ describe('Store', function () {
         ],
       })
 
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
       expect((result as any).length).to.equal(2)
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
       expect((result as any)[0].name).to.equal('Event 1')
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
       expect((result as any)[1].name).to.equal('Event 3')
     })
 
@@ -968,7 +968,7 @@ describe('Store', function () {
       })
 
       expect(result.length).to.equal(1)
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
       expect((result[0] as any)[META]).to.deep.equal({
         reactorTicketId: '42',
         total: 100,
@@ -1000,7 +1000,7 @@ describe('Store', function () {
       })
 
       expect(result.length).to.equal(1)
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
       expect((result[0] as any)[LINKS]).to.deep.equal({
         self: 'http://example.com/events/1',
       })
@@ -1056,7 +1056,7 @@ describe('Store', function () {
       })
 
       expect(result.length).to.equal(1)
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
       const event = result[0] as any
       expect(event.comment[REL_LINKS]).to.deep.equal({
         self: 'http://example.com/events/1/relationships/comment',
@@ -1101,11 +1101,11 @@ describe('Store', function () {
         ],
       })
 
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
       expect((page2 as any).length).to.equal(2)
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
       expect((page2 as any)[0].name).to.equal('Page 2 Event 1')
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
       expect((page2 as any)[1].name).to.equal('Page 2 Event 2')
       expect(store.validationErrors.length).to.equal(0)
     })

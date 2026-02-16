@@ -25,6 +25,6 @@
     "inlineSources": true,
     "sourceRoot": "/"
   },
-  "include": ["src/**/*", "test/**/*"],
+  "include": ["src/**/*", "test/**/*", "legacy.ts", "tsdown.config.ts"],
   "exclude": ["node_modules", "build", "dist"]
 }

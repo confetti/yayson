@@ -176,7 +176,7 @@ export default function createPresenter(adapter: typeof Adapter) {
         if (!this.scope.data) {
           this.scope.data = []
         }
-        collection.forEach((instance) => {
+        collection.forEach((instance: ModelLike) => {
           return this.toJSON(instance, options)
         })
       } else {

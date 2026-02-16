@@ -121,7 +121,7 @@ describe('LegacyStore', function () {
 
         expect(event).to.not.be.null
         if (event) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
           expect((event as any).name).to.equal('Invalid Event')
         }
         expect(store.validationErrors.length).to.equal(1)
@@ -247,7 +247,7 @@ describe('LegacyStore', function () {
         expect(store.validationErrors.length).to.equal(0)
 
         if (image) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test validates runtime data without schema
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test validates runtime data without schema
           expect((image as any).url).to.equal('http://example.com/image.jpg')
         }
       })
@@ -292,9 +292,9 @@ describe('LegacyStore', function () {
         if (event) {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test validates runtime data shape
           expect((event as { name: string }).name).to.equal('Event')
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test validates runtime data shape
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test validates runtime data shape
           expect(Array.isArray((event as any).images)).to.be.true
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test validates runtime data shape
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test validates runtime data shape
           expect((event as any).images[0].url).to.equal('http://example.com/image.jpg')
           expect(store.validationErrors.length).to.equal(0)
         }
@@ -441,7 +441,7 @@ describe('LegacyStore', function () {
 
         expect(event).to.not.be.null
         if (event) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
           expect((event as any)[META]).to.deep.equal({ total: 100, page: 1 })
         }
       })
@@ -464,7 +464,7 @@ describe('LegacyStore', function () {
 
         expect(event).to.not.be.null
         if (event) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
           expect((event as any).name).to.equal('Event')
         }
         expect(store.validationErrors.length).to.equal(1)
@@ -524,7 +524,7 @@ describe('LegacyStore', function () {
       const post = store.find('post', '1')
       expect(post).to.not.be.null
       if (post) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
         expect((post as any)[META]).to.deep.equal({
           reactorTicketId: '42',
           total: 100,
@@ -554,7 +554,7 @@ describe('LegacyStore', function () {
       const post = store.find('post', '1')
       expect(post).to.not.be.null
       if (post) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
         expect((post as any)[META]).to.deep.equal({
           reactorTicketId: '42',
           total: 100,
@@ -952,7 +952,7 @@ describe('LegacyStore', function () {
 
       expect(event).to.not.be.null
       if (event) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
         expect((event as any)[TYPE]).to.equal('event')
       }
     })
@@ -966,7 +966,7 @@ describe('LegacyStore', function () {
       const events = store.findAll('event')
 
       expect(events.length).to.equal(1)
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
       expect((events[0] as any)[TYPE]).to.equal('event')
     })
 
@@ -986,7 +986,7 @@ describe('LegacyStore', function () {
 
       expect(event).to.not.be.null
       if (event) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
         expect((event as any)[TYPE]).to.equal('event')
       }
     })
