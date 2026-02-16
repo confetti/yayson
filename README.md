@@ -158,9 +158,7 @@ Take a look at the SequelizeAdapter if you want to extend YAYSON to your ORM. Pu
 You can add metadata to the top level object.
 
 ```javascript
-
-  ItemsPresenter.render(items, {meta: {count: 10}})
-
+ItemsPresenter.render(items, { meta: { count: 10 } })
 ```
 
 This would produce:
