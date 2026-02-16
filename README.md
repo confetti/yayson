@@ -224,32 +224,37 @@ const { Presenter } = yayson({
 
 Take a look at the SequelizeAdapter if you want to extend YAYSON to your ORM. Pull requests are welcome. :)
 
-### Metadata
+### render() options
 
-You can add metadata to the top level object.
+The second argument to `render()` accepts an options object with `meta` and `links`:
 
 ```javascript
-ItemsPresenter.render(items, { meta: { count: 10 } })
+ItemsPresenter.render(items, {
+  meta: { total: 100, page: 1 },
+  links: {
+    self: 'http://example.com/items?page=1',
+    next: 'http://example.com/items?page=2',
+  },
+})
 ```
 
 This would produce:
 
 ```javascript
-
 {
   meta: {
-    count: 10
+    total: 100,
+    page: 1
   },
-  data: {
-    id: '5',
-    type: 'items',
-    attributes: {
-      name: 'First'
-    }
-  }
+  links: {
+    self: 'http://example.com/items?page=1',
+    next: 'http://example.com/items?page=2'
+  },
+  data: [...]
 }
-
 ```
+
+Both `meta` and `links` are optional and add top-level properties to the JSON API document.
 
 ## Parsing data
 
