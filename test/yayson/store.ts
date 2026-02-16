@@ -187,7 +187,9 @@ describe('Store', function () {
     })
 
     const event = this.store.find('events', 1)
+    expect(event.images[0].event).to.equal(event)
     expect(event.name).to.equal('Demo')
+    expect(event.images[0].event.name).to.equal('Demo')
     expect(event.images[0].name).to.equal('Header')
     expect(event.images[0].event.id).to.equal('1')
   })

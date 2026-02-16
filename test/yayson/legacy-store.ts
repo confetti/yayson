@@ -57,7 +57,9 @@ describe('LegacyStore', function () {
       images: [{ id: 2, event: 1 }],
     })
     const event = this.store.find('event', 1)
+    expect(event.images[0].event).to.equal(event)
     expect(event.name).to.equal('Demo')
+    expect(event.images[0].event.name).to.equal('Demo')
   })
 
   it('should return a event with all associated objects', function () {
