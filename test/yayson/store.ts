@@ -10,7 +10,6 @@ describe('Store', function () {
     this.store = new Store()
 
     this.store.records = []
-    this.store.relations = {}
   })
 
   it('should sync an event', function () {
