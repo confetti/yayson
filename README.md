@@ -14,11 +14,83 @@ npm install yayson
 
 ## Upgrading from 3.x
 
-Version 4.x includes several breaking changes:
+Version 4.x is a full TypeScript rewrite with several new features and breaking changes.
 
-### Node.js version
+### New features
+
+- **TypeScript support** — Full type definitions included, with type inference from schema registries
+- **Schema validation** — Optional runtime validation using [Zod](https://github.com/colinhacks/zod) or any compatible library with `parse()`/`safeParse()` methods
+- **Dual ESM/CJS package** — Native ES module support alongside CommonJS
+- **`yayson/utils` entry point** — Helper functions (`getType`, `getLinks`, `getMeta`, `getRelationshipLinks`, `getRelationshipMeta`) for reading model metadata
+- **`retrieveAll(type, data)`** — Sync data and return only models of a specific type
+- **`fields` property** — Limit which attributes a Presenter includes in its output
+
+### Breaking changes
+
+#### Node.js version
 
 Node.js 20+ is now required (was 14+).
+
+#### Metadata uses Symbols instead of plain properties
+
+In 3.x, resource type, links, and meta were stored as plain properties on models (`model.type`, `model.links`, `model.meta`). Relationship metadata used `model._links` and `model._meta`.
+
+In 4.x, these use Symbol keys to avoid collisions with your data. Use the helpers from `yayson/utils`:
+
+```javascript
+// 3.x
+model.type
+model.links
+model.meta
+relatedModel._links
+relatedModel._meta
+
+// 4.x
+import { getType, getLinks, getMeta, getRelationshipLinks, getRelationshipMeta } from 'yayson/utils'
+getType(model)
+getLinks(model)
+getMeta(model)
+getRelationshipLinks(relatedModel)
+getRelationshipMeta(relatedModel)
+```
+
+#### `sync()` always returns an array
+
+In 3.x, `sync()` returned a single model for single resources and an array for collections. In 4.x, `sync()` always returns an array.
+
+For most use cases, `retrieve()` and `retrieveAll()` are drop-in replacements — they sync the data and return the model(s). Use `find()` if you need to look up a previously synced model by id.
+
+```javascript
+// 3.x
+const event = store.sync({ data: { type: 'events', id: '1', attributes: { name: 'Demo' } } })
+event.name // 'Demo'
+
+// 4.x — single resource (pass type for filtering/type inference, or omit it)
+const event = store.retrieve('events', data)
+const event = store.retrieve(data)
+
+// 4.x — collection
+const events = store.retrieveAll('events', data)
+
+// 4.x — look up by id after syncing
+store.sync(data)
+const event = store.find('events', '1')
+```
+
+#### Document-level meta uses Symbols
+
+In 3.x, document-level metadata was stored as `result.meta`. In 4.x, it uses a Symbol key:
+
+```javascript
+// 3.x
+const result = store.sync(data)
+result.meta // { total: 100 }
+
+// 4.x
+import { META } from 'yayson/utils'
+const result = store.sync(data)
+result[META] // { total: 100 }
+```
 
 ## Presenting data
 
