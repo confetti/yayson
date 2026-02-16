@@ -106,12 +106,9 @@ Sync a JSON API document. Returns a single model when `data` is a single resourc
 
 Always returns an array. Processes `included` first, then `data`. Clears previous validation errors. On strict validation failure, rolls back store state.
 
-#### `retrieve(body: JsonApiDocument): StoreModel | null`
-
 #### `retrieve<T>(type: T, body: JsonApiDocument): InferModelType<S, T> | null`
 
-Single-argument form: syncs and returns first model or null.
-Two-argument form: syncs and returns first model matching `type`, or null.
+Sync and return the first model matching `type`, or null.
 
 #### `retrieveAll<T>(type: T, body: JsonApiDocument): InferModelType<S, T>[]`
 
