@@ -14,8 +14,8 @@ class Adapter {
 
   static id(model: ModelLike): string | undefined {
     const id = this.get(model, 'id')
-    if (id === undefined) {
-      return id
+    if (id == null) {
+      return undefined
     }
     return `${id}`
   }

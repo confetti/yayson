@@ -683,8 +683,8 @@ describe('Type Inference', function () {
       }
 
       const store = new Store({
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Testing invalid schema
-        schemas: { events: invalidSchema as unknown },
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Testing invalid schema at runtime
+        schemas: { events: invalidSchema as any },
         strict: true,
       })
 

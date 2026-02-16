@@ -17,4 +17,9 @@ describe('Adapter', function () {
     const id = Adapter.id({ id: 5 })
     expect(id).to.eq('5')
   })
+
+  it('should return undefined when id is null', function () {
+    const id = Adapter.id({ id: null })
+    expect(id).to.eq(undefined)
+  })
 })

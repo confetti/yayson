@@ -1,4 +1,5 @@
 import { TYPE, LINKS, META, REL_LINKS, REL_META } from './symbols.js'
+import type { ZodLikeSchema } from './schema.js'
 
 export interface JsonApiLink extends Record<string, unknown> {
   self?: string
@@ -44,6 +45,9 @@ export interface PresenterOptions {
   meta?: Record<string, unknown>
   links?: JsonApiLinks
   include?: boolean
+}
+
+export interface LegacyPresenterOptions extends PresenterOptions {
   defaultPlural?: boolean
 }
 
@@ -72,11 +76,14 @@ export interface StoreModels {
 }
 
 export interface SchemaRegistry {
-  [type: string]: unknown
+  [type: string]: ZodLikeSchema
 }
 
-// Type inference helper for extracting model types from schemas (Zod-style with .parse() method)
-export type InferSchemaType<Schema> = Schema extends { parse: (data: unknown) => infer ParsedType }
+// Type inference helper for extracting model types from schemas (Zod-style with .parse()/.safeParse() methods)
+export type InferSchemaType<Schema> = Schema extends {
+  parse: (data: unknown) => infer ParsedType
+  safeParse: (data: unknown) => unknown
+}
   ? ParsedType
   : unknown
 

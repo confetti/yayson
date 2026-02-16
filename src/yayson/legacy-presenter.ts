@@ -1,6 +1,6 @@
 import type { ModelLike } from './adapter.js'
 import type { Presenter } from './presenter.js'
-import type { JsonApiDocument, JsonApiLinks, PresenterOptions } from './types.js'
+import type { JsonApiDocument, JsonApiLinks, LegacyPresenterOptions } from './types.js'
 import { filterByFields } from './utils.js'
 
 function hasId(value: unknown): value is { id: unknown } {
@@ -105,7 +105,7 @@ export default function createLegacyPresenter(Presenter: Presenter) {
 
     toJSON(
       instanceOrCollection: ModelLike | ModelLike[] | null | undefined,
-      options?: PresenterOptions,
+      options?: LegacyPresenterOptions,
     ): LegacyJsonApiDocument {
       const opts = options ?? {}
       if (!this.scope.links) {
@@ -171,11 +171,17 @@ export default function createLegacyPresenter(Presenter: Presenter) {
       return this.toJSON(instanceOrCollection)
     }
 
-    static toJSON(instanceOrCollection: ModelLike | ModelLike[] | null, options?: PresenterOptions): JsonApiDocument {
+    static toJSON(
+      instanceOrCollection: ModelLike | ModelLike[] | null,
+      options?: LegacyPresenterOptions,
+    ): JsonApiDocument {
       return new this().toJSON(instanceOrCollection, options)
     }
 
-    static render(instanceOrCollection: ModelLike | ModelLike[] | null, _options?: PresenterOptions): JsonApiDocument {
+    static render(
+      instanceOrCollection: ModelLike | ModelLike[] | null,
+      _options?: LegacyPresenterOptions,
+    ): JsonApiDocument {
       return new this().render(instanceOrCollection)
     }
   }
