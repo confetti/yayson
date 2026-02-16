@@ -661,43 +661,6 @@ describe('Store', function () {
     expect(result[TYPE]).to.equal('events')
   })
 
-  it('should retrieve a single model without type', function () {
-    const result = this.store.retrieve({
-      data: {
-        type: 'events',
-        id: '1',
-        attributes: { name: 'Demo' },
-      },
-    })
-
-    expect(result).to.not.be.null
-    expect(result.id).to.equal('1')
-    expect(result.name).to.equal('Demo')
-    expect(result[TYPE]).to.equal('events')
-  })
-
-  it('should return null when data is empty without type', function () {
-    const result = this.store.retrieve({
-      data: [],
-    })
-
-    expect(result).to.be.null
-  })
-
-  it('should preserve document-level meta on retrieve without type', function () {
-    const result = this.store.retrieve({
-      data: {
-        type: 'events',
-        id: '1',
-        attributes: { name: 'Demo' },
-      },
-      meta: { total: 1, page: 1 },
-    })
-
-    expect(result).to.not.be.null
-    expect(result[META]).to.deep.equal({ total: 1, page: 1 })
-  })
-
   it('should return null when no model of the given type exists', function () {
     const result = this.store.retrieve('events', {
       data: {

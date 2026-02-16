@@ -258,26 +258,15 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     return result
   }
 
-  retrieve(body: JsonApiDocument): StoreModel | null
-  retrieve<T extends string>(type: T, body: JsonApiDocument): InferModelType<S, T> | null
-  retrieve<T extends string>(
-    typeOrBody: T | JsonApiDocument,
-    body?: JsonApiDocument,
-  ): InferModelType<S, T> | StoreModel | null {
-    let model: StoreModel | null | undefined = null
-    let synced: StoreResult | null = null
-    if (typeof typeOrBody === 'object') {
-      synced = this.syncAll(typeOrBody)
-      model = synced[0] ?? null
-    } else {
-      synced = this.syncAll(body!)
-      model = synced.find((m) => m[TYPE] === typeOrBody)
-    }
+  retrieve<T extends string>(type: T, body: JsonApiDocument): InferModelType<S, T> | null {
+    const synced = this.syncAll(body)
+    const model = synced.find((m) => m[TYPE] === type)
     if (!model) return null
     if (synced[META]) {
       model[META] = synced[META]
     }
-    return model
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from type parameter
+    return model as InferModelType<S, T>
   }
 
   retrieveAll<T extends string>(type: T, body: JsonApiDocument): StoreResult<InferModelType<S, T>> {
