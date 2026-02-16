@@ -2,6 +2,7 @@ import globals from 'globals'
 import tseslint from 'typescript-eslint'
 import eslint from '@eslint/js'
 import mochaPlugin from 'eslint-plugin-mocha'
+import eslintComments from '@eslint-community/eslint-plugin-eslint-comments'
 
 export default [
   eslint.configs.recommended,
@@ -9,6 +10,9 @@ export default [
   ...tseslint.config({
     files: ['**/*.{ts,mts}'],
     extends: [tseslint.configs.recommended],
+    plugins: {
+      '@eslint-community/eslint-comments': eslintComments,
+    },
     rules: {
       '@typescript-eslint/no-unused-vars': [
         'error',
@@ -25,6 +29,7 @@ export default [
         },
       ],
       '@typescript-eslint/explicit-function-return-type': ['error'],
+      '@eslint-community/eslint-comments/require-description': ['warn', { ignore: [] }],
     },
   }),
   {

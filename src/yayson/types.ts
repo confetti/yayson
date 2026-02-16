@@ -1,4 +1,5 @@
-import type { ModelLike } from './adapter.js'
+import { TYPE, LINKS, META, REL_LINKS, REL_META } from './symbols.js'
+import type { ZodLikeSchema } from './schema.js'
 
 export interface JsonApiLink extends Record<string, unknown> {
   self?: string
@@ -44,39 +45,10 @@ export interface PresenterOptions {
   meta?: Record<string, unknown>
   links?: JsonApiLinks
   include?: boolean
+}
+
+export interface LegacyPresenterOptions extends PresenterOptions {
   defaultPlural?: boolean
-}
-
-export interface AdapterConstructor {
-  new (): unknown
-  get<T = unknown>(model: ModelLike, key?: string): T
-  id(model: ModelLike): string | undefined
-}
-
-export interface PresenterConstructor {
-  new (scope?: JsonApiDocument): PresenterInstance
-  adapter: AdapterConstructor
-  type: string
-  plural?: string
-  toJSON(instanceOrCollection: ModelLike | ModelLike[] | null, options?: PresenterOptions): JsonApiDocument
-  render(instanceOrCollection: ModelLike | ModelLike[] | null, options?: PresenterOptions): JsonApiDocument
-}
-
-export interface PresenterInstance {
-  scope: JsonApiDocument
-  constructor: PresenterConstructor
-  _adapter: AdapterConstructor
-  _type: string
-  id(instance: ModelLike): string | undefined
-  selfLinks(instance: ModelLike): JsonApiLink | string | undefined
-  links(instance?: ModelLike): JsonApiLinks | undefined
-  relationships(): Record<string, PresenterConstructor> | undefined
-  attributes(instance: ModelLike | null): Record<string, unknown> | null
-  includeRelationships(scope: JsonApiDocument, instance: ModelLike): unknown[]
-  buildRelationships(instance: ModelLike | null): JsonApiRelationships | null
-  buildSelfLink(instance: ModelLike): JsonApiLink | undefined
-  toJSON(instanceOrCollection: ModelLike | ModelLike[] | null, options?: PresenterOptions): JsonApiDocument
-  render(instanceOrCollection: ModelLike | ModelLike[] | null, options?: PresenterOptions): JsonApiDocument
 }
 
 export interface StoreRecord {
@@ -90,15 +62,54 @@ export interface StoreRecord {
 
 export interface StoreModel extends Record<string, unknown> {
   id: string
-  type: string
-  meta?: Record<string, unknown>
-  links?: JsonApiLink
-  _links?: JsonApiLinks
-  _meta?: Record<string, unknown>
+  [TYPE]?: string
+  [LINKS]?: JsonApiLink
+  [META]?: Record<string, unknown>
+  [REL_LINKS]?: JsonApiLink
+  [REL_META]?: Record<string, unknown>
 }
 
 export interface StoreModels {
   [type: string]: {
     [id: string]: StoreModel
   }
+}
+
+export interface SchemaRegistry {
+  [type: string]: ZodLikeSchema
+}
+
+// Type inference helper for extracting model types from schemas (Zod-style with .parse()/.safeParse() methods)
+export type InferSchemaType<Schema> = Schema extends {
+  parse: (data: unknown) => infer ParsedType
+  safeParse: (data: unknown) => unknown
+}
+  ? ParsedType
+  : unknown
+
+export type InferModelType<Registry, TypeName extends string> = Registry extends SchemaRegistry
+  ? TypeName extends keyof Registry
+    ? InferSchemaType<Registry[TypeName]>
+    : StoreModel
+  : StoreModel
+
+export interface StoreResult<T = StoreModel> extends Array<T> {
+  [META]?: Record<string, unknown>
+}
+
+export interface StoreOptions<S extends SchemaRegistry = SchemaRegistry> {
+  schemas?: S
+  strict?: boolean
+}
+
+export interface ValidationError {
+  type: string
+  id: string
+  error: unknown
+}
+
+export interface LegacyStoreOptions<S extends SchemaRegistry = SchemaRegistry> {
+  types?: Record<string, string>
+  schemas?: S
+  strict?: boolean
 }

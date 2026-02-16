@@ -1,18 +1,26 @@
 import type {
+  InferModelType,
   JsonApiDocument,
-  JsonApiRelationship,
+  JsonApiLink,
+  JsonApiRelationships,
   JsonApiResourceIdentifier,
+  SchemaRegistry,
   StoreModel,
   StoreModels,
+  StoreOptions,
   StoreRecord as StoreRecordType,
+  StoreResult,
+  ValidationError,
 } from './types.js'
+import { TYPE, LINKS, META, REL_LINKS, REL_META } from './symbols.js'
+import { validate } from './schema.js'
 
-class StoreRecord {
+class StoreRecord implements StoreRecordType {
   id: string
   type: string
   attributes?: Record<string, unknown>
-  relationships?: Record<string, JsonApiRelationship>
-  links?: Record<string, unknown>
+  relationships?: JsonApiRelationships
+  links?: JsonApiLink
   meta?: Record<string, unknown>
 
   constructor(options: StoreRecordType) {
@@ -25,27 +33,28 @@ class StoreRecord {
   }
 }
 
-class Store {
+export default class Store<S extends SchemaRegistry = SchemaRegistry> {
   records: StoreRecord[] = []
+  schemas?: S
+  strict: boolean
+  validationErrors: ValidationError[] = []
 
-  constructor(_options?: unknown) {
+  constructor(options?: StoreOptions<S>) {
+    this.schemas = options?.schemas
+    this.strict = options?.strict ?? false
     this.reset()
   }
 
   reset(): void {
     this.records = []
+    this.validationErrors = []
   }
 
   toModel(rec: StoreRecord, type: string, models: StoreModels): StoreModel {
-    let typeAttribute: string | undefined
-    const model: StoreModel = { ...(rec.attributes || {}), id: '', type: '' }
-
-    if (rec.attributes && 'type' in rec.attributes && typeof rec.attributes.type === 'string') {
-      typeAttribute = rec.attributes.type
-    }
+    const model: StoreModel = { ...(rec.attributes || {}), id: '' }
 
     model.id = rec.id
-    model.type = rec.type
+    model[TYPE] = rec.type
     if (!models[type]) {
       models[type] = {}
     }
@@ -53,17 +62,12 @@ class Store {
       models[type][rec.id] = model
     }
 
-    if (Object.prototype.hasOwnProperty.call(model, 'meta')) {
-      model.attributes = { meta: model.meta }
-      delete model.meta
-    }
-
     if (rec.meta != null) {
-      model.meta = rec.meta
+      model[META] = rec.meta
     }
 
     if (rec.links != null) {
-      model.links = rec.links
+      model[LINKS] = rec.links
     }
 
     if (rec.relationships != null) {
@@ -78,25 +82,48 @@ class Store {
           continue
         }
         const resolve = ({ type, id }: JsonApiResourceIdentifier): StoreModel | null => {
-          return this.find(type, id, models)
+          const result = this.find(type, id, models)
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Runtime type string cannot use type parameter
+          return result as StoreModel | null
         }
         if (Array.isArray(data)) {
           model[key] = data.map(resolve)
         } else {
-          const relModel: Record<string, unknown> | null = data != null ? resolve(data) : {}
+          const relModel: StoreModel | null = data != null ? resolve(data) : { id: '' }
 
           if (relModel) {
-            relModel._links = links || {}
-            relModel._meta = meta || {}
+            relModel[REL_LINKS] = links || {}
+            relModel[REL_META] = meta || {}
             model[key] = relModel
           }
         }
       }
     }
 
-    if (typeAttribute) {
-      model.type = typeAttribute
+    // Validate with schema if provided
+    if (this.schemas && this.schemas[rec.type]) {
+      const schema = this.schemas[rec.type]
+      const result = validate(schema, model, this.strict)
+
+      if (!result.valid) {
+        this.validationErrors.push({
+          type: rec.type,
+          id: rec.id,
+          error: result.error,
+        })
+      }
+
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Schema validation returns unknown, cast to StoreModel after validation
+      const validatedModel = result.data as StoreModel
+
+      // Preserve symbol keys from original model (schema validation may not preserve them)
+      validatedModel[TYPE] = model[TYPE]
+      validatedModel[LINKS] = model[LINKS]
+      validatedModel[META] = model[META]
+
+      return validatedModel
     }
+
     return model
   }
 
@@ -108,19 +135,21 @@ class Store {
     return this.records.filter((r) => r.type === type)
   }
 
-  find(type: string, id: string, models?: StoreModels): StoreModel | null {
+  find<T extends string>(type: T, id: string, models?: StoreModels): InferModelType<S, T> | null {
     const modelsObj = models ?? {}
-    const rec = this.findRecord(type, id)
+    const idStr = String(id)
+    const rec = this.findRecord(type, idStr)
     if (rec == null) {
       return null
     }
     if (!modelsObj[type]) {
       modelsObj[type] = {}
     }
-    return modelsObj[type][id] || this.toModel(rec, type, modelsObj)
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from schema registry
+    return (modelsObj[type][idStr] || this.toModel(rec, type, modelsObj)) as InferModelType<S, T>
   }
 
-  findAll(type: string, models?: StoreModels): StoreModel[] {
+  findAll<T extends string>(type: T, models?: StoreModels): InferModelType<S, T>[] {
     const modelsObj = models ?? {}
     const recs = this.findRecords(type)
     if (recs == null) {
@@ -132,10 +161,11 @@ class Store {
       }
       return this.toModel(rec, type, modelsObj)
     })
-    return Object.values(modelsObj[type] || {})
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from schema registry
+    return Object.values(modelsObj[type] || {}) as InferModelType<S, T>[]
   }
 
-  remove(type: string, id?: string): void | void[] {
+  remove(type: string, id?: string): void {
     const removeOne = (record: StoreRecord): void => {
       const index = this.records.indexOf(record)
       if (!(index < 0)) {
@@ -144,25 +174,25 @@ class Store {
     }
 
     if (id != null) {
-      const record = this.findRecord(type, id)
+      const record = this.findRecord(type, String(id))
       if (record) {
-        return removeOne(record)
+        removeOne(record)
       }
     } else {
-      const records = this.findRecords(type)
-      return records.map(removeOne)
+      this.findRecords(type).forEach(removeOne)
     }
   }
 
-  sync(
-    body: JsonApiDocument,
-    filterType?: string,
-  ): ((StoreModel | StoreModel[] | null) & { links?: unknown; meta?: unknown }) | null {
-    const syncData = (
-      data: JsonApiDocument['data'] | JsonApiDocument['included'],
-    ): StoreRecord | StoreRecord[] | null => {
+  sync(body: JsonApiDocument): StoreResult {
+    // Clear previous validation errors
+    this.validationErrors = []
+
+    // Snapshot for rollback if strict validation throws
+    const previousRecords = [...this.records]
+
+    const syncData = (data: JsonApiDocument['data'] | JsonApiDocument['included']): StoreRecord[] => {
       if (data == null) {
-        return null
+        return []
       }
       const add = (obj: StoreRecordType): StoreRecord => {
         const { type, id } = obj
@@ -181,56 +211,47 @@ class Store {
             ...item,
             attributes: item.attributes ?? undefined,
             relationships: item.relationships ?? undefined,
-            id: item.id,
+            id: String(item.id),
           })
         })
       } else {
         if (!data.id) {
           throw new Error(`Resource of type ${data.type} is missing an id`)
         }
-        return add({
-          ...data,
-          attributes: data.attributes ?? undefined,
-          relationships: data.relationships ?? undefined,
-          id: data.id,
-        })
+        return [
+          add({
+            ...data,
+            attributes: data.attributes ?? undefined,
+            relationships: data.relationships ?? undefined,
+            id: String(data.id),
+          }),
+        ]
       }
     }
 
-    syncData(body.included)
-    const recs = syncData(body.data)
+    try {
+      syncData(body.included)
+      const recs = syncData(body.data)
 
-    if (recs == null) {
-      return null
-    }
-
-    const models: StoreModels = {}
-    let result: ((StoreModel | StoreModel[]) & { links?: unknown; meta?: unknown }) | null = null
-
-    if (Array.isArray(recs)) {
-      let modelArray = recs.map((rec) => {
-        return this.toModel(rec, rec.type, models)
-      })
-      if (filterType) {
-        modelArray = modelArray.filter((model) => model.type === filterType)
+      const models: StoreModels = {}
+      const result: StoreResult = recs.map((rec) => this.toModel(rec, rec.type, models))
+      if (body.meta != null) {
+        result[META] = body.meta
       }
-      result = Object.assign(modelArray, { links: undefined, meta: undefined })
-    } else {
-      result = Object.assign(this.toModel(recs, recs.type, models), { links: undefined, meta: undefined })
+      return result
+    } catch (e) {
+      this.records = previousRecords
+      throw e
     }
+  }
 
-    if (Object.prototype.hasOwnProperty.call(body, 'links')) {
-      result.links = body.links
-    }
-
-    if (Object.prototype.hasOwnProperty.call(body, 'meta')) {
-      result.meta = body.meta
-    }
-
+  retrieveAll<T extends string>(type: T, body: JsonApiDocument): StoreResult<InferModelType<S, T>> {
+    const synced = this.sync(body)
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from type parameter
+    const result: StoreResult<InferModelType<S, T>> = synced.filter((model) => model[TYPE] === type) as StoreResult<
+      InferModelType<S, T>
+    >
+    result[META] = synced[META]
     return result
   }
-}
-
-export default function createStore(): typeof Store {
-  return Store
 }

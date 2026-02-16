@@ -1,0 +1,5 @@
+export const TYPE: unique symbol = Symbol('yayson.type')
+export const LINKS: unique symbol = Symbol('yayson.links')
+export const META: unique symbol = Symbol('yayson.meta')
+export const REL_LINKS: unique symbol = Symbol('yayson.rel-links')
+export const REL_META: unique symbol = Symbol('yayson.rel-meta')

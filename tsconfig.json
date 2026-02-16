@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
+    "moduleResolution": "bundler",
     "lib": ["ES2022"],
 
     /* Emit */
@@ -18,13 +19,12 @@
     /* Interop */
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
 
     /* Source Maps */
     "inlineSources": true,
     "sourceRoot": "/"
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "test/**/*"],
   "exclude": ["node_modules", "build", "dist"]
 }

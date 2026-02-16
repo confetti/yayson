@@ -3,16 +3,39 @@
   "version": "4.0.0",
   "description": "A library for serializing and reading JSON API standardized data in JavaScript.",
   "type": "module",
-  "main": "./build/yayson.js",
-  "types": "./build/yayson.d.ts",
+  "main": "./build/yayson.cjs",
+  "module": "./build/yayson.mjs",
+  "types": "./build/yayson.d.mts",
   "exports": {
     ".": {
-      "import": "./build/yayson.js",
-      "types": "./build/yayson.d.ts"
+      "import": {
+        "types": "./build/yayson.d.mts",
+        "default": "./build/yayson.mjs"
+      },
+      "require": {
+        "types": "./build/yayson.d.cts",
+        "default": "./build/yayson.cjs"
+      }
     },
     "./legacy": {
-      "import": "./build/legacy.js",
-      "types": "./build/legacy.d.ts"
+      "import": {
+        "types": "./build/legacy.d.mts",
+        "default": "./build/legacy.mjs"
+      },
+      "require": {
+        "types": "./build/legacy.d.cts",
+        "default": "./build/legacy.cjs"
+      }
+    },
+    "./utils": {
+      "import": {
+        "types": "./build/utils.d.mts",
+        "default": "./build/utils.mjs"
+      },
+      "require": {
+        "types": "./build/utils.d.cts",
+        "default": "./build/utils.cjs"
+      }
     }
   },
   "files": [
@@ -21,14 +44,15 @@
     "LICENSE"
   ],
   "engines": {
-    "node": ">=18",
-    "npm": ">=8"
+    "node": ">=20",
+    "npm": ">=10"
   },
   "scripts": {
     "test": "tsx node_modules/.bin/mocha",
-    "build": "tsc -p .",
-    "prepublishOnly": "npm run build",
-    "preversion": "npm test && npm run build",
+    "test:build": "node test/build.test.cjs",
+    "build": "tsdown",
+    "prepublishOnly": "npm run build && npm run test:build",
+    "preversion": "npm test && npm run build && npm run test:build",
     "postversion": "git push --follow-tags origin master",
     "release": "npm version minor",
     "format": "prettier --write src test",
@@ -57,6 +81,7 @@
   },
   "homepage": "https://github.com/confetti/yayson",
   "devDependencies": {
+    "@eslint-community/eslint-plugin-eslint-comments": "4.6.0",
     "@eslint/js": "^9.35.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.5.1",
@@ -71,8 +96,10 @@
     "prettier": "3.7.2",
     "sinon": "^21.0.0",
     "sinon-chai": "^3.7.0",
+    "tsdown": "0.20.0-beta.4",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
-    "typescript-eslint": "^8.44.0"
+    "typescript-eslint": "^8.44.0",
+    "zod": "4.3.5"
   }
 }

@@ -1,6 +1,5 @@
-import type { ModelLike } from './adapter.js'
+import Adapter, { ModelLike } from './adapter.js'
 import type {
-  AdapterConstructor,
   JsonApiDocument,
   JsonApiLink,
   JsonApiLinks,
@@ -8,10 +7,9 @@ import type {
   JsonApiRelationships,
   JsonApiResource,
   JsonApiResourceIdentifier,
-  PresenterConstructor,
-  PresenterInstance,
   PresenterOptions,
 } from './types.js'
+import { filterByFields } from './utils.js'
 
 function buildLinks(link: JsonApiLink | string | null | undefined): JsonApiLink | undefined {
   if (link == null) {
@@ -24,30 +22,23 @@ function buildLinks(link: JsonApiLink | string | null | undefined): JsonApiLink 
   }
 }
 
-export default function createPresenter(adapter: AdapterConstructor): PresenterConstructor {
-  class Presenter implements PresenterInstance {
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is inferred from class
+export default function createPresenter(adapter: typeof Adapter) {
+  class Presenter {
+    declare ['constructor']: typeof Presenter
+
     static adapter = adapter
     static type = 'objects'
+    static fields?: string[]
 
     scope: JsonApiDocument
-    _adapter: AdapterConstructor
-    _type: string;
-    ['constructor']!: PresenterConstructor
 
     constructor(scope?: JsonApiDocument) {
       this.scope = scope ?? { data: null }
-      // Walk up prototype chain to find adapter and type
-      // Use Object.getPrototypeOf on constructor to walk the chain
-      let ctor: typeof Presenter | null = Object.getPrototypeOf(this).constructor
-      while (ctor && !ctor.adapter) {
-        ctor = Object.getPrototypeOf(ctor)
-      }
-      this._adapter = ctor?.adapter || adapter
-      this._type = ctor?.type || 'objects'
     }
 
     id(instance: ModelLike): string | undefined {
-      return this._adapter.id(instance)
+      return this.constructor.adapter.id(instance)
     }
 
     selfLinks(_instance: ModelLike): JsonApiLink | string | undefined {
@@ -58,15 +49,15 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
       return undefined
     }
 
-    relationships(): Record<string, PresenterConstructor> | undefined {
-      return undefined
+    relationships(): Record<string, typeof Presenter> {
+      return {}
     }
 
-    attributes(instance: ModelLike | null): Record<string, unknown> | null {
+    attributes(instance: ModelLike | null): Record<string, unknown> {
       if (instance == null) {
-        return null
+        return {}
       }
-      const attributes = { ...this._adapter.get<Record<string, unknown>>(instance) }
+      const attributes = { ...this.constructor.adapter.get(instance) }
       delete attributes['id']
 
       const relationships = this.relationships()
@@ -75,7 +66,8 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
           delete attributes[key]
         }
       }
-      return attributes
+
+      return filterByFields(attributes, this.constructor.fields)
     }
 
     includeRelationships(scope: JsonApiDocument, instance: ModelLike): unknown[] {
@@ -87,11 +79,12 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
 
       for (const key in relationships) {
         const factory = relationships[key]
-        if (!factory) throw new Error(`Presenter for ${key} in ${this._type} is not defined`)
+        if (!factory) throw new Error(`Presenter for ${key} in ${this.constructor.type} is not defined`)
 
         const presenter = new factory(scope)
 
-        const data = this._adapter.get<ModelLike | ModelLike[] | null>(instance, key)
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- unknown from adapter.get
+        const data = this.constructor.adapter.get(instance, key) as ModelLike | ModelLike[] | null
         result.push(presenter.toJSON(data, { include: true }))
       }
       return result
@@ -110,12 +103,15 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
       }
 
       for (const key in rels) {
-        const data = this._adapter.get<ModelLike | ModelLike[] | null | undefined>(instance, key)
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- unknown from adapter.get
+        const data = this.constructor.adapter.get(instance, key) as ModelLike | ModelLike[] | null | undefined
         const presenter = rels[key]
         const buildData = (d: ModelLike): JsonApiResourceIdentifier => {
-          const id = this._adapter.id(d)
+          const id = this.constructor.adapter.id(d)
           if (!id) {
-            throw new Error(`Model of type ${presenter.type} is missing an id`)
+            throw new Error(
+              `Model of type ${presenter.type} is missing an id (relationship '${key}' of ${this.constructor.type})`,
+            )
           }
           return {
             id,
@@ -188,7 +184,7 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
         let added = true
         const model: JsonApiResource = {
           id: this.id(instance),
-          type: this._type,
+          type: this.constructor.type,
           attributes: this.attributes(instance),
         }
         if (model.id === undefined) {
@@ -217,7 +213,7 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
           }
         } else if (this.scope.data != null) {
           if (Array.isArray(this.scope.data)) {
-            if (!this.scope.data.some((i) => i.id === model.id)) {
+            if (!this.scope.data.some((i) => i.id === model.id && i.type === model.type)) {
               this.scope.data.push(model)
             } else {
               added = false
@@ -252,3 +248,5 @@ export default function createPresenter(adapter: AdapterConstructor): PresenterC
 
   return Presenter
 }
+
+export type Presenter = ReturnType<typeof createPresenter>

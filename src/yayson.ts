@@ -1,22 +1,35 @@
 import Adapter from './yayson/adapter.js'
 import * as adapters from './yayson/adapters/index.js'
-import createPresenter from './yayson/presenter.js'
-import createStore from './yayson/store.js'
-import type { AdapterConstructor, PresenterConstructor } from './yayson/types.js'
+import createPresenter, { Presenter } from './yayson/presenter.js'
+import Store from './yayson/store.js'
+import type {
+  JsonApiDocument,
+  JsonApiLink,
+  JsonApiLinks,
+  JsonApiRelationship,
+  JsonApiRelationships,
+  JsonApiResource,
+  LegacyStoreOptions,
+  PresenterOptions,
+  SchemaRegistry,
+  StoreOptions,
+  ValidationError,
+} from './yayson/types.js'
+import type { ZodLikeSchema } from './yayson/schema.js'
 
-type AdapterOption = string | AdapterConstructor
+type AdapterOption = string | typeof Adapter
 
 interface YaysonOptions {
   adapter?: AdapterOption
 }
 
 interface YaysonResult {
-  Store: ReturnType<typeof createStore>
-  Presenter: PresenterConstructor
+  Store: typeof Store
+  Presenter: Presenter
   Adapter: typeof Adapter
 }
 
-function lookupAdapter(nameOrAdapter?: AdapterOption): AdapterConstructor {
+function lookupAdapter(nameOrAdapter?: AdapterOption): typeof Adapter {
   if (nameOrAdapter === 'default' || !nameOrAdapter) {
     return Adapter
   } else if (typeof nameOrAdapter === 'string') {
@@ -29,10 +42,9 @@ function lookupAdapter(nameOrAdapter?: AdapterOption): AdapterConstructor {
   return nameOrAdapter
 }
 
-export default function yayson(options?: YaysonOptions): YaysonResult {
+function yayson(options?: YaysonOptions): YaysonResult {
   const adapter = lookupAdapter(options?.adapter)
   const Presenter = createPresenter(adapter)
-  const Store = createStore()
 
   return {
     Store,
@@ -41,5 +53,21 @@ export default function yayson(options?: YaysonOptions): YaysonResult {
   }
 }
 
-export { Adapter, adapters, createPresenter, createStore }
-export type { YaysonOptions, YaysonResult }
+export default yayson
+export type {
+  Adapter,
+  JsonApiDocument,
+  JsonApiLink,
+  JsonApiLinks,
+  JsonApiRelationship,
+  JsonApiRelationships,
+  JsonApiResource,
+  LegacyStoreOptions,
+  PresenterOptions,
+  SchemaRegistry,
+  StoreOptions,
+  ValidationError,
+  YaysonOptions,
+  YaysonResult,
+  ZodLikeSchema,
+}

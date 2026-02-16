@@ -11,20 +11,20 @@ function isSequelizeModel(model: unknown): model is SequelizeModel {
 }
 
 class SequelizeAdapter extends Adapter {
-  static override get<T = unknown>(model: ModelLike, key?: string): T {
+  static override get(model: ModelLike): Record<string, unknown>
+  static override get(model: ModelLike, key: string): unknown
+  static override get(model: ModelLike, key?: string): unknown {
     if (isSequelizeModel(model)) {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Sequelize adapter converts unknown to T
-      return model.get(key) as T
+      return model.get(key)
     }
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Return undefined as T for compatibility
-    return undefined as T
+    return undefined
   }
 
   static override id(model: ModelLike): string | undefined {
     // Retain backwards compatibility with older sequelize versions
     const hasPrimaryKeys = model.constructor && 'primaryKeys' in model.constructor
     const pkFields = hasPrimaryKeys
-      ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Type checked with guard above
+      ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Access primaryKeys for Sequelize v3/v4 compatibility
         Object.keys((model.constructor as unknown as { primaryKeys: Record<string, unknown> }).primaryKeys)
       : ['id']
 

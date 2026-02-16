@@ -1,18 +1,39 @@
-import yayson from './yayson.js'
+import yaysonFactory from './yayson.js'
 import createLegacyPresenter from './yayson/legacy-presenter.js'
-import createLegacyStore from './yayson/legacy-store.js'
+import LegacyStore from './yayson/legacy-store.js'
+import type { LegacyData } from './yayson/legacy-store.js'
+import Adapter from './yayson/adapter.js'
+import type {
+  JsonApiDocument,
+  JsonApiLink,
+  JsonApiLinks,
+  JsonApiRelationship,
+  JsonApiRelationships,
+  JsonApiResource,
+} from './yayson/types.js'
 import type { YaysonOptions } from './yayson.js'
 
-interface LegacyYaysonResult {
-  Store: ReturnType<typeof createLegacyStore>
-  Presenter: ReturnType<typeof createLegacyPresenter>
-  Adapter: ReturnType<typeof yayson>['Adapter']
+export type {
+  Adapter,
+  JsonApiDocument,
+  JsonApiLink,
+  JsonApiLinks,
+  JsonApiRelationship,
+  JsonApiRelationships,
+  JsonApiResource,
+  LegacyData,
 }
 
-export default function legacy(options?: YaysonOptions): LegacyYaysonResult {
-  const { Presenter, Adapter } = yayson(options)
+interface LegacyYaysonResult {
+  Store: typeof LegacyStore
+  Presenter: ReturnType<typeof createLegacyPresenter>
+  Adapter: ReturnType<typeof yaysonFactory>['Adapter']
+}
+
+export default function yayson(options?: YaysonOptions): LegacyYaysonResult {
+  const { Presenter, Adapter } = yaysonFactory(options)
   return {
-    Store: createLegacyStore(),
+    Store: LegacyStore,
     Presenter: createLegacyPresenter(Presenter),
     Adapter,
   }
