@@ -498,6 +498,47 @@ describe('Store', function () {
     expect(result[META]).to.deep.equal({ total: 100, page: 1 })
   })
 
+  it('should retrieve a single model by type', function () {
+    const result = this.store.retrieve('events', {
+      data: {
+        type: 'events',
+        id: '1',
+        attributes: { name: 'Demo' },
+      },
+    })
+
+    expect(result).to.not.be.null
+    expect(result.id).to.equal('1')
+    expect(result.name).to.equal('Demo')
+    expect(result[TYPE]).to.equal('events')
+  })
+
+  it('should return null when no model of the given type exists', function () {
+    const result = this.store.retrieve('events', {
+      data: {
+        type: 'images',
+        id: '1',
+        attributes: { url: 'http://example.com/image.jpg' },
+      },
+    })
+
+    expect(result).to.be.null
+  })
+
+  it('should preserve document-level meta on retrieve result', function () {
+    const result = this.store.retrieve('events', {
+      data: {
+        type: 'events',
+        id: '1',
+        attributes: { name: 'Demo' },
+      },
+      meta: { total: 1, page: 1 },
+    })
+
+    expect(result).to.not.be.null
+    expect(result[META]).to.deep.equal({ total: 1, page: 1 })
+  })
+
   it('should preserve document-level meta on retrieveAll result', function () {
     const result = this.store.retrieveAll('events', {
       data: [
