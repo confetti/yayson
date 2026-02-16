@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-YAYSON is a library for serializing and reading [JSON API](http://jsonapi.org) data in JavaScript. It supports both ESM and CommonJS, has zero dependencies, and works in browsers and Node.js 18+.
+YAYSON is a library for serializing and reading [JSON API](http://jsonapi.org) data in JavaScript. It supports both ESM and CommonJS, has zero dependencies, and works in browsers and Node.js 20+.
 
 ## Commands
 

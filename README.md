@@ -16,32 +16,6 @@ npm install yayson
 
 Version 4.x includes several breaking changes:
 
-### Import syntax changed
-
-**CommonJS** - use named imports instead of default:
-
-```javascript
-// 3.x
-const yayson = require('yayson')
-const { Presenter } = yayson()
-
-// 4.x
-const { yayson } = require('yayson')
-const { Presenter } = yayson()
-```
-
-**Legacy module:**
-
-```javascript
-// 3.x
-const yayson = require('yayson/legacy')
-const { Store } = yayson()
-
-// 4.x
-const { yayson } = require('yayson/legacy')
-const { Store } = yayson()
-```
-
 ### Node.js version
 
 Node.js 20+ is now required (was 14+).
@@ -56,7 +30,7 @@ import yayson from 'yayson'
 const { Presenter } = yayson()
 
 // CommonJS
-const { yayson } = require('yayson')
+const yayson = require('yayson')
 const { Presenter } = yayson()
 
 class BikePresenter extends Presenter {
@@ -77,10 +51,9 @@ This would produce:
 
 {
   data: {
-    id: 5,
+    id: '5',
     type: 'bikes',
     attributes: {
-      id: 5,
       name: 'Monark'
     }
   }
@@ -139,7 +112,7 @@ This would produce:
 ```javascript
 {
   data: {
-    id: 1,
+    id: '1',
     type: 'users',
     attributes: {
       name: 'John',
@@ -186,7 +159,7 @@ You can add metadata to the top level object.
 
 ```javascript
 
-  ItemsPresenter.render(items, {meta: count: 10})
+  ItemsPresenter.render(items, {meta: {count: 10}})
 
 ```
 
@@ -197,12 +170,11 @@ This would produce:
 {
   meta: {
     count: 10
-  }
+  },
   data: {
-    id: 5,
+    id: '5',
     type: 'items',
     attributes: {
-      id: 5,
       name: 'First'
     }
   }
@@ -374,7 +346,7 @@ import yayson from 'yayson/legacy'
 const { Presenter, Store } = yayson()
 
 // CommonJS
-const { yayson } = require('yayson/legacy')
+const yayson = require('yayson/legacy')
 const { Presenter, Store } = yayson()
 ```
 
