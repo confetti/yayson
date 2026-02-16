@@ -16,20 +16,22 @@
 import yayson from 'yayson'
 // or: import yayson from 'yayson/legacy'
 
-function yayson(options?: {
-  adapter?: 'default' | 'sequelize' | AdapterClass
-}): { Presenter: typeof Presenter, Store: typeof Store, Adapter: typeof Adapter }
+function yayson(options?: { adapter?: 'default' | 'sequelize' | AdapterClass }): {
+  Presenter: typeof Presenter
+  Store: typeof Store
+  Adapter: typeof Adapter
+}
 ```
 
 ## Presenter
 
 ### Static Properties
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `type` | `string` | `'objects'` | JSON API resource type name |
-| `fields` | `string[]` | `undefined` | Attribute whitelist (undefined = all) |
-| `adapter` | `typeof Adapter` | injected | Data access adapter |
+| Property  | Type             | Default     | Description                           |
+| --------- | ---------------- | ----------- | ------------------------------------- |
+| `type`    | `string`         | `'objects'` | JSON API resource type name           |
+| `fields`  | `string[]`       | `undefined` | Attribute whitelist (undefined = all) |
+| `adapter` | `typeof Adapter` | injected    | Data access adapter                   |
 
 ### Instance Methods
 
@@ -62,16 +64,17 @@ Extract ID via adapter. Returns stringified ID.
 ### Static Methods
 
 #### `render(instanceOrCollection, options?): JsonApiDocument`
+
 #### `toJSON(instanceOrCollection, options?): JsonApiDocument`
 
 Serialize one or many instances to a JSON API document. `render` and `toJSON` are identical.
 
 **Options:**
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `meta` | `Record<string, unknown>` | Top-level `meta` in the document |
-| `links` | `JsonApiLinks` | Top-level `links` in the document |
+| Option  | Type                      | Description                       |
+| ------- | ------------------------- | --------------------------------- |
+| `meta`  | `Record<string, unknown>` | Top-level `meta` in the document  |
+| `links` | `JsonApiLinks`            | Top-level `links` in the document |
 
 **Return value:** `{ data, included?, meta?, links? }`
 
@@ -104,6 +107,7 @@ Sync a JSON API document. Returns a single model when `data` is a single resourc
 Always returns an array. Processes `included` first, then `data`. Clears previous validation errors. On strict validation failure, rolls back store state.
 
 #### `retrieve(body: JsonApiDocument): StoreModel | null`
+
 #### `retrieve<T>(type: T, body: JsonApiDocument): InferModelType<S, T> | null`
 
 Single-argument form: syncs and returns first model or null.
@@ -131,8 +135,8 @@ Clear all cached data and validation errors.
 
 ### Properties
 
-| Property | Type | Description |
-|----------|------|-------------|
+| Property           | Type                | Description                                                       |
+| ------------------ | ------------------- | ----------------------------------------------------------------- |
 | `validationErrors` | `ValidationError[]` | Errors from non-strict validation. Each has `type`, `id`, `error` |
 
 ### Validation Modes
@@ -200,13 +204,13 @@ import { TYPE, LINKS, META, REL_LINKS, REL_META } from 'yayson/utils'
 import { getType, getLinks, getMeta, getRelationshipLinks, getRelationshipMeta } from 'yayson/utils'
 ```
 
-| Symbol | Helper | Stored On | Contains |
-|--------|--------|-----------|----------|
-| `TYPE` | `getType(model)` | Any model | Resource type string |
-| `META` | `getMeta(model)` | Any model | Resource-level meta |
-| `LINKS` | `getLinks(model)` | Any model | Resource-level links |
-| `REL_LINKS` | `getRelationshipLinks(rel)` | Relationship value | Relationship links |
-| `REL_META` | `getRelationshipMeta(rel)` | Relationship value | Relationship meta |
+| Symbol      | Helper                      | Stored On          | Contains             |
+| ----------- | --------------------------- | ------------------ | -------------------- |
+| `TYPE`      | `getType(model)`            | Any model          | Resource type string |
+| `META`      | `getMeta(model)`            | Any model          | Resource-level meta  |
+| `LINKS`     | `getLinks(model)`           | Any model          | Resource-level links |
+| `REL_LINKS` | `getRelationshipLinks(rel)` | Relationship value | Relationship links   |
+| `REL_META`  | `getRelationshipMeta(rel)`  | Relationship value | Relationship meta    |
 
 Symbols survive schema validation (explicitly copied after `parse()`).
 
@@ -217,9 +221,9 @@ Symbols survive schema validation (explicitly copied after `parse()`).
 Works with plain JS objects.
 
 ```typescript
-Adapter.get(model)         // returns shallow copy of all properties
-Adapter.get(model, 'key')  // returns single property value
-Adapter.id(model)          // returns model.id as string
+Adapter.get(model) // returns shallow copy of all properties
+Adapter.get(model, 'key') // returns single property value
+Adapter.id(model) // returns model.id as string
 ```
 
 ### Sequelize Adapter
@@ -238,8 +242,8 @@ Any object with static `id(model)` and `get(model, key?)` methods:
 const { Presenter } = yayson({
   adapter: {
     id: (model) => String(model.pk),
-    get: (model, key) => key ? model.attrs[key] : model.attrs
-  }
+    get: (model, key) => (key ? model.attrs[key] : model.attrs),
+  },
 })
 ```
 

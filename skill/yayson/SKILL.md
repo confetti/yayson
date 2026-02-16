@@ -43,7 +43,7 @@ UserPresenter.render({ id: 1, name: 'Ada' })
 ```typescript
 class UserPresenter extends Presenter {
   static type = 'users'
-  static fields = ['name', 'email']  // whitelist, excludes everything else
+  static fields = ['name', 'email'] // whitelist, excludes everything else
 }
 ```
 
@@ -89,14 +89,18 @@ Override `selfLinks()` for resource links and `links()` for relationship links.
 ```typescript
 class CarPresenter extends Presenter {
   static type = 'cars'
-  relationships() { return { motor: MotorPresenter } }
-  selfLinks(instance) { return '/cars/' + this.id(instance) }
+  relationships() {
+    return { motor: MotorPresenter }
+  }
+  selfLinks(instance) {
+    return '/cars/' + this.id(instance)
+  }
   links(instance) {
     return {
       motor: {
         self: this.selfLinks(instance) + '/relationships/motor',
-        related: this.selfLinks(instance) + '/motor'
-      }
+        related: this.selfLinks(instance) + '/motor',
+      },
     }
   }
 }
@@ -109,7 +113,7 @@ Pass `meta` and `links` as top-level document properties:
 ```typescript
 ItemPresenter.render(items, {
   meta: { total: 100, page: 1 },
-  links: { self: '/items?page=1', next: '/items?page=2' }
+  links: { self: '/items?page=1', next: '/items?page=2' },
 })
 ```
 
@@ -142,11 +146,11 @@ const images = store.retrieveAll('images', jsonApiDocument)
 ### Querying cached data
 
 ```typescript
-store.find('events', 1)      // single model or null
-store.findAll('events')       // all cached events
-store.remove('events', 1)     // remove one
-store.remove('events')        // remove all of type
-store.reset()                 // clear everything
+store.find('events', 1) // single model or null
+store.findAll('events') // all cached events
+store.remove('events', 1) // remove one
+store.remove('events') // remove all of type
+store.reset() // clear everything
 ```
 
 ### Relationships resolve automatically
@@ -154,10 +158,10 @@ store.reset()                 // clear everything
 ```typescript
 store.sync({
   data: { type: 'events', id: '1', relationships: { images: { data: [{ type: 'images', id: '2' }] } } },
-  included: [{ type: 'images', id: '2', attributes: { url: 'pic.jpg' } }]
+  included: [{ type: 'images', id: '2', attributes: { url: 'pic.jpg' } }],
 })
 const event = store.find('events', '1')
-event.images[0].url  // 'pic.jpg'
+event.images[0].url // 'pic.jpg'
 ```
 
 ### Schema validation
@@ -167,14 +171,16 @@ Accepts any Zod-like schema (must have `parse`/`safeParse` methods). Use `.passt
 ```typescript
 import { z } from 'zod'
 
-const eventSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-}).passthrough()
+const eventSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+  })
+  .passthrough()
 
 const store = new Store({
   schemas: { events: eventSchema },
-  strict: true   // throws on validation error; false collects in store.validationErrors
+  strict: true, // throws on validation error; false collects in store.validationErrors
 })
 ```
 
@@ -184,11 +190,11 @@ const store = new Store({
 import { getType, getMeta, getLinks, getRelationshipLinks, getRelationshipMeta } from 'yayson/utils'
 
 const event = store.find('events', '1')
-getType(event)                        // 'events'
-getMeta(event)                        // resource meta
-getLinks(event)                       // resource links
-getRelationshipLinks(event.images)    // relationship links
-getRelationshipMeta(event.images)     // relationship meta
+getType(event) // 'events'
+getMeta(event) // resource meta
+getLinks(event) // resource links
+getRelationshipLinks(event.images) // relationship links
+getRelationshipMeta(event.images) // relationship meta
 ```
 
 ## Store (Legacy)
@@ -200,7 +206,7 @@ import yayson from 'yayson/legacy'
 const { Store } = yayson()
 
 const store = new Store({
-  types: { events: 'event', images: 'image' }  // plural -> singular mapping
+  types: { events: 'event', images: 'image' }, // plural -> singular mapping
 })
 ```
 
@@ -210,14 +216,14 @@ const store = new Store({
 store.sync({
   links: {
     'event.images': { type: 'images' },
-    'images.event': { type: 'event' }
+    'images.event': { type: 'event' },
   },
   event: { id: 1, name: 'Demo', images: [2] },
-  images: [{ id: 2, event: 1, url: 'pic.jpg' }]
+  images: [{ id: 2, event: 1, url: 'pic.jpg' }],
 })
 
 const event = store.find('event', 1)
-event.images[0].url  // 'pic.jpg'
+event.images[0].url // 'pic.jpg'
 ```
 
 The API methods (`sync`, `syncAll`, `retrieve`, `retrieveAll`, `find`, `findAll`, `remove`, `reset`) work the same as the standard Store. Schema validation is also supported.
