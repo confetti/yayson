@@ -1,20 +1,62 @@
 {
   "name": "yayson",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "A library for serializing and reading JSON API standardized data in JavaScript.",
-  "main": "src/yayson.js",
+  "type": "module",
+  "main": "./build/yayson.cjs",
+  "module": "./build/yayson.mjs",
+  "types": "./build/yayson.d.mts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./build/yayson.d.mts",
+        "default": "./build/yayson.mjs"
+      },
+      "require": {
+        "types": "./build/yayson.d.cts",
+        "default": "./build/yayson.cjs"
+      }
+    },
+    "./legacy": {
+      "import": {
+        "types": "./build/legacy.d.mts",
+        "default": "./build/legacy.mjs"
+      },
+      "require": {
+        "types": "./build/legacy.d.cts",
+        "default": "./build/legacy.cjs"
+      }
+    },
+    "./utils": {
+      "import": {
+        "types": "./build/utils.d.mts",
+        "default": "./build/utils.mjs"
+      },
+      "require": {
+        "types": "./build/utils.d.cts",
+        "default": "./build/utils.cjs"
+      }
+    }
+  },
+  "files": [
+    "build/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "engines": {
-    "node": ">=18",
-    "npm": ">=8"
+    "node": ">=20",
+    "npm": ">=10"
   },
   "scripts": {
-    "test": "mocha",
-    "build": "webpack --config webpack.dist.js",
-    "test-browser": "webpack-dev-server --config webpack.browser.js",
-    "preversion": "npm test && npm run build && git add dist/yayson.js",
+    "test": "tsx node_modules/.bin/mocha",
+    "test:build": "node test/build.test.cjs",
+    "build": "tsdown",
+    "prepublishOnly": "npm run build && npm run test:build",
+    "preversion": "npm test && npm run build && npm run test:build",
     "postversion": "git push --follow-tags origin master",
     "release": "npm version minor",
-    "format": "prettier --write src"
+    "format": "prettier --write src test",
+    "lint": "concurrently --prefix '[{name}]' --prefix-colors '#f73fae,#00c2db,#00db8b' --names 'tsc,eslint,prettier' 'tsc --noEmit' 'eslint .' 'prettier --check .'"
   },
   "repository": {
     "type": "git",
@@ -38,26 +80,26 @@
     "url": "https://github.com/confetti/yayson/issues"
   },
   "homepage": "https://github.com/confetti/yayson",
-  "browserslist": [
-    "defaults",
-    "not IE 11"
-  ],
   "devDependencies": {
-    "@babel/core": "^7.20.12",
-    "@babel/eslint-parser": "^7.19.1",
-    "@babel/preset-env": "^7.20.2",
-    "babel-loader": "^9.1.2",
-    "chai": "^4.3.7",
-    "core-js": "^3.27.2",
-    "eslint": "^8.33.0",
-    "eslint-plugin-mocha": "^10.1.0",
-    "mocha": "^10.2.0",
-    "prettier": "^2.8.3",
-    "sinon": "^15.0.1",
+    "@eslint-community/eslint-plugin-eslint-comments": "4.6.0",
+    "@eslint/js": "^9.35.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^24.5.1",
+    "@types/sinon": "^17.0.4",
+    "@types/sinon-chai": "^4.0.0",
+    "chai": "^4.5.0",
+    "concurrently": "^9.2.1",
+    "eslint": "9.39.1",
+    "eslint-plugin-mocha": "^11.1.0",
+    "globals": "^16.4.0",
+    "mocha": "^11.7.2",
+    "prettier": "3.7.2",
+    "sinon": "^21.0.0",
     "sinon-chai": "^3.7.0",
-    "webpack": "^5.75.0",
-    "webpack-cli": "^5.0.1",
-    "webpack-dev-server": "^4.11.1",
-    "webpack-merge": "^5.8.0"
+    "tsdown": "0.20.0-beta.4",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.44.0",
+    "zod": "4.3.5"
   }
 }
