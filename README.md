@@ -23,6 +23,7 @@ Version 4.x is a full TypeScript rewrite with several new features and breaking 
 - **Dual ESM/CJS package** — Native ES module support alongside CommonJS
 - **`yayson/utils` entry point** — Helper functions (`getType`, `getLinks`, `getMeta`, `getRelationshipLinks`, `getRelationshipMeta`) for reading model metadata
 - **`retrieveAll(type, data)`** — Sync data and return only models of a specific type
+- **`syncAll()`** — Always returns an array (useful when you always want array behavior)
 - **`fields` property** — Limit which attributes a Presenter includes in its output
 
 ### Breaking changes
@@ -54,27 +55,25 @@ getRelationshipLinks(relatedModel)
 getRelationshipMeta(relatedModel)
 ```
 
-#### `sync()` always returns an array
+#### `sync()` restores 3.x behavior
 
-In 3.x, `sync()` returned a single model for single resources and an array for collections. In 4.x, `sync()` always returns an array.
-
-For most use cases, `retrieve()` and `retrieveAll()` are drop-in replacements — they sync the data and return the model(s). Use `find()` if you need to look up a previously synced model by id.
+`sync()` now matches 3.x behavior: single resources return a model directly, collections return an array. If you always want an array, use `syncAll()`.
 
 ```javascript
-// 3.x
+// Single resource — returns model directly
 const event = store.sync({ data: { type: 'events', id: '1', attributes: { name: 'Demo' } } })
 event.name // 'Demo'
 
-// 4.x — single resource (pass type for filtering/type inference, or omit it)
+// Collection — returns array
+const events = store.sync({ data: [{ type: 'events', id: '1', attributes: { name: 'Demo' } }] })
+events.length // 1
+
+// Always returns array
+const events = store.syncAll(data)
+
+// retrieve/retrieveAll also available
 const event = store.retrieve('events', data)
-const event = store.retrieve(data)
-
-// 4.x — collection
 const events = store.retrieveAll('events', data)
-
-// 4.x — look up by id after syncing
-store.sync(data)
-const event = store.find('events', '1')
 ```
 
 #### Document-level meta uses Symbols
@@ -262,10 +261,14 @@ const { Store } = yayson()
 const store = new Store()
 
 const data = await adapter.get({ path: '/events/' + id })
-const allSynced = store.sync(data)
+const event = store.sync(data) // single resource → model directly
 ```
 
-The `sync()` method returns all models synced in this call (from both `data` and `included`), with relationships resolved.
+The `sync()` method returns a single model for single resources and an array for collections. Use `syncAll()` if you always want an array.
+
+```javascript
+const allSynced = store.syncAll(data) // always returns array
+```
 
 ### Filtering by type with retrieveAll
 
@@ -377,7 +380,7 @@ YAYSON stores metadata on models using Symbol keys. The `yayson/utils` entry poi
 ```javascript
 import { getType, getLinks, getMeta, getRelationshipLinks, getRelationshipMeta } from 'yayson/utils'
 
-const events = store.sync(data)
+const events = store.syncAll(data)
 const event = events[0]
 
 getType(event) // 'events'
@@ -389,12 +392,12 @@ getRelationshipMeta(event.image) // { permission: 'read' }
 
 The raw symbols (`TYPE`, `LINKS`, `META`, `REL_LINKS`, `REL_META`) are also exported from `yayson/utils` if you prefer direct access.
 
-Note that `sync()` and `retrieveAll()` return arrays with a `META` symbol property for document-level metadata. Array methods like `.filter()` and `.map()` return plain arrays without this property, so extract it before transforming:
+Note that `syncAll()` and `retrieveAll()` return arrays with a `META` symbol property for document-level metadata. Array methods like `.filter()` and `.map()` return plain arrays without this property, so extract it before transforming:
 
 ```javascript
 import { META } from 'yayson/utils'
 
-const result = store.sync(data)
+const result = store.syncAll(data)
 const meta = result[META] // { total: 100, page: 1 }
 const filtered = result.filter((e) => e.name === 'Demo')
 // filtered[META] is undefined — use the extracted `meta` instead
@@ -428,11 +431,16 @@ const store = new Store({
   },
 })
 
-const allSynced = store.sync({
+const event = store.sync({
+  event: { id: '1', name: 'Demo Event' },
+})
+// single resource → returns model directly
+
+const allSynced = store.syncAll({
   event: { id: '1', name: 'Demo Event' },
   images: [{ id: '2', url: 'http://example.com/image.jpg' }],
 })
-// allSynced contains both the event and images
+// syncAll always returns array
 
 const event = store.find('event', '1')
 ```

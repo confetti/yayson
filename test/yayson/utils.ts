@@ -7,7 +7,7 @@ const { Store } = yayson()
 describe('Utils', function () {
   it('getType should return the type of a synced model', function () {
     const store = new Store()
-    const [event] = store.sync({
+    const [event] = store.syncAll({
       data: { type: 'events', id: '1', attributes: { name: 'Demo' } },
     })
     expect(getType(event)).to.equal('events')
@@ -15,7 +15,7 @@ describe('Utils', function () {
 
   it('getLinks should return links from a synced model', function () {
     const store = new Store()
-    const [event] = store.sync({
+    const [event] = store.syncAll({
       data: {
         type: 'events',
         id: '1',
@@ -28,7 +28,7 @@ describe('Utils', function () {
 
   it('getLinks should return undefined when no links exist', function () {
     const store = new Store()
-    const [event] = store.sync({
+    const [event] = store.syncAll({
       data: { type: 'events', id: '1', attributes: { name: 'Demo' } },
     })
     expect(getLinks(event)).to.be.undefined
@@ -36,7 +36,7 @@ describe('Utils', function () {
 
   it('getMeta should return meta from a synced model', function () {
     const store = new Store()
-    const [event] = store.sync({
+    const [event] = store.syncAll({
       data: {
         type: 'events',
         id: '1',
@@ -49,7 +49,7 @@ describe('Utils', function () {
 
   it('getMeta should return undefined when no meta exists', function () {
     const store = new Store()
-    const [event] = store.sync({
+    const [event] = store.syncAll({
       data: { type: 'events', id: '1', attributes: { name: 'Demo' } },
     })
     expect(getMeta(event)).to.be.undefined
@@ -57,7 +57,7 @@ describe('Utils', function () {
 
   it('getRelationshipLinks should return relationship links', function () {
     const store = new Store()
-    const [event] = store.sync({
+    const [event] = store.syncAll({
       data: {
         type: 'events',
         id: '1',
@@ -80,7 +80,7 @@ describe('Utils', function () {
 
   it('getRelationshipMeta should return relationship meta', function () {
     const store = new Store()
-    const [event] = store.sync({
+    const [event] = store.syncAll({
       data: {
         type: 'events',
         id: '1',

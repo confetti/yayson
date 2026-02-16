@@ -12,8 +12,8 @@ describe('Store', function () {
     this.store.records = []
   })
 
-  it('should sync an event', function () {
-    const events = this.store.sync({
+  it('should sync all events', function () {
+    const events = this.store.syncAll({
       data: {
         type: 'events',
         id: 1,
@@ -28,7 +28,7 @@ describe('Store', function () {
   })
 
   it('should allow an attribute namned type', function () {
-    this.store.sync({
+    this.store.syncAll({
       data: {
         type: 'events',
         id: 1,
@@ -45,7 +45,7 @@ describe('Store', function () {
   })
 
   it('should find an event', function () {
-    this.store.sync({
+    this.store.syncAll({
       data: {
         type: 'events',
         id: 1,
@@ -56,13 +56,30 @@ describe('Store', function () {
     })
 
     const event = this.store.find('events', 1)
-    expect(event.id).to.equal('1')
+    expect(event.id).to.equal(1)
     expect(event[TYPE]).to.equal('events')
     expect(event.name).to.equal('Demo')
   })
 
-  it('should coerce numeric ids to strings', function () {
-    this.store.sync({
+  it('should preserve numeric ids', function () {
+    this.store.syncAll({
+      data: {
+        type: 'events',
+        id: 1,
+        attributes: {
+          name: 'Demo',
+        },
+      },
+    })
+
+    const event = this.store.find('events', 1)
+    expect(event).to.not.be.null
+    expect(event.id).to.equal(1)
+    expect(event.name).to.equal('Demo')
+  })
+
+  it('should find by string id when stored as number', function () {
+    this.store.syncAll({
       data: {
         type: 'events',
         id: 1,
@@ -74,12 +91,12 @@ describe('Store', function () {
 
     const event = this.store.find('events', '1')
     expect(event).to.not.be.null
-    expect(event.id).to.equal('1')
+    expect(event.id).to.equal(1)
     expect(event.name).to.equal('Demo')
   })
 
   it('should handle relations with duplicates', function () {
-    this.store.sync({
+    this.store.syncAll({
       data: {
         type: 'events',
         id: 1,
@@ -124,7 +141,7 @@ describe('Store', function () {
   })
 
   it('should handle relationship elements without links attribute', function () {
-    this.store.sync({
+    this.store.syncAll({
       data: {
         type: 'events',
         id: 1,
@@ -148,7 +165,7 @@ describe('Store', function () {
   })
 
   it('should handle more circular relations', function () {
-    this.store.sync({
+    this.store.syncAll({
       data: {
         type: 'events',
         id: 1,
@@ -190,11 +207,11 @@ describe('Store', function () {
     expect(event.name).to.equal('Demo')
     expect(event.images[0].event.name).to.equal('Demo')
     expect(event.images[0].name).to.equal('Header')
-    expect(event.images[0].event.id).to.equal('1')
+    expect(event.images[0].event.id).to.equal(1)
   })
 
   it('should return a event with all associated objects', function () {
-    this.store.sync({
+    this.store.syncAll({
       data: {
         type: 'events',
         id: 1,
@@ -291,11 +308,11 @@ describe('Store', function () {
     const event = this.store.find('events', 1)
     expect(event.organisers.length).to.equal(2)
     expect(event.images.length).to.equal(3)
-    expect(event.organisers[0].image.id).to.equal('2')
+    expect(event.organisers[0].image.id).to.equal(2)
   })
 
   it('should remove an event', function () {
-    this.store.sync({
+    this.store.syncAll({
       data: [
         { id: 1, type: 'events' },
         { id: 2, type: 'events' },
@@ -303,14 +320,14 @@ describe('Store', function () {
     })
 
     let event = this.store.find('events', 1)
-    expect(event.id).to.eq('1')
+    expect(event.id).to.eq(1)
     this.store.remove('events', 1)
     event = this.store.find('events', 1)
     expect(event).to.eq(null)
   })
 
   it('should remove all events', function () {
-    this.store.sync({
+    this.store.syncAll({
       data: [
         { id: 1, type: 'events' },
         { id: 2, type: 'events' },
@@ -325,7 +342,7 @@ describe('Store', function () {
   })
 
   it('should reset', function () {
-    this.store.sync({
+    this.store.syncAll({
       data: [
         {
           type: 'events',
@@ -377,7 +394,7 @@ describe('Store', function () {
   })
 
   it('should handle circular relations', function () {
-    this.store.sync({
+    this.store.syncAll({
       data: {
         type: 'events',
         id: 1,
@@ -403,7 +420,7 @@ describe('Store', function () {
   })
 
   it('should retain links and meta on models', function () {
-    const result = this.store.sync({
+    const result = this.store.syncAll({
       data: [
         {
           type: 'events',
@@ -484,8 +501,140 @@ describe('Store', function () {
     })
   })
 
-  it('should preserve document-level meta on sync result', function () {
-    const result = this.store.sync({
+  it('should sync a single resource and return model directly', function () {
+    const event = this.store.sync({
+      data: {
+        type: 'events',
+        id: '1',
+        attributes: {
+          name: 'Demo',
+        },
+      },
+    })
+
+    expect(Array.isArray(event)).to.be.false
+    expect(event.id).to.equal('1')
+    expect(event.name).to.equal('Demo')
+    expect(event[TYPE]).to.equal('events')
+  })
+
+  it('should sync array data and return an array', function () {
+    const events = this.store.sync({
+      data: [
+        { type: 'events', id: '1', attributes: { name: 'Event 1' } },
+        { type: 'events', id: '2', attributes: { name: 'Event 2' } },
+      ],
+    })
+
+    expect(Array.isArray(events)).to.be.true
+    expect(events.length).to.equal(2)
+    expect(events[0].name).to.equal('Event 1')
+    expect(events[1].name).to.equal('Event 2')
+  })
+
+  it('should preserve META on sync with single resource', function () {
+    const event = this.store.sync({
+      data: {
+        type: 'events',
+        id: '1',
+        attributes: { name: 'Demo' },
+      },
+      meta: { total: 1, page: 1 },
+    })
+
+    expect(event[META]).to.deep.equal({ total: 1, page: 1 })
+  })
+
+  it('should sync a single resource with numeric id and return model directly', function () {
+    const event = this.store.sync({
+      data: {
+        type: 'events',
+        id: 1,
+        attributes: {
+          name: 'Demo',
+        },
+      },
+    })
+
+    expect(Array.isArray(event)).to.be.false
+    expect(event.id).to.equal(1)
+    expect(event.name).to.equal('Demo')
+    expect(event[TYPE]).to.equal('events')
+  })
+
+  it('should sync array data with numeric ids and return an array', function () {
+    const events = this.store.sync({
+      data: [
+        { type: 'events', id: 1, attributes: { name: 'Event 1' } },
+        { type: 'events', id: 2, attributes: { name: 'Event 2' } },
+      ],
+    })
+
+    expect(Array.isArray(events)).to.be.true
+    expect(events.length).to.equal(2)
+    expect(events[0].id).to.equal(1)
+    expect(events[0].name).to.equal('Event 1')
+    expect(events[1].id).to.equal(2)
+    expect(events[1].name).to.equal('Event 2')
+  })
+
+  it('should sync and preserve numeric ids through relationships', function () {
+    const event = this.store.sync({
+      data: {
+        type: 'events',
+        id: 1,
+        attributes: {
+          name: 'Demo',
+        },
+        relationships: {
+          images: {
+            data: [{ type: 'images', id: 2 }],
+          },
+        },
+      },
+      included: [
+        {
+          type: 'images',
+          id: 2,
+          attributes: {
+            name: 'Header',
+          },
+        },
+      ],
+    })
+
+    expect(event.id).to.equal(1)
+    expect(event.images[0].id).to.equal(2)
+  })
+
+  it('should preserve META on sync with array data', function () {
+    const events = this.store.sync({
+      data: [
+        { type: 'events', id: '1', attributes: { name: 'Event 1' } },
+        { type: 'events', id: '2', attributes: { name: 'Event 2' } },
+      ],
+      meta: { total: 100, page: 1 },
+    })
+
+    expect(events[META]).to.deep.equal({ total: 100, page: 1 })
+  })
+
+  it('should syncAll always return an array for single resource', function () {
+    const result = this.store.syncAll({
+      data: {
+        type: 'events',
+        id: '1',
+        attributes: { name: 'Demo' },
+      },
+    })
+
+    expect(Array.isArray(result)).to.be.true
+    expect(result.length).to.equal(1)
+    expect(result[0].name).to.equal('Demo')
+  })
+
+  it('should preserve document-level meta on syncAll result', function () {
+    const result = this.store.syncAll({
       data: [
         { type: 'events', id: '1', attributes: { name: 'Event 1' } },
         { type: 'events', id: '2', attributes: { name: 'Event 2' } },
@@ -676,7 +825,7 @@ describe('Store', function () {
         strict: true,
       })
 
-      const result = store.sync({
+      const result = store.syncAll({
         data: {
           type: 'events',
           id: '1',
@@ -704,7 +853,7 @@ describe('Store', function () {
       })
 
       // Pre-populate store with valid data
-      store.sync({
+      store.syncAll({
         data: {
           type: 'events',
           id: '1',
@@ -716,7 +865,7 @@ describe('Store', function () {
 
       // Sync invalid data that will throw
       expect(() => {
-        store.sync({
+        store.syncAll({
           data: {
             type: 'events',
             id: '2',
@@ -745,7 +894,7 @@ describe('Store', function () {
       })
 
       expect(() => {
-        store.sync({
+        store.syncAll({
           data: {
             type: 'events',
             id: '1',
@@ -769,7 +918,7 @@ describe('Store', function () {
         strict: false,
       })
 
-      const result = store.sync({
+      const result = store.syncAll({
         data: {
           type: 'events',
           id: '1',
@@ -799,7 +948,7 @@ describe('Store', function () {
         strict: false,
       })
 
-      const result = store.sync({
+      const result = store.syncAll({
         data: [
           {
             type: 'events',
@@ -833,7 +982,7 @@ describe('Store', function () {
         strict: false,
       })
 
-      const result = store.sync({
+      const result = store.syncAll({
         data: [
           {
             type: 'events',
@@ -875,7 +1024,7 @@ describe('Store', function () {
         strict: false,
       })
 
-      store.sync({
+      store.syncAll({
         data: {
           type: 'events',
           id: '1',
@@ -885,7 +1034,7 @@ describe('Store', function () {
 
       expect(store.validationErrors.length).to.equal(1)
 
-      store.sync({
+      store.syncAll({
         data: {
           type: 'events',
           id: '2',
@@ -955,7 +1104,7 @@ describe('Store', function () {
         strict: true,
       })
 
-      const result = store.sync({
+      const result = store.syncAll({
         data: {
           type: 'events',
           id: '1',
@@ -988,7 +1137,7 @@ describe('Store', function () {
         strict: true,
       })
 
-      const result = store.sync({
+      const result = store.syncAll({
         data: {
           type: 'events',
           id: '1',
@@ -1026,7 +1175,7 @@ describe('Store', function () {
         strict: true,
       })
 
-      const result = store.sync({
+      const result = store.syncAll({
         data: {
           type: 'events',
           id: '1',
@@ -1087,7 +1236,7 @@ describe('Store', function () {
         strict: true,
       })
 
-      store.sync({
+      store.syncAll({
         data: [
           { type: 'events', id: '1', attributes: { name: 'Page 1 Event 1' } },
           { type: 'events', id: '2', attributes: { name: 'Page 1 Event 2' } },

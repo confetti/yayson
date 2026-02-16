@@ -11,7 +11,7 @@ export interface JsonApiLinks {
 }
 
 export interface JsonApiResourceIdentifier {
-  id: string
+  id: string | number
   type: string
 }
 
@@ -26,7 +26,7 @@ export interface JsonApiRelationships {
 }
 
 export interface JsonApiResource {
-  id?: string
+  id?: string | number
   type: string
   attributes?: Record<string, unknown> | null
   relationships?: JsonApiRelationships | null
@@ -52,7 +52,7 @@ export interface LegacyPresenterOptions extends PresenterOptions {
 }
 
 export interface StoreRecord {
-  id: string
+  id: string | number
   type: string
   attributes?: Record<string, unknown>
   relationships?: JsonApiRelationships
@@ -61,7 +61,7 @@ export interface StoreRecord {
 }
 
 export interface StoreModel extends Record<string, unknown> {
-  id: string
+  id: string | number
   [TYPE]?: string
   [LINKS]?: JsonApiLink
   [META]?: Record<string, unknown>
@@ -104,7 +104,7 @@ export interface StoreOptions<S extends SchemaRegistry = SchemaRegistry> {
 
 export interface ValidationError {
   type: string
-  id: string
+  id: string | number
   error: unknown
 }
 

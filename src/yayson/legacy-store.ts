@@ -152,7 +152,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
   }
 
   retrieve<T extends string>(type: T, data: LegacyData): InferModelType<S, T> | null {
-    const synced = this.sync(data)
+    const synced = this.syncAll(data)
     const normalizedType = this.types[type] || type
     const model = synced.find((m) => m[TYPE] === normalizedType)
     if (!model) return null
@@ -163,7 +163,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     return model as InferModelType<S, T>
   }
 
-  find<T extends string>(type: T, id: string, models?: StoreModels): InferModelType<S, T> | null {
+  find<T extends string>(type: T, id: string | number, models?: StoreModels): InferModelType<S, T> | null {
     const modelsObj = models ?? this.models
     const idStr = String(id)
     const rec = this.findRecord(type, idStr)
@@ -193,7 +193,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     return Object.values(modelsObj[type] || {}) as InferModelType<S, T>[]
   }
 
-  remove(type: string, id?: string): void {
+  remove(type: string, id?: string | number): void {
     const normalizedType = this.types[type] || type
 
     const removeOne = (record: LegacyStoreRecordType): void => {
@@ -215,7 +215,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     }
   }
 
-  sync(data: LegacyData): StoreResult {
+  syncAll(data: LegacyData): StoreResult {
     // Clear validation errors and models cache from previous sync
     this.validationErrors = []
     this.models = {}
@@ -261,9 +261,21 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     return result
   }
 
+  sync(data: LegacyData): StoreModel | StoreResult {
+    const result = this.syncAll(data)
+    if (result.length === 1) {
+      const model = result[0]
+      if (result[META]) {
+        model[META] = result[META]
+      }
+      return model
+    }
+    return result
+  }
+
   retrieveAll<T extends string>(type: T, data: LegacyData): StoreResult<InferModelType<S, T>> {
     const normalizedType = this.types[type] || type
-    const synced = this.sync(data)
+    const synced = this.syncAll(data)
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from type parameter
     const result: StoreResult<InferModelType<S, T>> = synced.filter(
       (model) => model[TYPE] === normalizedType,
