@@ -501,6 +501,28 @@ describe('Store', function () {
     })
   })
 
+  it('should not mutate the input document', function () {
+    const body = {
+      data: {
+        type: 'events',
+        id: '1',
+        attributes: { name: 'Demo' },
+        relationships: {
+          images: {
+            data: [{ type: 'images', id: '2' }],
+          },
+        },
+      },
+      included: [{ type: 'images', id: '2', attributes: { url: 'pic.jpg' } }],
+      meta: { total: 1 },
+    }
+    const snapshot = JSON.parse(JSON.stringify(body))
+
+    this.store.sync(body)
+
+    expect(body).to.deep.equal(snapshot)
+  })
+
   it('should sync a single resource and return model directly', function () {
     const event = this.store.sync({
       data: {
