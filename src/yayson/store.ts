@@ -16,7 +16,7 @@ import { TYPE, LINKS, META, REL_LINKS, REL_META } from './symbols.js'
 import { validate } from './schema.js'
 
 class StoreRecord implements StoreRecordType {
-  id: string
+  id: string | number
   type: string
   attributes?: Record<string, unknown>
   relationships?: JsonApiRelationships
@@ -51,15 +51,15 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
   }
 
   toModel(rec: StoreRecord, type: string, models: StoreModels): StoreModel {
-    const model: StoreModel = { ...(rec.attributes || {}), id: '' }
+    const model: StoreModel = { ...(rec.attributes || {}), id: rec.id }
 
-    model.id = rec.id
     model[TYPE] = rec.type
+    const idStr = String(rec.id)
     if (!models[type]) {
       models[type] = {}
     }
-    if (!models[type][rec.id]) {
-      models[type][rec.id] = model
+    if (!models[type][idStr]) {
+      models[type][idStr] = model
     }
 
     if (rec.meta != null) {
@@ -127,15 +127,16 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     return model
   }
 
-  findRecord(type: string, id: string): StoreRecord | undefined {
-    return this.records.find((r) => r.type === type && r.id === id)
+  findRecord(type: string, id: string | number): StoreRecord | undefined {
+    const idStr = String(id)
+    return this.records.find((r) => r.type === type && String(r.id) === idStr)
   }
 
   findRecords(type: string): StoreRecord[] {
     return this.records.filter((r) => r.type === type)
   }
 
-  find<T extends string>(type: T, id: string, models?: StoreModels): InferModelType<S, T> | null {
+  find<T extends string>(type: T, id: string | number, models?: StoreModels): InferModelType<S, T> | null {
     const modelsObj = models ?? {}
     const idStr = String(id)
     const rec = this.findRecord(type, idStr)
@@ -165,7 +166,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     return Object.values(modelsObj[type] || {}) as InferModelType<S, T>[]
   }
 
-  remove(type: string, id?: string): void {
+  remove(type: string, id?: string | number): void {
     const removeOne = (record: StoreRecord): void => {
       const index = this.records.indexOf(record)
       if (!(index < 0)) {
@@ -183,7 +184,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     }
   }
 
-  sync(body: JsonApiDocument): StoreResult {
+  syncAll(body: JsonApiDocument): StoreResult {
     // Clear previous validation errors
     this.validationErrors = []
 
@@ -211,7 +212,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
             ...item,
             attributes: item.attributes ?? undefined,
             relationships: item.relationships ?? undefined,
-            id: String(item.id),
+            id: item.id,
           })
         })
       } else {
@@ -223,7 +224,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
             ...data,
             attributes: data.attributes ?? undefined,
             relationships: data.relationships ?? undefined,
-            id: String(data.id),
+            id: data.id,
           }),
         ]
       }
@@ -245,8 +246,31 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     }
   }
 
+  sync(body: JsonApiDocument): StoreModel | StoreResult {
+    const result = this.syncAll(body)
+    if (!Array.isArray(body.data) && body.data != null) {
+      const model = result[0]
+      if (result[META]) {
+        model[META] = result[META]
+      }
+      return model
+    }
+    return result
+  }
+
+  retrieve<T extends string>(type: T, body: JsonApiDocument): InferModelType<S, T> | null {
+    const synced = this.syncAll(body)
+    const model = synced.find((m) => m[TYPE] === type)
+    if (!model) return null
+    if (synced[META]) {
+      model[META] = synced[META]
+    }
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from type parameter
+    return model as InferModelType<S, T>
+  }
+
   retrieveAll<T extends string>(type: T, body: JsonApiDocument): StoreResult<InferModelType<S, T>> {
-    const synced = this.sync(body)
+    const synced = this.syncAll(body)
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from type parameter
     const result: StoreResult<InferModelType<S, T>> = synced.filter((model) => model[TYPE] === type) as StoreResult<
       InferModelType<S, T>

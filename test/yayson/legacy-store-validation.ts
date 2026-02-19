@@ -9,7 +9,7 @@ describe('LegacyStore', function () {
       it('should work without schemas', function () {
         const store = new LegacyStore()
 
-        store.sync({ event: { id: '1', name: 'Demo' } })
+        store.syncAll({ event: { id: '1', name: 'Demo' } })
         const event = store.find('event', '1')
 
         expect(event).to.not.be.null
@@ -27,7 +27,7 @@ describe('LegacyStore', function () {
           },
         })
 
-        store.sync({ events: [{ id: '1', name: 'Event 1' }] })
+        store.syncAll({ events: [{ id: '1', name: 'Event 1' }] })
         const events = store.findAll('event')
 
         expect(events.length).to.equal(1)
@@ -49,7 +49,7 @@ describe('LegacyStore', function () {
           strict: true,
         })
 
-        store.sync({ event: { id: '1', name: 'Valid Event' } })
+        store.syncAll({ event: { id: '1', name: 'Valid Event' } })
         const event = store.find('event', '1')
 
         expect(event).to.not.be.null
@@ -74,7 +74,7 @@ describe('LegacyStore', function () {
 
         // With eager validation, exception is thrown during sync()
         expect(() => {
-          store.sync({ event: { id: '1', name: 'Invalid Event' } })
+          store.syncAll({ event: { id: '1', name: 'Invalid Event' } })
         }).to.throw()
       })
 
@@ -90,7 +90,7 @@ describe('LegacyStore', function () {
           strict: true,
         })
 
-        store.sync({ event: { id: '1', name: 'Event', count: '42' } })
+        store.syncAll({ event: { id: '1', name: 'Event', count: '42' } })
         const event = store.find('event', '1')
 
         expect(event).to.not.be.null
@@ -116,12 +116,12 @@ describe('LegacyStore', function () {
           strict: false,
         })
 
-        store.sync({ event: { id: '1', name: 'Invalid Event' } })
+        store.syncAll({ event: { id: '1', name: 'Invalid Event' } })
         const event = store.find('event', '1')
 
         expect(event).to.not.be.null
         if (event) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
           expect((event as any).name).to.equal('Invalid Event')
         }
         expect(store.validationErrors.length).to.equal(1)
@@ -142,7 +142,7 @@ describe('LegacyStore', function () {
           strict: false,
         })
 
-        store.sync({ event: { id: '1', name: 'Invalid Event' } })
+        store.syncAll({ event: { id: '1', name: 'Invalid Event' } })
 
         // Validation errors should be collected during sync, not find
         expect(store.validationErrors.length).to.equal(1)
@@ -162,7 +162,7 @@ describe('LegacyStore', function () {
           strict: false,
         })
 
-        store.sync({
+        store.syncAll({
           event: [
             { id: '1', name: 'Event 1' },
             { id: '2', name: 'Event 2' },
@@ -190,11 +190,11 @@ describe('LegacyStore', function () {
           strict: false,
         })
 
-        store.sync({ event: { id: '1', name: 'Invalid Event' } })
+        store.syncAll({ event: { id: '1', name: 'Invalid Event' } })
         store.find('event', '1')
         expect(store.validationErrors.length).to.equal(1)
 
-        store.sync({ event: { id: '2', name: 'Valid Event', requiredField: 'value' } })
+        store.syncAll({ event: { id: '2', name: 'Valid Event', requiredField: 'value' } })
         store.find('event', '2')
         expect(store.validationErrors.length).to.equal(0)
       })
@@ -211,7 +211,7 @@ describe('LegacyStore', function () {
           strict: false,
         })
 
-        store.sync({ event: { id: '1', name: 'Invalid Event' } })
+        store.syncAll({ event: { id: '1', name: 'Invalid Event' } })
         store.find('event', '1')
         expect(store.validationErrors.length).to.equal(1)
 
@@ -233,7 +233,7 @@ describe('LegacyStore', function () {
           strict: false,
         })
 
-        store.sync({
+        store.syncAll({
           event: { id: '1', name: 'Event' },
           image: { id: '2', url: 'http://example.com/image.jpg' },
         })
@@ -247,7 +247,7 @@ describe('LegacyStore', function () {
         expect(store.validationErrors.length).to.equal(0)
 
         if (image) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test validates runtime data without schema
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test validates runtime data without schema
           expect((image as any).url).to.equal('http://example.com/image.jpg')
         }
       })
@@ -279,7 +279,7 @@ describe('LegacyStore', function () {
           strict: true,
         })
 
-        store.sync({
+        store.syncAll({
           links: {
             'event.images': { type: 'image' },
           },
@@ -292,9 +292,9 @@ describe('LegacyStore', function () {
         if (event) {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test validates runtime data shape
           expect((event as { name: string }).name).to.equal('Event')
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test validates runtime data shape
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test validates runtime data shape
           expect(Array.isArray((event as any).images)).to.be.true
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test validates runtime data shape
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test validates runtime data shape
           expect((event as any).images[0].url).to.equal('http://example.com/image.jpg')
           expect(store.validationErrors.length).to.equal(0)
         }
@@ -321,7 +321,7 @@ describe('LegacyStore', function () {
           strict: false,
         })
 
-        store.sync({
+        store.syncAll({
           links: {
             'event.images': { type: 'image' },
             'image.event': { type: 'event' },
@@ -357,7 +357,7 @@ describe('LegacyStore', function () {
           strict: true,
         })
 
-        store.sync({ events: [{ id: '1', name: 'Event' }] })
+        store.syncAll({ events: [{ id: '1', name: 'Event' }] })
         const events = store.findAll('event')
 
         expect(events.length).to.equal(1)
@@ -389,7 +389,7 @@ describe('LegacyStore', function () {
           strict: true,
         })
 
-        store.sync({
+        store.syncAll({
           events: [{ id: '1', name: 'Event' }],
           images: [{ id: '2', url: 'http://example.com/image.jpg' }],
         })
@@ -441,7 +441,7 @@ describe('LegacyStore', function () {
 
         expect(event).to.not.be.null
         if (event) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
           expect((event as any)[META]).to.deep.equal({ total: 100, page: 1 })
         }
       })
@@ -464,7 +464,7 @@ describe('LegacyStore', function () {
 
         expect(event).to.not.be.null
         if (event) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
           expect((event as any).name).to.equal('Event')
         }
         expect(store.validationErrors.length).to.equal(1)
@@ -513,7 +513,7 @@ describe('LegacyStore', function () {
         strict: true,
       })
 
-      store.sync({
+      store.syncAll({
         post: {
           id: '1',
           title: 'Hello',
@@ -524,7 +524,7 @@ describe('LegacyStore', function () {
       const post = store.find('post', '1')
       expect(post).to.not.be.null
       if (post) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
         expect((post as any)[META]).to.deep.equal({
           reactorTicketId: '42',
           total: 100,
@@ -543,7 +543,7 @@ describe('LegacyStore', function () {
         strict: true,
       })
 
-      store.sync({
+      store.syncAll({
         post: {
           id: '1',
           title: 'Hello',
@@ -554,7 +554,7 @@ describe('LegacyStore', function () {
       const post = store.find('post', '1')
       expect(post).to.not.be.null
       if (post) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
         expect((post as any)[META]).to.deep.equal({
           reactorTicketId: '42',
           total: 100,
@@ -573,16 +573,16 @@ describe('LegacyStore', function () {
         ],
       }
 
-      store.sync(data)
+      store.syncAll(data)
 
       // Top-level meta is accessible directly on the data object
       expect(data.meta).to.deep.equal({ total: 100, page: 1 })
     })
 
-    it('should preserve document-level meta on sync result', function () {
+    it('should preserve document-level meta on syncAll result', function () {
       const store = new LegacyStore()
 
-      const result = store.sync({
+      const result = store.syncAll({
         meta: { total: 100, page: 1 },
         post: [
           { id: '1', title: 'First' },
@@ -633,7 +633,7 @@ describe('LegacyStore', function () {
 
       const store = new LegacyStore({ schemas, strict: true })
 
-      store.sync({
+      store.syncAll({
         event: [
           { id: '1', name: 'TypeScript Meetup', date: '2025-01-15' },
           { id: '2', name: 'JavaScript Conf', date: '2025-02-20' },
@@ -704,7 +704,7 @@ describe('LegacyStore', function () {
 
       const store = new LegacyStore({ schemas })
 
-      store.sync({
+      store.syncAll({
         ticket: [
           { id: '1', title: 'Fix bug', priority: 5 },
           { id: '2', title: 'Add feature', priority: 3 },
@@ -751,7 +751,7 @@ describe('LegacyStore', function () {
     it('should work without schemas (backward compatibility)', function () {
       const store = new LegacyStore()
 
-      store.sync({ event: { id: '1', name: 'Event' } })
+      store.syncAll({ event: { id: '1', name: 'Event' } })
 
       // Without schemas, returns StoreModel
       const events = store.findAll('event')
@@ -876,10 +876,10 @@ describe('LegacyStore', function () {
       }
     })
 
-    it('should return all synced models from sync()', function () {
+    it('should return all synced models from syncAll()', function () {
       const store = new LegacyStore()
 
-      const result = store.sync({
+      const result = store.syncAll({
         event: [
           { id: '1', name: 'Event 1' },
           { id: '2', name: 'Event 2' },
@@ -947,12 +947,12 @@ describe('LegacyStore', function () {
     it('should set TYPE symbol on models', function () {
       const store = new LegacyStore()
 
-      store.sync({ event: { id: '1', name: 'Demo' } })
+      store.syncAll({ event: { id: '1', name: 'Demo' } })
       const event = store.find('event', '1')
 
       expect(event).to.not.be.null
       if (event) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
         expect((event as any)[TYPE]).to.equal('event')
       }
     })
@@ -962,11 +962,11 @@ describe('LegacyStore', function () {
         types: { events: 'event' },
       })
 
-      store.sync({ events: [{ id: '1', name: 'Event 1' }] })
+      store.syncAll({ events: [{ id: '1', name: 'Event 1' }] })
       const events = store.findAll('event')
 
       expect(events.length).to.equal(1)
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
       expect((events[0] as any)[TYPE]).to.equal('event')
     })
 
@@ -981,12 +981,12 @@ describe('LegacyStore', function () {
         strict: true,
       })
 
-      store.sync({ event: { id: '1', name: 'Demo' } })
+      store.syncAll({ event: { id: '1', name: 'Demo' } })
       const event = store.find('event', '1')
 
       expect(event).to.not.be.null
       if (event) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any -- Test needs runtime property access
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test needs runtime property access
         expect((event as any)[TYPE]).to.equal('event')
       }
     })

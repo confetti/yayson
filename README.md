@@ -14,11 +14,82 @@ npm install yayson
 
 ## Upgrading from 3.x
 
-Version 4.x includes several breaking changes:
+Version 4.x is a full TypeScript rewrite with several new features and breaking changes.
 
-### Node.js version
+### New features
+
+- **TypeScript support** — Full type definitions included, with type inference from schema registries
+- **Schema validation** — Optional runtime validation using [Zod](https://github.com/colinhacks/zod) or any compatible library with `parse()`/`safeParse()` methods
+- **Dual ESM/CJS package** — Native ES module support alongside CommonJS
+- **`yayson/utils` entry point** — Helper functions (`getType`, `getLinks`, `getMeta`, `getRelationshipLinks`, `getRelationshipMeta`) for reading model metadata
+- **`retrieveAll(type, data)`** — Sync data and return only models of a specific type
+- **`syncAll()`** — Always returns an array (useful when you always want array behavior)
+- **`fields` property** — Limit which attributes a Presenter includes in its output
+
+### Breaking changes
+
+#### Node.js version
 
 Node.js 20+ is now required (was 14+).
+
+#### Metadata uses Symbols instead of plain properties
+
+In 3.x, resource type, links, and meta were stored as plain properties on models (`model.type`, `model.links`, `model.meta`). Relationship metadata used `model._links` and `model._meta`.
+
+In 4.x, these use Symbol keys to avoid collisions with your data. Use the helpers from `yayson/utils`:
+
+```javascript
+// 3.x
+model.type
+model.links
+model.meta
+relatedModel._links
+relatedModel._meta
+
+// 4.x
+import { getType, getLinks, getMeta, getRelationshipLinks, getRelationshipMeta } from 'yayson/utils'
+getType(model)
+getLinks(model)
+getMeta(model)
+getRelationshipLinks(relatedModel)
+getRelationshipMeta(relatedModel)
+```
+
+#### `sync()` restores 3.x behavior
+
+`sync()` now matches 3.x behavior: single resources return a model directly, collections return an array. If you always want an array, use `syncAll()`.
+
+```javascript
+// Single resource — returns model directly
+const event = store.sync({ data: { type: 'events', id: '1', attributes: { name: 'Demo' } } })
+event.name // 'Demo'
+
+// Collection — returns array
+const events = store.sync({ data: [{ type: 'events', id: '1', attributes: { name: 'Demo' } }] })
+events.length // 1
+
+// Always returns array
+const events = store.syncAll(data)
+
+// retrieve/retrieveAll also available
+const event = store.retrieve('events', data)
+const events = store.retrieveAll('events', data)
+```
+
+#### Document-level meta uses Symbols
+
+In 3.x, document-level metadata was stored as `result.meta`. In 4.x, it uses a Symbol key:
+
+```javascript
+// 3.x
+const result = store.sync(data)
+result.meta // { total: 100 }
+
+// 4.x
+import { META } from 'yayson/utils'
+const result = store.sync(data)
+result[META] // { total: 100 }
+```
 
 ## Presenting data
 
@@ -153,32 +224,37 @@ const { Presenter } = yayson({
 
 Take a look at the SequelizeAdapter if you want to extend YAYSON to your ORM. Pull requests are welcome. :)
 
-### Metadata
+### render() options
 
-You can add metadata to the top level object.
+The second argument to `render()` accepts an options object with `meta` and `links`:
 
 ```javascript
-ItemsPresenter.render(items, { meta: { count: 10 } })
+ItemsPresenter.render(items, {
+  meta: { total: 100, page: 1 },
+  links: {
+    self: 'http://example.com/items?page=1',
+    next: 'http://example.com/items?page=2',
+  },
+})
 ```
 
 This would produce:
 
 ```javascript
-
 {
   meta: {
-    count: 10
+    total: 100,
+    page: 1
   },
-  data: {
-    id: '5',
-    type: 'items',
-    attributes: {
-      name: 'First'
-    }
-  }
+  links: {
+    self: 'http://example.com/items?page=1',
+    next: 'http://example.com/items?page=2'
+  },
+  data: [...]
 }
-
 ```
+
+Both `meta` and `links` are optional and add top-level properties to the JSON API document.
 
 ## Parsing data
 
@@ -190,10 +266,14 @@ const { Store } = yayson()
 const store = new Store()
 
 const data = await adapter.get({ path: '/events/' + id })
-const allSynced = store.sync(data)
+const event = store.sync(data) // single resource → model directly
 ```
 
-The `sync()` method returns all models synced in this call (from both `data` and `included`), with relationships resolved.
+The `sync()` method returns a single model for single resources and an array for collections. Use `syncAll()` if you always want an array.
+
+```javascript
+const allSynced = store.syncAll(data) // always returns array
+```
 
 ### Filtering by type with retrieveAll
 
@@ -305,7 +385,7 @@ YAYSON stores metadata on models using Symbol keys. The `yayson/utils` entry poi
 ```javascript
 import { getType, getLinks, getMeta, getRelationshipLinks, getRelationshipMeta } from 'yayson/utils'
 
-const events = store.sync(data)
+const events = store.syncAll(data)
 const event = events[0]
 
 getType(event) // 'events'
@@ -317,15 +397,27 @@ getRelationshipMeta(event.image) // { permission: 'read' }
 
 The raw symbols (`TYPE`, `LINKS`, `META`, `REL_LINKS`, `REL_META`) are also exported from `yayson/utils` if you prefer direct access.
 
-Note that `sync()` and `retrieveAll()` return arrays with a `META` symbol property for document-level metadata. Array methods like `.filter()` and `.map()` return plain arrays without this property, so extract it before transforming:
+Note that `syncAll()` and `retrieveAll()` return arrays with a `META` symbol property for document-level metadata. Array methods like `.filter()` and `.map()` return plain arrays without this property, so extract it before transforming:
 
 ```javascript
 import { META } from 'yayson/utils'
 
-const result = store.sync(data)
+const result = store.syncAll(data)
 const meta = result[META] // { total: 100, page: 1 }
 const filtered = result.filter((e) => e.name === 'Demo')
 // filtered[META] is undefined — use the extracted `meta` instead
+```
+
+## Claude Code skill
+
+YAYSON includes a [Claude Code skill](https://docs.anthropic.com/en/docs/claude-code/skills) that helps you write Presenters and set up Stores. To install it, copy the `skill/yayson` directory to your project's `.claude/skills/` or your personal `~/.claude/skills/`:
+
+```bash
+# Project-level (available to everyone working on that project)
+cp -r node_modules/yayson/skill/yayson .claude/skills/
+
+# Personal (available across all your projects)
+cp -r node_modules/yayson/skill/yayson ~/.claude/skills/
 ```
 
 ## Use in the browser
@@ -356,11 +448,16 @@ const store = new Store({
   },
 })
 
-const allSynced = store.sync({
+const event = store.sync({
+  event: { id: '1', name: 'Demo Event' },
+})
+// single resource → returns model directly
+
+const allSynced = store.syncAll({
   event: { id: '1', name: 'Demo Event' },
   images: [{ id: '2', url: 'http://example.com/image.jpg' }],
 })
-// allSynced contains both the event and images
+// syncAll always returns array
 
 const event = store.find('event', '1')
 ```

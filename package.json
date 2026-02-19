@@ -40,6 +40,7 @@
   },
   "files": [
     "build/**/*",
+    "skill/**/*",
     "README.md",
     "LICENSE"
   ],

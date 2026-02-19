@@ -63,6 +63,10 @@ Types in `src/yayson/types.ts`:
 - `InferModelType<S, T>` - Infers TypeScript type from schema registry
 - `PresenterConstructor/Instance` - Presenter class and instance types
 
+### Skill
+
+The `skill/yayson/` directory contains a Claude Code skill for this project with usage docs and an API reference.
+
 ### Build Output
 
 Dual CJS/ESM builds via tsdown:

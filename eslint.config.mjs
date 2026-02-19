@@ -10,6 +10,12 @@ export default [
   ...tseslint.config({
     files: ['**/*.{ts,mts}'],
     extends: [tseslint.configs.recommended],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
     plugins: {
       '@eslint-community/eslint-comments': eslintComments,
     },
@@ -29,6 +35,12 @@ export default [
         },
       ],
       '@typescript-eslint/explicit-function-return-type': ['error'],
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unsafe-assignment': 'error',
+      '@typescript-eslint/no-unsafe-member-access': 'error',
+      '@typescript-eslint/no-unsafe-call': 'error',
+      '@typescript-eslint/no-unsafe-argument': 'error',
+      '@typescript-eslint/no-unsafe-return': 'error',
       '@eslint-community/eslint-comments/require-description': ['warn', { ignore: [] }],
     },
   }),
@@ -71,9 +83,16 @@ export default [
     rules: {
       '@typescript-eslint/no-unused-expressions': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      // Mocha's `this` context is untyped — these rules create noise in tests
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
       'mocha/no-exclusive-tests': 'error',
       'mocha/consistent-spacing-between-blocks': 'off',
-      '@typescript-eslint/explicit-function-return-type': ['off'],
     },
   },
 ]

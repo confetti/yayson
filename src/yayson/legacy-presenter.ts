@@ -53,7 +53,7 @@ export default function createLegacyPresenter(Presenter: Presenter) {
               attributes[key] = id
             }
           } else if (Array.isArray(data)) {
-            attributes[key] = data.map((obj) => (hasId(obj) ? obj.id : obj))
+            attributes[key] = data.map((obj: unknown) => (hasId(obj) ? obj.id : obj))
           } else if (hasId(data)) {
             attributes[key] = data.id
           }
@@ -117,7 +117,7 @@ export default function createLegacyPresenter(Presenter: Presenter) {
         if (!this.scope[type]) {
           this.scope[type] = []
         }
-        collection.forEach((instance) => {
+        collection.forEach((instance: ModelLike) => {
           return this.toJSON(instance)
         })
       } else {
