@@ -101,4 +101,20 @@ describe('SequelizeAdapter', function () {
 
     delete model.constructor.primaryKeys
   })
+
+  it('should return undefined when id is null', function (): void {
+    const model: SequelizeModelMock = {
+      get(): null {
+        return null
+      },
+      constructor: {
+        primaryKeys: { id: {} },
+      },
+    }
+
+    const id = SequelizeAdapter.id(model)
+    expect(id).to.eq(undefined)
+
+    delete model.constructor.primaryKeys
+  })
 })

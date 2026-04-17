@@ -87,12 +87,30 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
 
     const relations = this.relations[type]
     if (relations) {
+      const resolve = (relationType: string, id: string): StoreModel => {
+        const found = this.findModel(relationType, id, models)
+        if (found) {
+          return found
+        }
+        // Create stub for unresolved relationship linkage
+        const stub: StoreModel = { id }
+        stub[TYPE] = relationType
+        return stub
+      }
       for (const attribute in relations) {
         const relationType = relations[attribute]!
         const value = model[attribute]
-        model[attribute] = Array.isArray(value)
-          ? value.map((id: unknown) => this.find(relationType, String(id), models))
-          : this.find(relationType, String(value), models)
+        if (Array.isArray(value)) {
+          // Filter out null ids (invalid per JSON:API spec)
+          model[attribute] = value
+            .filter((id: unknown) => id != null)
+            .map((id: unknown) => resolve(relationType, String(id)))
+        } else if (value != null) {
+          model[attribute] = resolve(relationType, String(value))
+        } else {
+          // Null id treated as empty relationship
+          model[attribute] = null
+        }
       }
     }
 
@@ -146,6 +164,15 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     return this.records.filter((r) => r.type === type)
   }
 
+  private findModel(type: string, id: string, models: StoreModels): StoreModel | null {
+    const rec = this.findRecord(type, id)
+    if (rec == null) {
+      return null
+    }
+    // Return cached model if available, otherwise build it
+    return models[type]?.[id] ?? this.toModel(rec, type, models)
+  }
+
   /** @deprecated Use retrieve() instead. */
   retrive<T extends string>(type: T, data: LegacyData): InferModelType<S, T> | null {
     return this.retrieve(type, data)
@@ -164,17 +191,9 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
   }
 
   find<T extends string>(type: T, id: string | number, models?: StoreModels): InferModelType<S, T> | null {
-    const modelsObj = models ?? this.models
-    const idStr = String(id)
-    const rec = this.findRecord(type, idStr)
-    if (rec == null) {
-      return null
-    }
-    if (!modelsObj[type]) {
-      modelsObj[type] = {}
-    }
+    const result = this.findModel(type, String(id), models ?? this.models)
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Type inference: maps string literal type parameter to schema type
-    return (modelsObj[type]![idStr] || this.toModel(rec, type, modelsObj)) as InferModelType<S, T>
+    return result as InferModelType<S, T> | null
   }
 
   findAll<T extends string>(type: T, models?: StoreModels): InferModelType<S, T>[] {

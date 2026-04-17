@@ -367,16 +367,17 @@ describe('Type Inference', function () {
     })
 
     it('should handle unresolved relationships (referenced but not included)', function () {
+      // Stub-compatible schema: only requires id, url is optional
       const imageSchema = z.object({
         id: z.string(),
-        url: z.string(),
+        url: z.string().optional(),
       })
 
-      // Use array of nullable items to handle unresolved references
+      // Use array of images (stubs are now returned for unresolved refs)
       const eventSchema = z.object({
         id: z.string(),
         name: z.string(),
-        images: z.array(imageSchema.nullable()).optional(),
+        images: z.array(imageSchema).optional(),
       })
 
       const schemas = {
@@ -401,19 +402,21 @@ describe('Type Inference', function () {
             },
           },
         },
-        // No included array - images won't resolve
+        // No included array - images return as stubs
       })
 
       const event = store.find('events', '1')
       expect(event).to.not.be.null
       if (event) {
         expect(event.name).to.equal('Broken References Event')
-        // Unresolved references become null
+        // Unresolved references become stubs with id and TYPE
         expect(event.images).to.be.an('array')
         if (event.images) {
           expect(event.images).to.have.length(2)
-          expect(event.images[0]).to.be.null
-          expect(event.images[1]).to.be.null
+          expect(event.images[0]).to.not.be.null
+          expect(event.images[0]?.id).to.equal('99')
+          expect(event.images[1]).to.not.be.null
+          expect(event.images[1]?.id).to.equal('100')
         }
       }
     })
@@ -488,15 +491,16 @@ describe('Type Inference', function () {
     })
 
     it('should handle mixed resolved and unresolved relationships', function () {
+      // Stub-compatible schema: only requires id, url is optional
       const imageSchema = z.object({
         id: z.string(),
-        url: z.string(),
+        url: z.string().optional(),
       })
 
       const eventSchema = z.object({
         id: z.string(),
         name: z.string(),
-        images: z.array(imageSchema.nullable()).optional(),
+        images: z.array(imageSchema).optional(),
       })
 
       const schemas = {
@@ -515,7 +519,7 @@ describe('Type Inference', function () {
             images: {
               data: [
                 { type: 'images', id: '10' }, // Included
-                { type: 'images', id: '99' }, // Not included
+                { type: 'images', id: '99' }, // Not included (returns stub)
                 { type: 'images', id: '11' }, // Included
               ],
             },
@@ -543,7 +547,10 @@ describe('Type Inference', function () {
           expect(event.images).to.have.length(3)
           expect(event.images[0]).to.not.be.null
           expect(event.images[0]?.url).to.equal('https://example.com/a.jpg')
-          expect(event.images[1]).to.be.null // Unresolved
+          // Unresolved returns stub with id only (no url)
+          expect(event.images[1]).to.not.be.null
+          expect(event.images[1]?.id).to.equal('99')
+          expect(event.images[1]?.url).to.be.undefined
           expect(event.images[2]).to.not.be.null
           expect(event.images[2]?.url).to.equal('https://example.com/b.jpg')
         }

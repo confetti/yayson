@@ -140,7 +140,7 @@ describe('Store', function () {
     expect(images.length).to.eq(1)
   })
 
-  it('should handle relationship elements without links attribute', function () {
+  it('should create stub for relationship without included entry', function () {
     this.store.syncAll({
       data: {
         type: 'events',
@@ -161,7 +161,97 @@ describe('Store', function () {
     const event = this.store.find('events', 1)
 
     expect(event.name).to.equal('Demo')
-    expect(event.image).to.be.null
+    expect(event.image).to.not.be.null
+    expect(event.image.id).to.equal(2)
+    expect(event.image[TYPE]).to.equal('images')
+  })
+
+  it('should create stubs for array relationships without included entries', function () {
+    this.store.syncAll({
+      data: {
+        type: 'events',
+        id: 1,
+        attributes: {
+          name: 'Demo',
+        },
+        relationships: {
+          images: {
+            data: [
+              { type: 'images', id: 2 },
+              { type: 'images', id: 3 },
+            ],
+          },
+        },
+      },
+    })
+    const event = this.store.find('events', 1)
+
+    expect(event.name).to.equal('Demo')
+    expect(event.images.length).to.equal(2)
+    expect(event.images[0].id).to.equal(2)
+    expect(event.images[0][TYPE]).to.equal('images')
+    expect(event.images[1].id).to.equal(3)
+    expect(event.images[1][TYPE]).to.equal('images')
+  })
+
+  it('should handle JSON API create/update payloads with relationship linkage', function () {
+    const result = this.store.sync({
+      data: {
+        type: 'photos',
+        id: '1',
+        attributes: { title: 'Ember Hamster' },
+        relationships: {
+          photographer: { data: { type: 'people', id: '9' } },
+        },
+      },
+    })
+
+    expect(result.title).to.equal('Ember Hamster')
+    expect(result.photographer).to.not.be.null
+    expect(result.photographer.id).to.equal('9')
+    expect(result.photographer[TYPE]).to.equal('people')
+  })
+
+  it('should treat relationship with null id as empty', function () {
+    // Per JSON:API spec, a resource identifier must have a string id.
+    // A null id is invalid and should be treated as an empty relationship.
+    const result = this.store.sync({
+      data: {
+        type: 'speakers',
+        id: '1',
+        attributes: { name: 'Jane' },
+        relationships: {
+          image: { data: { type: 'images', id: null } },
+        },
+      },
+    })
+
+    expect(result.name).to.equal('Jane')
+    expect(result.image).to.be.null
+  })
+
+  it('should filter out array items with null id', function () {
+    const result = this.store.sync({
+      data: {
+        type: 'events',
+        id: '1',
+        attributes: { name: 'Conference' },
+        relationships: {
+          images: {
+            data: [
+              { type: 'images', id: '10' },
+              { type: 'images', id: null },
+              { type: 'images', id: '11' },
+            ],
+          },
+        },
+      },
+    })
+
+    expect(result.name).to.equal('Conference')
+    expect(result.images).to.have.length(2)
+    expect(result.images[0].id).to.equal('10')
+    expect(result.images[1].id).to.equal('11')
   })
 
   it('should handle more circular relations', function () {

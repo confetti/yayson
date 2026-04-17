@@ -81,22 +81,33 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
         if (data == null && links == null) {
           continue
         }
-        const resolve = ({ type, id }: JsonApiResourceIdentifier): StoreModel | null => {
-          const result = this.find(type, id, models)
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Runtime type string cannot use type parameter
-          return result as StoreModel | null
+        const resolve = ({ type, id }: JsonApiResourceIdentifier): StoreModel => {
+          const found = this.findModel(type, id, models)
+          if (found) {
+            return found
+          }
+          // Create stub for unresolved relationship linkage
+          const stub: StoreModel = { id }
+          stub[TYPE] = type
+          return stub
         }
         if (Array.isArray(data)) {
-          model[key] = data.map(resolve)
-        } else {
-          const relModel: StoreModel | null = data != null ? resolve(data) : { id: '' }
-
-          if (relModel) {
-            relModel[REL_LINKS] = links || {}
-            relModel[REL_META] = meta || {}
-            model[key] = relModel
-          }
+          // Filter out invalid resource identifiers (id must be non-null per JSON:API spec)
+          model[key] = data.filter((item) => item.id != null).map(resolve)
+        } else if (data != null && data.id != null) {
+          // Valid resource identifier
+          const relModel: StoreModel = resolve(data)
+          relModel[REL_LINKS] = links || {}
+          relModel[REL_META] = meta || {}
+          model[key] = relModel
+        } else if (data == null && (links != null || meta != null)) {
+          // No data but has links/meta - create placeholder to hold them
+          const relModel: StoreModel = { id: '' }
+          relModel[REL_LINKS] = links || {}
+          relModel[REL_META] = meta || {}
+          model[key] = relModel
         }
+        // else: data.id is null - invalid linkage treated as empty relationship
       }
     }
 
@@ -136,18 +147,23 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     return this.records.filter((r) => r.type === type)
   }
 
-  find<T extends string>(type: T, id: string | number, models?: StoreModels): InferModelType<S, T> | null {
-    const modelsObj = models ?? {}
+  private findModel(type: string, id: string | number, models: StoreModels): StoreModel | null {
     const idStr = String(id)
-    const rec = this.findRecord(type, idStr)
+    const cached = models[type]?.[idStr]
+    if (cached) {
+      return cached
+    }
+    const rec = this.findRecord(type, id)
     if (rec == null) {
       return null
     }
-    if (!modelsObj[type]) {
-      modelsObj[type] = {}
-    }
+    return this.toModel(rec, type, models)
+  }
+
+  find<T extends string>(type: T, id: string | number, models?: StoreModels): InferModelType<S, T> | null {
+    const result = this.findModel(type, id, models ?? {})
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from schema registry
-    return (modelsObj[type][idStr] || this.toModel(rec, type, modelsObj)) as InferModelType<S, T>
+    return result as InferModelType<S, T> | null
   }
 
   findAll<T extends string>(type: T, models?: StoreModels): InferModelType<S, T>[] {
