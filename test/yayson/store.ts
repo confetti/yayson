@@ -254,6 +254,141 @@ describe('Store', function () {
     expect(result.images[1].id).to.equal('11')
   })
 
+  it('should build model from document without id (create payload)', function () {
+    // Per JSON:API spec: "The id member is not required when the resource object
+    // originates at the client and represents a new resource to be created on the server."
+    const model = this.store.build({
+      data: {
+        type: 'events',
+        attributes: {
+          name: 'New Event',
+        },
+      },
+    })
+
+    expect(model.name).to.equal('New Event')
+    expect(model.id).to.be.undefined
+    expect(model[TYPE]).to.equal('events')
+
+    // build() should not store anything
+    expect(this.store.records.length).to.equal(0)
+  })
+
+  it('should throw when build receives array data', function () {
+    expect(() =>
+      this.store.build({
+        data: [
+          { type: 'events', attributes: { name: 'Event 1' } },
+          { type: 'events', attributes: { name: 'Event 2' } },
+        ],
+      }),
+    ).to.throw('build() expects a single resource in data, not null or an array')
+  })
+
+  it('should throw when build receives null data', function () {
+    expect(() => this.store.build({ data: null })).to.throw(
+      'build() expects a single resource in data, not null or an array',
+    )
+  })
+
+  it('should build model with id when provided', function () {
+    const model = this.store.build({
+      data: {
+        type: 'events',
+        id: '123',
+        attributes: {
+          name: 'Existing Event',
+        },
+      },
+    })
+
+    expect(model.name).to.equal('Existing Event')
+    expect(model.id).to.equal('123')
+    expect(model[TYPE]).to.equal('events')
+
+    // build() should not store anything
+    expect(this.store.records.length).to.equal(0)
+  })
+
+  it('should build model with relationship stubs when not in store', function () {
+    const model = this.store.build({
+      data: {
+        type: 'events',
+        attributes: { name: 'New Event' },
+        relationships: {
+          image: { data: { type: 'images', id: '5' } },
+          tags: {
+            data: [
+              { type: 'tags', id: '1' },
+              { type: 'tags', id: '2' },
+            ],
+          },
+        },
+      },
+    })
+
+    expect(model.name).to.equal('New Event')
+    expect(model.image).to.not.be.null
+    expect(model.image.id).to.equal('5')
+    expect(model.image[TYPE]).to.equal('images')
+    expect(model.tags).to.have.length(2)
+    expect(model.tags[0].id).to.equal('1')
+    expect(model.tags[1].id).to.equal('2')
+  })
+
+  it('should build model with resolved relationships when in store', function () {
+    // First sync some data into the store
+    this.store.syncAll({
+      data: [
+        { type: 'images', id: '5', attributes: { url: 'http://example.com/img.jpg' } },
+        { type: 'tags', id: '1', attributes: { name: 'tech' } },
+        { type: 'tags', id: '2', attributes: { name: 'news' } },
+      ],
+    })
+
+    // Now build a new event that references those
+    const model = this.store.build({
+      data: {
+        type: 'events',
+        attributes: { name: 'New Event' },
+        relationships: {
+          image: { data: { type: 'images', id: '5' } },
+          tags: {
+            data: [
+              { type: 'tags', id: '1' },
+              { type: 'tags', id: '2' },
+              { type: 'tags', id: '99' }, // Not in store - should be stub
+            ],
+          },
+        },
+      },
+    })
+
+    expect(model.name).to.equal('New Event')
+    // Image should be fully resolved from store
+    expect(model.image.id).to.equal('5')
+    expect(model.image.url).to.equal('http://example.com/img.jpg')
+    // Tags should be resolved, except the one not in store
+    expect(model.tags).to.have.length(3)
+    expect(model.tags[0].name).to.equal('tech')
+    expect(model.tags[1].name).to.equal('news')
+    expect(model.tags[2].id).to.equal('99')
+    expect(model.tags[2].name).to.be.undefined // stub, not resolved
+  })
+
+  it('should build model via static method without instance', function () {
+    const model = Store.build({
+      data: {
+        type: 'events',
+        attributes: { name: 'Static Build' },
+      },
+    })
+
+    expect(model.name).to.equal('Static Build')
+    expect(model[TYPE]).to.equal('events')
+    expect(model.id).to.be.undefined
+  })
+
   it('should handle more circular relations', function () {
     this.store.syncAll({
       data: {

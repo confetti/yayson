@@ -69,6 +69,14 @@ export interface StoreModel extends Record<string, unknown> {
   [REL_META]?: Record<string, unknown>
 }
 
+/** Model type for create payloads where id may be absent */
+export interface StoreModelWithOptionalId extends Record<string, unknown> {
+  id?: string | number
+  [TYPE]?: string
+  [LINKS]?: JsonApiLink
+  [META]?: Record<string, unknown>
+}
+
 export interface StoreModels {
   [type: string]: {
     [id: string]: StoreModel

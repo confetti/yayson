@@ -6,6 +6,7 @@ import type {
   JsonApiResourceIdentifier,
   SchemaRegistry,
   StoreModel,
+  StoreModelWithOptionalId,
   StoreModels,
   StoreOptions,
   StoreRecord as StoreRecordType,
@@ -50,66 +51,104 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     this.validationErrors = []
   }
 
-  toModel(rec: StoreRecord, type: string, models: StoreModels): StoreModel {
-    const model: StoreModel = { ...(rec.attributes || {}), id: rec.id }
+  #createStub(type: string, id: string | number): StoreModel {
+    const stub: StoreModel = { id }
+    stub[TYPE] = type
+    return stub
+  }
 
-    model[TYPE] = rec.type
-    const idStr = String(rec.id)
-    if (!models[type]) {
-      models[type] = {}
+  #createModel(
+    resource: {
+      type: string
+      id?: string | number | null
+      attributes?: Record<string, unknown> | null
+      relationships?: JsonApiRelationships | null
+      meta?: Record<string, unknown> | null
+      links?: JsonApiLink | null
+    },
+    options?: {
+      models?: StoreModels
+      includeRelMeta?: boolean
+    },
+  ): StoreModelWithOptionalId {
+    const models = options?.models ?? {}
+
+    const model: StoreModelWithOptionalId = { ...(resource.attributes || {}) }
+    if (resource.id != null) {
+      model.id = resource.id
     }
-    if (!models[type][idStr]) {
-      models[type][idStr] = model
+    const type = resource.type
+    model[TYPE] = type
+    if (resource.meta != null) {
+      model[META] = resource.meta
+    }
+    if (resource.links != null) {
+      model[LINKS] = resource.links
     }
 
-    if (rec.meta != null) {
-      model[META] = rec.meta
-    }
-
-    if (rec.links != null) {
-      model[LINKS] = rec.links
-    }
-
-    if (rec.relationships != null) {
-      for (const key in rec.relationships) {
-        const rel = rec.relationships[key]
-        const { data } = rel
-        const { links } = rel
-        const { meta } = rel
-
-        model[key] = null
-        if (data == null && links == null) {
-          continue
-        }
-        const resolve = ({ type, id }: JsonApiResourceIdentifier): StoreModel => {
-          const found = this.findModel(type, id, models)
-          if (found) {
-            return found
-          }
-          // Create stub for unresolved relationship linkage
-          const stub: StoreModel = { id }
-          stub[TYPE] = type
-          return stub
-        }
-        if (Array.isArray(data)) {
-          // Filter out invalid resource identifiers (id must be non-null per JSON:API spec)
-          model[key] = data.filter((item) => item.id != null).map(resolve)
-        } else if (data != null && data.id != null) {
-          // Valid resource identifier
-          const relModel: StoreModel = resolve(data)
-          relModel[REL_LINKS] = links || {}
-          relModel[REL_META] = meta || {}
-          model[key] = relModel
-        } else if (data == null && (links != null || meta != null)) {
-          // No data but has links/meta - create placeholder to hold them
-          const relModel: StoreModel = { id: '' }
-          relModel[REL_LINKS] = links || {}
-          relModel[REL_META] = meta || {}
-          model[key] = relModel
-        }
-        // else: data.id is null - invalid linkage treated as empty relationship
+    // Cache before resolving relationships (for circular refs)
+    if (model.id != null) {
+      const idStr = String(model.id)
+      if (!models[type]) {
+        models[type] = {}
+      }
+      if (!models[type][idStr]) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- model.id is checked above
+        models[type][idStr] = model as StoreModel
       }
     }
+
+    if (resource.relationships != null) {
+      const resolver = (ref: JsonApiResourceIdentifier): StoreModel => {
+        return this.#findModel(ref.type, ref.id, models) ?? this.#createStub(ref.type, ref.id)
+      }
+      this.#resolveRelationships(model, resource.relationships, resolver, {
+        includeRelMeta: options?.includeRelMeta,
+      })
+    }
+    return model
+  }
+
+  #resolveRelationships(
+    model: StoreModel | StoreModelWithOptionalId,
+    relationships: JsonApiRelationships,
+    resolver: (ref: JsonApiResourceIdentifier) => StoreModel | StoreModelWithOptionalId,
+    options?: { includeRelMeta?: boolean },
+  ): void {
+    const includeRelMeta = options?.includeRelMeta ?? true
+
+    for (const key in relationships) {
+      const rel = relationships[key]
+      const { data, links, meta } = rel
+
+      model[key] = null
+      if (data == null && links == null) {
+        continue
+      }
+
+      if (Array.isArray(data)) {
+        model[key] = data.filter((item) => item.id != null).map(resolver)
+      } else if (data != null && data.id != null) {
+        const relModel = resolver(data)
+        if (includeRelMeta) {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- REL_LINKS/REL_META only used when resolver returns StoreModel
+          const modelWithMeta = relModel as StoreModel
+          modelWithMeta[REL_LINKS] = links || {}
+          modelWithMeta[REL_META] = meta || {}
+        }
+        model[key] = relModel
+      } else if (data == null && (links != null || meta != null) && includeRelMeta) {
+        const relModel: StoreModel = { id: '' }
+        relModel[REL_LINKS] = links || {}
+        relModel[REL_META] = meta || {}
+        model[key] = relModel
+      }
+    }
+  }
+
+  toModel(rec: StoreRecord, type: string, models: StoreModels): StoreModel {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- StoreRecord always has id
+    const model = this.#createModel(rec, { models }) as StoreModel
 
     // Validate with schema if provided
     if (this.schemas && this.schemas[rec.type]) {
@@ -147,7 +186,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     return this.records.filter((r) => r.type === type)
   }
 
-  private findModel(type: string, id: string | number, models: StoreModels): StoreModel | null {
+  #findModel(type: string, id: string | number, models: StoreModels): StoreModel | null {
     const idStr = String(id)
     const cached = models[type]?.[idStr]
     if (cached) {
@@ -161,7 +200,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
   }
 
   find<T extends string>(type: T, id: string | number, models?: StoreModels): InferModelType<S, T> | null {
-    const result = this.findModel(type, id, models ?? {})
+    const result = this.#findModel(type, id, models ?? {})
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from schema registry
     return result as InferModelType<S, T> | null
   }
@@ -272,6 +311,25 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
       return model
     }
     return result
+  }
+
+  /**
+   * Build a model from a JSON:API document without storing it.
+   * Useful for create payloads where id may be absent.
+   *
+   * Per JSON:API spec: "The id member is not required when the resource object
+   * originates at the client and represents a new resource to be created on the server."
+   */
+  static build(body: JsonApiDocument): StoreModelWithOptionalId {
+    return new Store().build(body)
+  }
+
+  build(body: JsonApiDocument): StoreModelWithOptionalId {
+    const { data } = body
+    if (data == null || Array.isArray(data)) {
+      throw new Error('build() expects a single resource in data, not null or an array')
+    }
+    return this.#createModel(data)
   }
 
   retrieve<T extends string>(type: T, body: JsonApiDocument): InferModelType<S, T> | null {
