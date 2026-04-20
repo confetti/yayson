@@ -27,7 +27,6 @@ export default function createLegacyPresenter(Presenter: Presenter) {
       super(scope || emptyScope)
       // Remove the 'data' property that the parent constructor adds
       if (!scope) {
-        // Legacy format doesn't include 'data' property
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Need Partial to allow delete
         delete (this.scope as Partial<JsonApiDocument>).data
       }
@@ -167,6 +166,17 @@ export default function createLegacyPresenter(Presenter: Presenter) {
       return this.scope
     }
 
+    payload(instance: ModelLike): LegacyJsonApiDocument {
+      if (Array.isArray(instance)) {
+        throw new Error('payload() expects a single resource, not an array')
+      }
+      if (instance == null) {
+        throw new Error('payload() requires a resource, got null')
+      }
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Legacy payload intentionally omits `data`
+      return { [this.constructor.type]: this.attributes(instance) } as LegacyJsonApiDocument
+    }
+
     render(instanceOrCollection: ModelLike | ModelLike[] | null): LegacyJsonApiDocument {
       return this.toJSON(instanceOrCollection)
     }
@@ -183,6 +193,10 @@ export default function createLegacyPresenter(Presenter: Presenter) {
       _options?: LegacyPresenterOptions,
     ): JsonApiDocument {
       return new this().render(instanceOrCollection)
+    }
+
+    static payload(instance: ModelLike): JsonApiDocument {
+      return new this().payload(instance)
     }
   }
 }

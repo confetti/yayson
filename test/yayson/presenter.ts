@@ -549,6 +549,145 @@ describe('Presenter', function (): void {
     expect(getSpy).to.have.been.calledOnce
   })
 
+  describe('payload', function (): void {
+    it('should create a payload without id', function (): void {
+      const obj = { name: 'New Thing' }
+      const json = Presenter.payload(obj)
+      expect(json).to.deep.equal({
+        data: {
+          type: 'objects',
+          attributes: {
+            name: 'New Thing',
+          },
+        },
+      })
+    })
+
+    it('should create a payload with id', function (): void {
+      const obj = { id: 5, name: 'Updated Thing' }
+      const json = Presenter.payload(obj)
+      expect(json).to.deep.equal({
+        data: {
+          type: 'objects',
+          id: '5',
+          attributes: {
+            name: 'Updated Thing',
+          },
+        },
+      })
+    })
+
+    it('should include relationship linkage without included resources', function (): void {
+      class MotorPresenter extends Presenter {
+        static type = 'motors'
+      }
+
+      class CarPresenter extends Presenter {
+        static type = 'cars'
+        relationships() {
+          return { motor: MotorPresenter }
+        }
+      }
+
+      const car = {
+        id: 1,
+        motor: { id: 2, hp: 200 },
+      }
+
+      const json = CarPresenter.payload(car)
+      expect(json).to.deep.equal({
+        data: {
+          type: 'cars',
+          id: '1',
+          attributes: {},
+          relationships: {
+            motor: {
+              data: { type: 'motors', id: '2' },
+            },
+          },
+        },
+      })
+      expect(json.included).to.equal(undefined)
+    })
+
+    it('should include has-many relationship linkage without included resources', function (): void {
+      class WheelPresenter extends Presenter {
+        static type = 'wheels'
+      }
+
+      class BikePresenter extends Presenter {
+        static type = 'bikes'
+        relationships() {
+          return { wheels: WheelPresenter }
+        }
+      }
+
+      const bike = {
+        id: 1,
+        wheels: [
+          { id: 10, size: 26 },
+          { id: 11, size: 26 },
+        ],
+      }
+
+      const json = BikePresenter.payload(bike)
+      expect(json).to.deep.equal({
+        data: {
+          type: 'bikes',
+          id: '1',
+          attributes: {},
+          relationships: {
+            wheels: {
+              data: [
+                { type: 'wheels', id: '10' },
+                { type: 'wheels', id: '11' },
+              ],
+            },
+          },
+        },
+      })
+      expect(json.included).to.equal(undefined)
+    })
+
+    it('should add meta and links options', function (): void {
+      const obj = { id: 1, foo: 'bar' }
+      const json = Presenter.payload(obj, {
+        meta: { count: 1 },
+        links: { self: '/objects/1' },
+      })
+      expect(json.meta).to.deep.equal({ count: 1 })
+      expect(json.links).to.deep.equal({ self: '/objects/1' })
+    })
+
+    it('should throw on array input', function (): void {
+      expect(() => {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Testing runtime array guard
+        Presenter.payload([{ id: 1 }] as unknown as ModelLike)
+      }).to.throw('payload() expects a single resource, not an array')
+    })
+
+    it('should throw on null input', function (): void {
+      expect(() => {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Testing runtime null guard
+        Presenter.payload(null as unknown as ModelLike)
+      }).to.throw('payload() requires a resource, got null')
+    })
+
+    it('should work as an instance method', function (): void {
+      const presenter = new Presenter()
+      const json = presenter.payload({ id: 1, foo: 'bar' })
+      expect(json).to.deep.equal({
+        data: {
+          type: 'objects',
+          id: '1',
+          attributes: {
+            foo: 'bar',
+          },
+        },
+      })
+    })
+  })
+
   describe('static fields', function (): void {
     it('should filter attributes to only include specified fields', function (): void {
       class PostPresenter extends Presenter {

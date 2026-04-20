@@ -233,6 +233,32 @@ export default function createPresenter(adapter: typeof Adapter) {
       return this.scope
     }
 
+    payload(instance: ModelLike, options?: PresenterOptions): JsonApiDocument {
+      if (Array.isArray(instance)) {
+        throw new Error('payload() expects a single resource, not an array')
+      }
+      if (instance == null) {
+        throw new Error('payload() requires a resource, got null')
+      }
+      const model: JsonApiResource = {
+        type: this.constructor.type,
+        attributes: this.attributes(instance),
+      }
+      const id = this.id(instance)
+      if (id != null) {
+        model.id = id
+      }
+      const relationships = this.buildRelationships(instance)
+      if (relationships != null) {
+        model.relationships = relationships
+      }
+      const result: JsonApiDocument = { data: model }
+      const opts = options ?? {}
+      if (opts.meta != null) result.meta = opts.meta
+      if (opts.links != null) result.links = opts.links
+      return result
+    }
+
     render(instanceOrCollection: ModelLike | ModelLike[] | null, options?: PresenterOptions): JsonApiDocument {
       return this.toJSON(instanceOrCollection, options)
     }
@@ -243,6 +269,10 @@ export default function createPresenter(adapter: typeof Adapter) {
 
     static render(instanceOrCollection: ModelLike | ModelLike[] | null, options?: PresenterOptions): JsonApiDocument {
       return new this().render(instanceOrCollection, options)
+    }
+
+    static payload(instance: ModelLike, options?: PresenterOptions): JsonApiDocument {
+      return new this().payload(instance, options)
     }
   }
 
