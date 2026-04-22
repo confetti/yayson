@@ -180,6 +180,49 @@ This would produce:
 
 Both `meta` and `links` are optional and add top-level properties to the JSON API document.
 
+### Creating payloads with payload()
+
+Use `payload()` to serialize a single resource for create or update API requests. Unlike `render()`, it omits `included` resources — only the primary resource with relationship linkage is produced:
+
+```javascript
+class WheelPresenter extends Presenter {
+  static type = 'wheels'
+}
+
+class BikePresenter extends Presenter {
+  static type = 'bikes'
+  relationships() {
+    return { wheels: WheelPresenter }
+  }
+}
+
+// Create (no id)
+BikePresenter.payload({ name: 'Monark', wheels: [{ id: 1 }, { id: 2 }] })
+```
+
+This would produce:
+
+```javascript
+{
+  data: {
+    type: 'bikes',
+    attributes: {
+      name: 'Monark'
+    },
+    relationships: {
+      wheels: {
+        data: [
+          { type: 'wheels', id: '1' },
+          { type: 'wheels', id: '2' }
+        ]
+      }
+    }
+  }
+}
+```
+
+For updates, include an `id` and it will appear in the output. `payload()` also accepts `meta` and `links` options like `render()`. It throws on arrays and null — use `render()` for collections.
+
 ## Parsing data
 
 You can use a `Store` like this:
@@ -433,6 +476,30 @@ const allSynced = store.syncAll({
 // syncAll always returns array
 
 const event = store.find('event', '1')
+```
+
+#### Creating payloads with payload()
+
+The legacy presenter also supports `payload()` for create/update requests. It produces the legacy envelope format without `links` or sideloaded collections:
+
+```javascript
+class TirePresenter extends Presenter {
+  static type = 'tire'
+}
+
+class CarPresenter extends Presenter {
+  static type = 'car'
+  relationships() {
+    return { tires: TirePresenter }
+  }
+}
+
+CarPresenter.payload({
+  get() {
+    return { name: 'Volvo', tires: [{ id: 1 }, { id: 2 }] }
+  },
+})
+// { car: { name: 'Volvo', tires: [1, 2] } }
 ```
 
 #### Filtering by type with retrieveAll
