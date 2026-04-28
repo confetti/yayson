@@ -227,8 +227,18 @@ describe('LegacyPresenter', function () {
       const obj = {
         get(attr?: string): unknown {
           const wheels = [
-            { id: 10, get(): unknown { return { id: 10, size: 26 } } },
-            { id: 11, get(): unknown { return { id: 11, size: 26 } } },
+            {
+              id: 10,
+              get(): unknown {
+                return { id: 10, size: 26 }
+              },
+            },
+            {
+              id: 11,
+              get(): unknown {
+                return { id: 11, size: 26 }
+              },
+            },
           ]
           const data = { id: 1, wheels }
           if (attr) {
