@@ -474,7 +474,9 @@ const allSynced = store.syncAll({
   images: [{ id: '2', url: 'http://example.com/image.jpg' }],
 })
 // syncAll always returns array
+```
 
+```javascript
 const event = store.find('event', '1')
 ```
 
@@ -494,11 +496,7 @@ class CarPresenter extends Presenter {
   }
 }
 
-CarPresenter.payload({
-  get() {
-    return { name: 'Volvo', tires: [{ id: 1 }, { id: 2 }] }
-  },
-})
+CarPresenter.payload({ name: 'Volvo', tires: [{ id: 1 }, { id: 2 }] })
 // { car: { name: 'Volvo', tires: [1, 2] } }
 ```
 
@@ -649,6 +647,19 @@ const event = store.find('event', '1')
 ```
 
 **Note**: Validation happens eagerly during `sync()` when schemas are configured. This allows you to check `store.validationErrors` immediately after syncing.
+
+## Upgrading from 4.0
+
+### Unresolved relationships now resolve to stubs
+
+In 4.0, when a relationship referenced a resource that wasn't present in the document's `included` array, the relationship would resolve to `null`. Array relationships could contain `null` entries, and relationship references with `id: null` would also surface as `null`.
+
+The current behavior is:
+
+- Unresolved references resolve to a stub model `{ id, [TYPE]: type }` so consumers can still rely on `id` and `getType()` without sideloading the full resource.
+- Relationship references with `id: null` are filtered out entirely (arrays drop them; to-one relationships become `null`).
+
+If you have schemas that previously typed unresolved relationships as nullable (e.g. `z.array(itemSchema.nullable())`), tighten them to non-nullable. If your code branches on `relation === null` to detect "not sideloaded", check for the absence of attributes instead, or sideload the resource.
 
 ## Upgrading from 3.x
 

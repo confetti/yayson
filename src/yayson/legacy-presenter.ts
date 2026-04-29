@@ -184,18 +184,18 @@ export default function createLegacyPresenter(Presenter: Presenter) {
     static toJSON(
       instanceOrCollection: ModelLike | ModelLike[] | null,
       options?: LegacyPresenterOptions,
-    ): JsonApiDocument {
+    ): LegacyJsonApiDocument {
       return new this().toJSON(instanceOrCollection, options)
     }
 
     static render(
       instanceOrCollection: ModelLike | ModelLike[] | null,
       _options?: LegacyPresenterOptions,
-    ): JsonApiDocument {
+    ): LegacyJsonApiDocument {
       return new this().render(instanceOrCollection)
     }
 
-    static payload(instance: ModelLike): JsonApiDocument {
+    static payload(instance: ModelLike): LegacyJsonApiDocument {
       return new this().payload(instance)
     }
   }
