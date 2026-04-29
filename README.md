@@ -650,16 +650,11 @@ const event = store.find('event', '1')
 
 ## Upgrading from 4.0
 
-### Unresolved relationships now resolve to stubs
+### Unresolved relationships resolve to stubs
 
-In 4.0, when a relationship referenced a resource that wasn't present in the document's `included` array, the relationship would resolve to `null`. Array relationships could contain `null` entries, and relationship references with `id: null` would also surface as `null`.
+References missing from `included` now resolve to a stub `{ id, [TYPE]: type }` instead of `null`. References with `id: null` are dropped (arrays filter them out; to-one becomes `null`).
 
-The current behavior is:
-
-- Unresolved references resolve to a stub model `{ id, [TYPE]: type }` so consumers can still rely on `id` and `getType()` without sideloading the full resource.
-- Relationship references with `id: null` are filtered out entirely (arrays drop them; to-one relationships become `null`).
-
-If you have schemas that previously typed unresolved relationships as nullable (e.g. `z.array(itemSchema.nullable())`), tighten them to non-nullable. If your code branches on `relation === null` to detect "not sideloaded", check for the absence of attributes instead, or sideload the resource.
+Tighten schemas that typed relationships as nullable, and detect "not sideloaded" by absence of attributes rather than `=== null`.
 
 ## Upgrading from 3.x
 
