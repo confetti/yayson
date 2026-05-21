@@ -16,6 +16,10 @@ import type {
 import { TYPE, LINKS, META, REL_LINKS, REL_META } from './symbols.js'
 import { validate } from './schema.js'
 
+function hasId(model: StoreModelWithOptionalId): model is StoreModel {
+  return model.id !== undefined && model.id !== null
+}
+
 class StoreRecord implements StoreRecordType {
   id: string | number
   type: string
@@ -87,14 +91,13 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     }
 
     // Cache before resolving relationships (for circular refs)
-    if (model.id != null) {
+    if (hasId(model)) {
       const idStr = String(model.id)
       if (!models[type]) {
         models[type] = {}
       }
       if (!models[type][idStr]) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- model.id is checked above
-        models[type][idStr] = model as StoreModel
+        models[type][idStr] = model
       }
     }
 

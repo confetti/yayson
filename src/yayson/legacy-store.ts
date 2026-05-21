@@ -35,7 +35,7 @@ export interface LegacyData {
 }
 
 function hasId(model: StoreModelWithOptionalId): model is StoreModel {
-  return model.id != null
+  return model.id !== undefined && model.id !== null
 }
 
 export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
