@@ -40,7 +40,7 @@ class SequelizeAdapter extends Adapter {
     }
 
     const id = this.get(model, pkFields[0])
-    if (id === undefined || id === null) {
+    if (id == null) {
       return undefined
     }
     return `${id}`

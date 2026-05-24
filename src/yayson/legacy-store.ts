@@ -34,8 +34,8 @@ export interface LegacyData {
   [key: string]: LegacyDataValue | LegacyLinks | Record<string, unknown> | undefined
 }
 
-function hasId(model: StoreModelWithOptionalId): model is StoreModel {
-  return model.id !== undefined && model.id !== null
+function hasId<T extends StoreModelWithOptionalId>(model: T): model is T & { id: string | number } {
+  return model.id != null
 }
 
 export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
