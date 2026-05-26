@@ -1,5 +1,6 @@
 import type {
   StoreModel,
+  StoreModelWithOptionalId,
   StoreModels,
   StoreResult,
   SchemaRegistry,
@@ -13,6 +14,7 @@ import { validate } from './schema.js'
 interface LegacyStoreRecordType {
   type: string
   data: Record<string, unknown> & {
+    id?: string | number
     meta?: Record<string, unknown>
     links?: Record<string, unknown>
   }
@@ -30,6 +32,10 @@ export interface LegacyData {
   links?: LegacyLinks
   meta?: Record<string, unknown>
   [key: string]: LegacyDataValue | LegacyLinks | Record<string, unknown> | undefined
+}
+
+function hasId<T extends StoreModelWithOptionalId>(model: T): model is T & { id: string | number } {
+  return model.id != null
 }
 
 export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
@@ -58,22 +64,42 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     this.models = {}
   }
 
-  toModel(rec: LegacyStoreRecordType, type: string, models: StoreModels): StoreModel {
-    // Keep original id type from data, but ensure string key for models lookup
-    const idStr = String(rec.data.id)
+  #createStub(type: string, id: string): StoreModel {
+    const stub: StoreModel = { id }
+    stub[TYPE] = type
+    return stub
+  }
 
-    if (!models[type]) {
-      models[type] = {}
+  #resolveRelationships(
+    model: StoreModel | StoreModelWithOptionalId,
+    type: string,
+    resolver: (relationType: string, id: string) => StoreModel,
+  ): void {
+    const relations = this.relations[type]
+    if (!relations) return
+
+    for (const attribute in relations) {
+      const relationType = relations[attribute]!
+      const value = model[attribute]
+      if (Array.isArray(value)) {
+        model[attribute] = value
+          .filter((id: unknown) => id != null)
+          .map((id: unknown) => resolver(relationType, String(id)))
+      } else if (value != null) {
+        model[attribute] = resolver(relationType, String(value))
+      } else {
+        model[attribute] = null
+      }
     }
+  }
 
-    // Return cached model if already built (prevents double validation)
-    if (models[type]![idStr]) {
-      return models[type]![idStr]!
+  #createModel(rec: LegacyStoreRecordType, type: string, options?: { models?: StoreModels }): StoreModelWithOptionalId {
+    const models = options?.models
+
+    const model: StoreModelWithOptionalId = { ...rec.data }
+    if (rec.data.id != null) {
+      model.id = rec.data.id
     }
-
-    // Don't add 'type' to model - preserve original data shape for backwards compatibility
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Legacy format: rec.data has id, spread creates StoreModel-compatible object
-    const model: StoreModel = { ...rec.data, id: rec.data.id as string }
     model[TYPE] = type
     if (rec.data.meta != null) {
       model[META] = rec.data.meta
@@ -82,21 +108,39 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
       model[LINKS] = rec.data.links
     }
 
-    // Store placeholder to handle circular relations
-    models[type]![idStr] = model
-
-    const relations = this.relations[type]
-    if (relations) {
-      for (const attribute in relations) {
-        const relationType = relations[attribute]!
-        const value = model[attribute]
-        model[attribute] = Array.isArray(value)
-          ? value.map((id: unknown) => this.find(relationType, String(id), models))
-          : this.find(relationType, String(value), models)
+    if (models && hasId(model)) {
+      const idStr = String(model.id)
+      if (!models[type]) {
+        models[type] = {}
       }
+      models[type]![idStr] = model
     }
 
-    // Validate with schema if provided
+    const resolver = (relationType: string, id: string): StoreModel => {
+      return this.#findModel(relationType, id, models ?? {}) ?? this.#createStub(relationType, id)
+    }
+    this.#resolveRelationships(model, type, resolver)
+
+    return model
+  }
+
+  toModel(rec: LegacyStoreRecordType, type: string, models: StoreModels): StoreModel {
+    const idStr = String(rec.data.id)
+
+    if (!models[type]) {
+      models[type] = {}
+    }
+
+    if (models[type]![idStr]) {
+      return models[type]![idStr]!
+    }
+
+    const result = this.#createModel(rec, type, { models })
+    if (!hasId(result)) {
+      throw new Error(`Expected model of type ${type} to have an id`)
+    }
+    const model = result
+
     if (this.schemas && this.schemas[type]) {
       const schema = this.schemas[type]
       const result = validate(schema, model, this.strict)
@@ -146,6 +190,44 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     return this.records.filter((r) => r.type === type)
   }
 
+  #findModel(type: string, id: string, models: StoreModels): StoreModel | null {
+    const rec = this.findRecord(type, id)
+    if (rec == null) {
+      return null
+    }
+    return models[type]?.[id] ?? this.toModel(rec, type, models)
+  }
+
+  static build(data: LegacyData): StoreModelWithOptionalId {
+    return new LegacyStore().build(data)
+  }
+
+  build(data: LegacyData): StoreModelWithOptionalId {
+    if (data.links) {
+      this.setupRelations(data.links)
+    }
+
+    let name: string | undefined
+    for (const key in data) {
+      if (key !== 'meta' && key !== 'links') {
+        name = key
+        break
+      }
+    }
+
+    if (name == null) {
+      throw new Error('build() expects a single resource, not an array')
+    }
+
+    const value = data[name]
+    if (value == null || Array.isArray(value)) {
+      throw new Error('build() expects a single resource, not an array')
+    }
+
+    const type = this.types[name] || name
+    return this.#createModel({ type, data: value }, type)
+  }
+
   /** @deprecated Use retrieve() instead. */
   retrive<T extends string>(type: T, data: LegacyData): InferModelType<S, T> | null {
     return this.retrieve(type, data)
@@ -164,17 +246,9 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
   }
 
   find<T extends string>(type: T, id: string | number, models?: StoreModels): InferModelType<S, T> | null {
-    const modelsObj = models ?? this.models
-    const idStr = String(id)
-    const rec = this.findRecord(type, idStr)
-    if (rec == null) {
-      return null
-    }
-    if (!modelsObj[type]) {
-      modelsObj[type] = {}
-    }
+    const result = this.#findModel(type, String(id), models ?? this.models)
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Type inference: maps string literal type parameter to schema type
-    return (modelsObj[type]![idStr] || this.toModel(rec, type, modelsObj)) as InferModelType<S, T>
+    return result as InferModelType<S, T> | null
   }
 
   findAll<T extends string>(type: T, models?: StoreModels): InferModelType<S, T>[] {
@@ -224,7 +298,6 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
       this.setupRelations(data.links)
     }
 
-    // Track records added in this sync
     const syncedRecords: LegacyStoreRecordType[] = []
 
     for (const name in data) {
@@ -249,7 +322,6 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
       }
     }
 
-    // Build models for all synced records
     for (const rec of syncedRecords) {
       this.toModel(rec, rec.type, this.models)
     }

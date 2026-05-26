@@ -151,6 +151,140 @@ describe('LegacyPresenter', function () {
     expect((json as unknown as { object: Record<string, unknown> }).object.hej).to.eq('test')
   })
 
+  describe('payload', function () {
+    it('should create a payload without id', function () {
+      const obj = {
+        get(): unknown {
+          return { name: 'New Thing' }
+        },
+      }
+      const json = LegacyPresenter.payload(obj)
+      expect(json).to.deep.equal({ object: { name: 'New Thing' } })
+      expect(json).to.not.have.property('links')
+    })
+
+    it('should create a payload with id', function () {
+      const obj = {
+        get(): unknown {
+          return { id: 1, name: 'Updated Thing' }
+        },
+      }
+      const json = LegacyPresenter.payload(obj)
+      expect(json).to.deep.equal({ object: { id: 1, name: 'Updated Thing' } })
+      expect(json).to.not.have.property('links')
+    })
+
+    it('should include flat relationship IDs without sideloading', function () {
+      class TirePresenter extends LegacyPresenter {
+        static type = 'tire'
+      }
+
+      class CarPresenter extends LegacyPresenter {
+        static type = 'car'
+        relationships() {
+          return { tire: TirePresenter }
+        }
+      }
+
+      const obj = {
+        id: 1,
+        get(attr?: string): unknown {
+          const tire = {
+            id: 2,
+            get(): unknown {
+              return { id: 2, hp: 200 }
+            },
+          }
+          const data = { id: 1, tire }
+          if (attr) {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test helper needs dynamic key access
+            return data[attr as keyof typeof data]
+          }
+          return data
+        },
+      }
+
+      const json = CarPresenter.payload(obj)
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Legacy format uses dynamic property names
+      const result = json as unknown as { car: Record<string, unknown> }
+      expect(result.car).to.deep.equal({ id: 1, tire: 2 })
+      expect(json).to.not.have.property('links')
+      expect(json).to.not.have.property('tires')
+    })
+
+    it('should include flat has-many relationship IDs without sideloading', function () {
+      class WheelPresenter extends LegacyPresenter {
+        static type = 'wheel'
+      }
+
+      class BikePresenter extends LegacyPresenter {
+        static type = 'bike'
+        relationships() {
+          return { wheels: WheelPresenter }
+        }
+      }
+
+      const obj = {
+        get(attr?: string): unknown {
+          const wheels = [
+            {
+              id: 10,
+              get(): unknown {
+                return { id: 10, size: 26 }
+              },
+            },
+            {
+              id: 11,
+              get(): unknown {
+                return { id: 11, size: 26 }
+              },
+            },
+          ]
+          const data = { id: 1, wheels }
+          if (attr) {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test helper needs dynamic key access
+            return data[attr as keyof typeof data]
+          }
+          return data
+        },
+      }
+
+      const json = BikePresenter.payload(obj)
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Legacy format uses dynamic property names
+      const result = json as unknown as { bike: Record<string, unknown> }
+      expect(result.bike).to.deep.equal({ id: 1, wheels: [10, 11] })
+      expect(json).to.not.have.property('links')
+      expect(json).to.not.have.property('wheels')
+    })
+
+    it('should throw on array input', function () {
+      expect(() => {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Testing runtime array guard
+        LegacyPresenter.payload([{ id: 1 }] as unknown as ModelLike)
+      }).to.throw('payload() expects a single resource, not an array')
+    })
+
+    it('should throw on null input', function () {
+      expect(() => {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Testing runtime null guard
+        LegacyPresenter.payload(null as unknown as ModelLike)
+      }).to.throw('payload() requires a resource, got null')
+    })
+
+    it('should work as an instance method', function () {
+      const presenter = new LegacyPresenter()
+      const obj = {
+        get(): unknown {
+          return { id: 1, foo: 'bar' }
+        },
+      }
+      const json = presenter.payload(obj)
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Legacy format uses dynamic property names
+      const result = json as unknown as { object: Record<string, unknown> }
+      expect(result.object).to.deep.equal({ id: 1, foo: 'bar' })
+    })
+  })
+
   describe('static fields', function () {
     it('should filter attributes to only include specified fields', function () {
       class PostPresenter extends LegacyPresenter {

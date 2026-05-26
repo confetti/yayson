@@ -2,7 +2,10 @@
 
 A library for serializing and reading [JSON API](http://jsonapi.org) data in JavaScript.
 
-YAYSON supports both ESM and CommonJS, has zero dependencies, and works in the browser and in Node.js 20+.
+- Zero dependencies
+- Full TypeScript support with type inference from schema registries
+- Optional runtime validation with [Zod](https://github.com/colinhacks/zod) or any compatible library
+- Dual ESM/CJS package — works in browsers and Node.js 20+
 
 [![NPM](https://nodei.co/npm/yayson.png?downloads=true)](https://nodei.co/npm/yayson/)
 
@@ -10,85 +13,6 @@ YAYSON supports both ESM and CommonJS, has zero dependencies, and works in the b
 
 ```
 npm install yayson
-```
-
-## Upgrading from 3.x
-
-Version 4.x is a full TypeScript rewrite with several new features and breaking changes.
-
-### New features
-
-- **TypeScript support** — Full type definitions included, with type inference from schema registries
-- **Schema validation** — Optional runtime validation using [Zod](https://github.com/colinhacks/zod) or any compatible library with `parse()`/`safeParse()` methods
-- **Dual ESM/CJS package** — Native ES module support alongside CommonJS
-- **`yayson/utils` entry point** — Helper functions (`getType`, `getLinks`, `getMeta`, `getRelationshipLinks`, `getRelationshipMeta`) for reading model metadata
-- **`retrieveAll(type, data)`** — Sync data and return only models of a specific type
-- **`syncAll()`** — Always returns an array (useful when you always want array behavior)
-- **`fields` property** — Limit which attributes a Presenter includes in its output
-
-### Breaking changes
-
-#### Node.js version
-
-Node.js 20+ is now required (was 14+).
-
-#### Metadata uses Symbols instead of plain properties
-
-In 3.x, resource type, links, and meta were stored as plain properties on models (`model.type`, `model.links`, `model.meta`). Relationship metadata used `model._links` and `model._meta`.
-
-In 4.x, these use Symbol keys to avoid collisions with your data. Use the helpers from `yayson/utils`:
-
-```javascript
-// 3.x
-model.type
-model.links
-model.meta
-relatedModel._links
-relatedModel._meta
-
-// 4.x
-import { getType, getLinks, getMeta, getRelationshipLinks, getRelationshipMeta } from 'yayson/utils'
-getType(model)
-getLinks(model)
-getMeta(model)
-getRelationshipLinks(relatedModel)
-getRelationshipMeta(relatedModel)
-```
-
-#### `sync()` restores 3.x behavior
-
-`sync()` now matches 3.x behavior: single resources return a model directly, collections return an array. If you always want an array, use `syncAll()`.
-
-```javascript
-// Single resource — returns model directly
-const event = store.sync({ data: { type: 'events', id: '1', attributes: { name: 'Demo' } } })
-event.name // 'Demo'
-
-// Collection — returns array
-const events = store.sync({ data: [{ type: 'events', id: '1', attributes: { name: 'Demo' } }] })
-events.length // 1
-
-// Always returns array
-const events = store.syncAll(data)
-
-// retrieve/retrieveAll also available
-const event = store.retrieve('events', data)
-const events = store.retrieveAll('events', data)
-```
-
-#### Document-level meta uses Symbols
-
-In 3.x, document-level metadata was stored as `result.meta`. In 4.x, it uses a Symbol key:
-
-```javascript
-// 3.x
-const result = store.sync(data)
-result.meta // { total: 100 }
-
-// 4.x
-import { META } from 'yayson/utils'
-const result = store.sync(data)
-result[META] // { total: 100 }
 ```
 
 ## Presenting data
@@ -256,6 +180,49 @@ This would produce:
 
 Both `meta` and `links` are optional and add top-level properties to the JSON API document.
 
+### Creating payloads with payload()
+
+Use `payload()` to serialize a single resource for create or update API requests. Unlike `render()`, it omits `included` resources — only the primary resource with relationship linkage is produced:
+
+```javascript
+class WheelPresenter extends Presenter {
+  static type = 'wheels'
+}
+
+class BikePresenter extends Presenter {
+  static type = 'bikes'
+  relationships() {
+    return { wheels: WheelPresenter }
+  }
+}
+
+// Create (no id)
+BikePresenter.payload({ name: 'Monark', wheels: [{ id: 1 }, { id: 2 }] })
+```
+
+This would produce:
+
+```javascript
+{
+  data: {
+    type: 'bikes',
+    attributes: {
+      name: 'Monark'
+    },
+    relationships: {
+      wheels: {
+        data: [
+          { type: 'wheels', id: '1' },
+          { type: 'wheels', id: '2' }
+        ]
+      }
+    }
+  }
+}
+```
+
+For updates, include an `id` and it will appear in the output. `payload()` also accepts `meta` and `links` options like `render()`. It throws on arrays and null — use `render()` for collections.
+
 ## Parsing data
 
 You can use a `Store` like this:
@@ -266,7 +233,7 @@ const { Store } = yayson()
 const store = new Store()
 
 const data = await adapter.get({ path: '/events/' + id })
-const event = store.sync(data) // single resource → model directly
+const event = store.sync(data) // single resource -> model directly
 ```
 
 The `sync()` method returns a single model for single resources and an array for collections. Use `syncAll()` if you always want an array.
@@ -301,6 +268,55 @@ const response = {
 // Get only the events, not the included images
 const events = store.retrieveAll('events', response)
 // events.length === 2
+```
+
+### Building models from create payloads
+
+Use `build()` to create a model from a JSON:API document without storing it. This is useful for create payloads where the `id` may not yet exist:
+
+```javascript
+const model = store.build({
+  data: {
+    type: 'events',
+    attributes: { name: 'New Event' },
+  },
+})
+
+model.name // 'New Event'
+model.id // undefined
+```
+
+If the store already has synced data, `build()` resolves relationships against it. Unresolved references become stubs with just `id` and type:
+
+```javascript
+store.syncAll({
+  data: [{ type: 'images', id: '5', attributes: { url: 'http://example.com/img.jpg' } }],
+})
+
+const model = store.build({
+  data: {
+    type: 'events',
+    attributes: { name: 'New Event' },
+    relationships: {
+      image: { data: { type: 'images', id: '5' } },
+      sponsor: { data: { type: 'sponsors', id: '99' } },
+    },
+  },
+})
+
+model.image.url // 'http://example.com/img.jpg' (resolved from store)
+model.sponsor.id // '99' (stub — not in store)
+```
+
+A static version is also available when you don't need a store instance:
+
+```javascript
+const model = Store.build({
+  data: {
+    type: 'events',
+    attributes: { name: 'New Event' },
+  },
+})
 ```
 
 ### Finding synced data
@@ -451,15 +467,37 @@ const store = new Store({
 const event = store.sync({
   event: { id: '1', name: 'Demo Event' },
 })
-// single resource → returns model directly
+// single resource -> returns model directly
 
 const allSynced = store.syncAll({
   event: { id: '1', name: 'Demo Event' },
   images: [{ id: '2', url: 'http://example.com/image.jpg' }],
 })
 // syncAll always returns array
+```
 
+```javascript
 const event = store.find('event', '1')
+```
+
+#### Creating payloads with payload()
+
+The legacy presenter also supports `payload()` for create/update requests. It produces the legacy envelope format without `links` or sideloaded collections:
+
+```javascript
+class TirePresenter extends Presenter {
+  static type = 'tire'
+}
+
+class CarPresenter extends Presenter {
+  static type = 'car'
+  relationships() {
+    return { tires: TirePresenter }
+  }
+}
+
+CarPresenter.payload({ name: 'Volvo', tires: [{ id: 1 }, { id: 2 }] })
+// { car: { name: 'Volvo', tires: [1, 2] } }
 ```
 
 #### Filtering by type with retrieveAll
@@ -483,6 +521,40 @@ Options can be passed when creating the store:
 const store = new Store({
   types: { events: 'event' },
 })
+```
+
+#### Building models from create payloads
+
+The legacy store also supports `build()` for creating models without storing them:
+
+```javascript
+const model = store.build({
+  event: { name: 'New Event' },
+})
+
+model.name // 'New Event'
+model.id // undefined
+```
+
+Relationships are resolved against existing store data when available:
+
+```javascript
+store.syncAll({
+  links: { 'event.images': { type: 'images' } },
+  images: [{ id: '2', name: 'Header' }],
+})
+
+const model = store.build({
+  event: { name: 'New Event', images: [2] },
+})
+
+model.images[0].name // 'Header' (resolved from store)
+```
+
+A static version is also available:
+
+```javascript
+const model = Store.build({ event: { name: 'New Event' } })
 ```
 
 ### Schema Validation for Legacy Store
@@ -575,3 +647,78 @@ const event = store.find('event', '1')
 ```
 
 **Note**: Validation happens eagerly during `sync()` when schemas are configured. This allows you to check `store.validationErrors` immediately after syncing.
+
+## Upgrading from 4.0
+
+### Unresolved relationships resolve to stubs
+
+References missing from `included` now resolve to a stub `{ id, [TYPE]: type }` instead of `null`. References with `id: null` are dropped (arrays filter them out; to-one becomes `null`).
+
+Tighten schemas that typed relationships as nullable, and detect "not sideloaded" by absence of attributes rather than `=== null`.
+
+## Upgrading from 3.x
+
+Version 4.x is a full TypeScript rewrite with several breaking changes.
+
+### Node.js version
+
+Node.js 20+ is now required (was 14+).
+
+### Metadata uses Symbols instead of plain properties
+
+In 3.x, resource type, links, and meta were stored as plain properties on models (`model.type`, `model.links`, `model.meta`). Relationship metadata used `model._links` and `model._meta`.
+
+In 4.x, these use Symbol keys to avoid collisions with your data. Use the helpers from `yayson/utils`:
+
+```javascript
+// 3.x
+model.type
+model.links
+model.meta
+relatedModel._links
+relatedModel._meta
+
+// 4.x
+import { getType, getLinks, getMeta, getRelationshipLinks, getRelationshipMeta } from 'yayson/utils'
+getType(model)
+getLinks(model)
+getMeta(model)
+getRelationshipLinks(relatedModel)
+getRelationshipMeta(relatedModel)
+```
+
+### `sync()` restores 3.x behavior
+
+`sync()` now matches 3.x behavior: single resources return a model directly, collections return an array. If you always want an array, use `syncAll()`.
+
+```javascript
+// Single resource — returns model directly
+const event = store.sync({ data: { type: 'events', id: '1', attributes: { name: 'Demo' } } })
+event.name // 'Demo'
+
+// Collection — returns array
+const events = store.sync({ data: [{ type: 'events', id: '1', attributes: { name: 'Demo' } }] })
+events.length // 1
+
+// Always returns array
+const events = store.syncAll(data)
+
+// retrieve/retrieveAll also available
+const event = store.retrieve('events', data)
+const events = store.retrieveAll('events', data)
+```
+
+### Document-level meta uses Symbols
+
+In 3.x, document-level metadata was stored as `result.meta`. In 4.x, it uses a Symbol key:
+
+```javascript
+// 3.x
+const result = store.sync(data)
+result.meta // { total: 100 }
+
+// 4.x
+import { META } from 'yayson/utils'
+const result = store.sync(data)
+result[META] // { total: 100 }
+```

@@ -229,4 +229,119 @@ describe('LegacyStore', function () {
 
     expect(events[META]).to.deep.equal({ total: 100, page: 1 })
   })
+
+  describe('build', function () {
+    it('should build model without id', function () {
+      const model = this.store.build({ event: { name: 'New Event' } })
+
+      expect(model.name).to.equal('New Event')
+      expect(model.id).to.be.undefined
+      expect(model[TYPE]).to.equal('event')
+    })
+
+    it('should build model with id', function () {
+      const model = this.store.build({ event: { id: 1, name: 'Demo' } })
+
+      expect(model.name).to.equal('Demo')
+      expect(model.id).to.equal(1)
+      expect(model[TYPE]).to.equal('event')
+    })
+
+    it('should not store anything', function () {
+      this.store.build({ event: { id: 1, name: 'Demo' } })
+
+      expect(this.store.records.length).to.equal(0)
+      expect(this.store.find('event', 1)).to.be.null
+    })
+
+    it('should build with relationship stubs when not in store', function () {
+      this.store.relations = {
+        event: { images: 'image' },
+      }
+
+      const model = this.store.build({
+        event: { name: 'New Event', images: [5] },
+      })
+
+      expect(model.name).to.equal('New Event')
+      expect(model.images).to.have.length(1)
+      expect(model.images[0].id).to.equal('5')
+      expect(model.images[0][TYPE]).to.equal('image')
+    })
+
+    it('should build with resolved relationships after syncing data', function () {
+      this.store.syncAll({
+        links: {
+          'event.images': { type: 'images' },
+        },
+        images: [{ id: 2, name: 'Header' }],
+      })
+
+      const model = this.store.build({
+        event: { name: 'New Event', images: [2] },
+      })
+
+      expect(model.name).to.equal('New Event')
+      expect(model.images[0].id).to.equal(2)
+      expect(model.images[0].name).to.equal('Header')
+    })
+
+    it('should throw on array data', function () {
+      expect(() =>
+        this.store.build({
+          events: [
+            { id: 1, name: 'Event 1' },
+            { id: 2, name: 'Event 2' },
+          ],
+        }),
+      ).to.throw('build() expects a single resource, not an array')
+    })
+
+    it('should throw on empty data', function () {
+      expect(() => this.store.build({})).to.throw('build() expects a single resource, not an array')
+      expect(() => this.store.build({ meta: { page: 1 } })).to.throw('build() expects a single resource, not an array')
+    })
+
+    it('should work via static method', function () {
+      const model = LegacyStore.build({ event: { name: 'Static Build' } })
+
+      expect(model.name).to.equal('Static Build')
+      expect(model[TYPE]).to.equal('event')
+      expect(model.id).to.be.undefined
+    })
+
+    it('should apply type mapping', function () {
+      const model = this.store.build({ events: { id: 1, name: 'Mapped' } })
+
+      expect(model.name).to.equal('Mapped')
+      expect(model[TYPE]).to.equal('event')
+    })
+
+    it('should process links in build data', function () {
+      const model = this.store.build({
+        links: {
+          'event.images': { type: 'images' },
+        },
+        event: { name: 'With Links', images: [99] },
+      })
+
+      expect(model.name).to.equal('With Links')
+      expect(model.images).to.have.length(1)
+      expect(model.images[0].id).to.equal('99')
+      expect(model.images[0][TYPE]).to.equal('image')
+    })
+
+    it('should handle null relationship values', function () {
+      this.store.relations = {
+        event: { image: 'image' },
+      }
+
+      const model = this.store.build({
+        event: { name: 'No Image', image: null },
+      })
+
+      expect(model.name).to.equal('No Image')
+      expect(model.image).to.be.null
+    })
+  })
 })
