@@ -21,6 +21,18 @@ export interface JsonApiRelationship {
   meta?: Record<string, unknown>
 }
 
+/**
+ * Extended relationship descriptor for `relationships()` return values.
+ * `hasMany: true` renders empty/missing as `data: []` (spec-compliant to-many).
+ * `optional: true` omits the relationship when its key is absent on the instance
+ * (or renders `links` only); explicit `null`/`[]` still render normally.
+ */
+export interface RelationshipConfig<P> {
+  presenter: P
+  hasMany?: boolean
+  optional?: boolean
+}
+
 export interface JsonApiRelationships {
   [key: string]: JsonApiRelationship
 }

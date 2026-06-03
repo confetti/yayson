@@ -20,6 +20,15 @@ class SequelizeAdapter extends Adapter {
     return undefined
   }
 
+  static override has(model: ModelLike, key: string): boolean {
+    if (isSequelizeModel(model)) {
+      // `key in model` doesn't work across Sequelize versions; .get() returning
+      // undefined is the proxy for "unloaded association or undeclared key".
+      return model.get(key) !== undefined
+    }
+    return false
+  }
+
   static override id(model: ModelLike): string | undefined {
     // Retain backwards compatibility with older sequelize versions
     const hasPrimaryKeys = model.constructor && 'primaryKeys' in model.constructor

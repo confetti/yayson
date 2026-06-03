@@ -35,15 +35,36 @@ function yayson(options?: { adapter?: 'default' | 'sequelize' | AdapterClass }):
 
 ### Instance Methods
 
-#### `relationships(): Record<string, typeof Presenter>`
+#### `relationships(): Record<string, typeof Presenter | RelationshipConfig>`
 
-Return map of property names to their Presenter classes. Relationship keys are automatically excluded from attributes.
+Return map of property names to their Presenter classes (or a config object). Relationship keys are automatically excluded from attributes.
 
 ```typescript
 relationships() {
   return { author: AuthorPresenter, comments: CommentPresenter }
 }
 ```
+
+Use the config form to declare cardinality or conditional-include semantics:
+
+```typescript
+relationships() {
+  return {
+    addons: { presenter: AddonPresenter, hasMany: true },
+    parentTicket: { presenter: TicketPresenter, optional: true },
+    guestTickets: { presenter: TicketPresenter, hasMany: true, optional: true },
+  }
+}
+```
+
+| Flag       | Type      | Effect                                                                                                                                                                                                                                                             |
+| ---------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `hasMany`  | `boolean` | Declares a to-many relationship. Empty/missing data renders as `data: []` (JSON:API requires `[]`, not `null`, for empty to-many).                                                                                                                                 |
+| `optional` | `boolean` | When the key is absent from the instance, the relationship is omitted entirely (or rendered with only `links` if `links()` provides them for the key). Explicit `null`/`[]` values on the instance still render normally — the distinction is "absent" vs "empty". |
+
+The bare-class form (`Presenter` directly) is unchanged: missing data renders as `data: null` regardless of cardinality.
+
+In `payload()` output, `optional` omission is disabled (a write request asserts state, so dropping a relationship would be misleading), but `hasMany: true` still applies so a client can correctly clear a to-many relationship with `data: []`.
 
 #### `attributes(instance): Record<string, unknown>`
 
@@ -221,6 +242,7 @@ Works with plain JS objects.
 Adapter.get(model) // returns shallow copy of all properties
 Adapter.get(model, 'key') // returns single property value
 Adapter.id(model) // returns model.id as string
+Adapter.has(model, 'key') // returns true if key is present on the model (used by optional relationships)
 ```
 
 ### Sequelize Adapter
@@ -240,6 +262,7 @@ const { Presenter } = yayson({
   adapter: {
     id: (model) => String(model.pk),
     get: (model, key) => (key ? model.attrs[key] : model.attrs),
+    has: (model, key) => key in model.attrs, // only needed if you use `optional: true` relationships
   },
 })
 ```

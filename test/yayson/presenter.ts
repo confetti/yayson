@@ -425,6 +425,229 @@ describe('Presenter', function (): void {
     })
   })
 
+  describe('hasMany cardinality', function (): void {
+    it('renders data: [] when hasMany relationship key is missing on instance', function (): void {
+      class TicketPresenter extends Presenter {
+        static type = 'tickets'
+
+        relationships() {
+          return { guestTickets: { presenter: TicketPresenter, hasMany: true } }
+        }
+      }
+
+      const json = TicketPresenter.render({ id: 1 })
+      assertSingleResource(json.data)
+      expect(json.data.relationships).to.deep.equal({
+        guestTickets: { data: [] },
+      })
+    })
+
+    it('renders data: [] when hasMany relationship is an empty array', function (): void {
+      class TicketPresenter extends Presenter {
+        static type = 'tickets'
+
+        relationships() {
+          return { guestTickets: { presenter: TicketPresenter, hasMany: true } }
+        }
+      }
+
+      const json = TicketPresenter.render({ id: 1, guestTickets: [] })
+      assertSingleResource(json.data)
+      expect(json.data.relationships).to.deep.equal({
+        guestTickets: { data: [] },
+      })
+    })
+
+    it('renders data array when hasMany relationship has values', function (): void {
+      class TicketPresenter extends Presenter {
+        static type = 'tickets'
+
+        relationships() {
+          return { guestTickets: { presenter: TicketPresenter, hasMany: true } }
+        }
+      }
+
+      const json = TicketPresenter.render({ id: 1, guestTickets: [{ id: 7 }, { id: 8 }] })
+      assertSingleResource(json.data)
+      expect(json.data.relationships).to.deep.equal({
+        guestTickets: {
+          data: [
+            { type: 'tickets', id: '7' },
+            { type: 'tickets', id: '8' },
+          ],
+        },
+      })
+    })
+
+    it('renders data: [] when hasMany value is explicitly null', function (): void {
+      class TicketPresenter extends Presenter {
+        static type = 'tickets'
+
+        relationships() {
+          return { guestTickets: { presenter: TicketPresenter, hasMany: true } }
+        }
+      }
+
+      const json = TicketPresenter.render({ id: 1, guestTickets: null })
+      assertSingleResource(json.data)
+      expect(json.data.relationships).to.deep.equal({
+        guestTickets: { data: [] },
+      })
+    })
+  })
+
+  describe('optional relationships', function (): void {
+    it('omits an optional belongsTo relationship when the key is absent from the instance', function (): void {
+      class TicketPresenter extends Presenter {
+        static type = 'tickets'
+
+        relationships() {
+          return {
+            parentTicket: { presenter: TicketPresenter, optional: true },
+          }
+        }
+      }
+
+      const json = TicketPresenter.render({ id: 1, parentTicketId: 2 })
+      assertSingleResource(json.data)
+      expect(json.data.relationships).to.eq(undefined)
+    })
+
+    it('renders data: null for an optional belongsTo relationship when the key is present and null', function (): void {
+      class TicketPresenter extends Presenter {
+        static type = 'tickets'
+
+        relationships() {
+          return {
+            parentTicket: { presenter: TicketPresenter, optional: true },
+          }
+        }
+      }
+
+      const json = TicketPresenter.render({ id: 1, parentTicket: null })
+      assertSingleResource(json.data)
+      expect(json.data.relationships).to.deep.equal({
+        parentTicket: { data: null },
+      })
+    })
+
+    it('omits an optional hasMany relationship when the key is absent from the instance', function (): void {
+      class TicketPresenter extends Presenter {
+        static type = 'tickets'
+
+        relationships() {
+          return {
+            guestTickets: { presenter: TicketPresenter, hasMany: true, optional: true },
+          }
+        }
+      }
+
+      const json = TicketPresenter.render({ id: 1 })
+      assertSingleResource(json.data)
+      expect(json.data.relationships).to.eq(undefined)
+    })
+
+    it('renders data: [] for an optional hasMany relationship when the key is present and empty', function (): void {
+      class TicketPresenter extends Presenter {
+        static type = 'tickets'
+
+        relationships() {
+          return {
+            guestTickets: { presenter: TicketPresenter, hasMany: true, optional: true },
+          }
+        }
+      }
+
+      const json = TicketPresenter.render({ id: 1, guestTickets: [] })
+      assertSingleResource(json.data)
+      expect(json.data.relationships).to.deep.equal({
+        guestTickets: { data: [] },
+      })
+    })
+
+    it('renders links only (no data) when an optional relationship key is absent and links are configured', function (): void {
+      class TicketPresenter extends Presenter {
+        static type = 'tickets'
+
+        relationships() {
+          return {
+            parentTicket: { presenter: TicketPresenter, optional: true },
+          }
+        }
+
+        links(instance: ModelLike) {
+          return {
+            parentTicket: { related: '/tickets/' + this.id(instance) + '/parent' },
+          }
+        }
+      }
+
+      const json = TicketPresenter.render({ id: 1 })
+      assertSingleResource(json.data)
+      expect(json.data.relationships).to.deep.equal({
+        parentTicket: { links: { related: '/tickets/1/parent' } },
+      })
+    })
+
+    it('omits multiple optional relationships at once when keys are absent', function (): void {
+      class AddonPresenter extends Presenter {
+        static type = 'addons'
+      }
+
+      class TicketPresenter extends Presenter {
+        static type = 'tickets'
+
+        relationships() {
+          return {
+            addons: { presenter: AddonPresenter, hasMany: true },
+            parentTicket: { presenter: TicketPresenter, optional: true },
+            guestTickets: { presenter: TicketPresenter, hasMany: true, optional: true },
+          }
+        }
+      }
+
+      const json = TicketPresenter.render({ id: 1, parentTicketId: 2 })
+      assertSingleResource(json.data)
+      expect(json.data.relationships).to.deep.equal({
+        addons: { data: [] },
+      })
+    })
+  })
+
+  describe('payload() with extended relationship config', function (): void {
+    it('renders data: [] for hasMany in payload mode when key is missing (so clients can clear the relationship)', function (): void {
+      class TicketPresenter extends Presenter {
+        static type = 'tickets'
+
+        relationships() {
+          return { guestTickets: { presenter: TicketPresenter, hasMany: true } }
+        }
+      }
+
+      const payload = TicketPresenter.payload({ id: 1 })
+      assertSingleResource(payload.data)
+      expect(payload.data.relationships).to.deep.equal({
+        guestTickets: { data: [] },
+      })
+    })
+
+    it('does not omit optional relationships in payload mode', function (): void {
+      class TicketPresenter extends Presenter {
+        static type = 'tickets'
+
+        relationships() {
+          return { parentTicket: { presenter: TicketPresenter, optional: true } }
+        }
+      }
+
+      const payload = TicketPresenter.payload({ id: 1 })
+      assertSingleResource(payload.data)
+      expect(payload.data.relationships).to.deep.equal({
+        parentTicket: { data: null },
+      })
+    })
+  })
+
   it('should not dedup data entries of different types with the same id', function (): void {
     class CarPresenter extends Presenter {
       static type = 'cars'
@@ -540,6 +763,9 @@ describe('Presenter', function (): void {
       static get<T = unknown>(): T {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test mock adapter returns unknown from spy, must cast to generic T
         return getSpy() as T
+      }
+      static has(): boolean {
+        return false
       }
     }
 
