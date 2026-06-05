@@ -262,10 +262,12 @@ const { Presenter } = yayson({
   adapter: {
     id: (model) => String(model.pk),
     get: (model, key) => (key ? model.attrs[key] : model.attrs),
-    has: (model, key) => key in model.attrs, // only needed if you use `optional: true` relationships
+    has: (model, key) => key in model.attrs,
   },
 })
 ```
+
+Implementing `has(model, key)` is only required when using `optional: true` relationships. It tells the presenter whether a relationship key is actually present on the model (so an unloaded relationship can be omitted) versus loaded-but-null. The default adapter uses `key in model`; custom adapters that store data on a sub-property (like `model.attrs` above) need to override it.
 
 ## Type Inference
 

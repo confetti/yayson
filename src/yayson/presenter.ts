@@ -92,13 +92,13 @@ export default function createPresenter(adapter: typeof Adapter) {
       return result
     }
 
-    buildRelationships(instance: ModelLike | null, options?: { payload?: boolean }): JsonApiRelationships | null {
+    buildRelationships(instance: ModelLike | null, options: { payload?: boolean } = {}): JsonApiRelationships | null {
       if (instance == null) {
         return null
       }
       const rels = this.relationships()
       const links = this.links(instance) || {}
-      const isPayload = options?.payload === true
+      const isPayload = options.payload === true
       let relationships: JsonApiRelationships | null = null
 
       if (!rels) {
