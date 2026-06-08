@@ -8,6 +8,7 @@ import type {
   JsonApiResource,
   JsonApiResourceIdentifier,
   PresenterOptions,
+  RelationshipConfig,
 } from './types.js'
 import { filterByFields } from './utils.js'
 
@@ -49,7 +50,7 @@ export default function createPresenter(adapter: typeof Adapter) {
       return undefined
     }
 
-    relationships(): Record<string, typeof Presenter> {
+    relationships(): Record<string, typeof Presenter | RelationshipConfig<typeof Presenter>> {
       return {}
     }
 
@@ -78,8 +79,9 @@ export default function createPresenter(adapter: typeof Adapter) {
       }
 
       for (const key in relationships) {
-        const factory = relationships[key]
-        if (!factory) throw new Error(`Presenter for ${key} in ${this.constructor.type} is not defined`)
+        const entry = relationships[key]
+        if (!entry) throw new Error(`Presenter for ${key} in ${this.constructor.type} is not defined`)
+        const factory = typeof entry === 'function' ? entry : entry.presenter
 
         const presenter = new factory(scope)
 
@@ -90,12 +92,13 @@ export default function createPresenter(adapter: typeof Adapter) {
       return result
     }
 
-    buildRelationships(instance: ModelLike | null): JsonApiRelationships | null {
+    buildRelationships(instance: ModelLike | null, options: { payload?: boolean } = {}): JsonApiRelationships | null {
       if (instance == null) {
         return null
       }
       const rels = this.relationships()
       const links = this.links(instance) || {}
+      const isPayload = options.payload === true
       let relationships: JsonApiRelationships | null = null
 
       if (!rels) {
@@ -103,9 +106,21 @@ export default function createPresenter(adapter: typeof Adapter) {
       }
 
       for (const key in rels) {
+        const entry = rels[key]
+        if (!entry) continue
+
+        const isConfig = typeof entry !== 'function'
+        const presenter = isConfig ? entry.presenter : entry
+        const hasMany = isConfig ? entry.hasMany : undefined
+        const optional = isConfig ? (entry.optional ?? false) : false
+
+        const linkValue = links[key]
+        const hasLinks = linkValue != null
+
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- unknown from adapter.get
         const data = this.constructor.adapter.get(instance, key) as ModelLike | ModelLike[] | null | undefined
-        const presenter = rels[key]
+        const keyPresent = this.constructor.adapter.has(instance, key)
+
         const buildData = (d: ModelLike): JsonApiResourceIdentifier => {
           const id = this.constructor.adapter.id(d)
           if (!id) {
@@ -113,37 +128,37 @@ export default function createPresenter(adapter: typeof Adapter) {
               `Model of type ${presenter.type} is missing an id (relationship '${key}' of ${this.constructor.type})`,
             )
           }
-          return {
-            id,
-            type: presenter.type,
+          return { id, type: presenter.type }
+        }
+
+        // Skip in payload mode: an omitted relationship in a write must not be
+        // confused with the model simply not having loaded it.
+        if (optional && !keyPresent && !isPayload) {
+          if (hasLinks) {
+            if (!relationships) relationships = {}
+            relationships[key] = { links: buildLinks(linkValue) }
           }
+          continue
         }
-        const build = (d: ModelLike | null | undefined): JsonApiRelationship => {
-          const rel: JsonApiRelationship = {}
-          if (d != null) {
-            rel.data = buildData(d)
-          }
-          if (links[key] != null) {
-            rel.links = buildLinks(links[key])
-          } else if (d == null) {
-            rel.data = null
-          }
-          return rel
-        }
-        if (!relationships) {
-          relationships = {}
-        }
-        if (!relationships[key]) {
-          relationships[key] = {}
-        }
+
+        if (!relationships) relationships = {}
+        const rel: JsonApiRelationship = {}
+
         if (Array.isArray(data)) {
-          relationships[key].data = data.map(buildData)
-          if (links[key] != null) {
-            relationships[key].links = buildLinks(links[key])
-          }
-        } else {
-          relationships[key] = build(data)
+          rel.data = data.map(buildData)
+        } else if (data != null) {
+          rel.data = buildData(data)
+        } else if (hasMany === true) {
+          rel.data = []
+        } else if (!hasLinks) {
+          rel.data = null
         }
+
+        if (hasLinks) {
+          rel.links = buildLinks(linkValue)
+        }
+
+        relationships[key] = rel
       }
       return relationships
     }
@@ -248,7 +263,7 @@ export default function createPresenter(adapter: typeof Adapter) {
       if (id != null) {
         model.id = id
       }
-      const relationships = this.buildRelationships(instance)
+      const relationships = this.buildRelationships(instance, { payload: true })
       if (relationships != null) {
         model.relationships = relationships
       }

@@ -19,6 +19,10 @@ class Adapter {
     }
     return `${id}`
   }
+
+  static has(model: ModelLike, key: string): boolean {
+    return key in model
+  }
 }
 
 export default Adapter

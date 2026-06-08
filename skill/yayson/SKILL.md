@@ -68,6 +68,26 @@ BikePresenter.render({ id: 1, wheels: [{ id: 10 }, { id: 11 }] })
 // included = [{ type: 'wheels', id: '10', ... }, ...]
 ```
 
+For to-many relationships and conditionally loaded (`?include=`) responses, declare cardinality and/or optional semantics via the config form:
+
+```typescript
+class TicketPresenter extends Presenter {
+  static type = 'tickets'
+  relationships() {
+    return {
+      addons: { presenter: AddonPresenter, hasMany: true }, // empty → data: []
+      parentTicket: { presenter: TicketPresenter, optional: true }, // key absent → omitted
+      guestTickets: { presenter: TicketPresenter, hasMany: true, optional: true },
+    }
+  }
+}
+```
+
+- `hasMany: true` → empty/missing data renders as `data: []` instead of `data: null` (spec-compliant for to-many).
+- `optional: true` → when the relationship key is absent from the instance, the relationship is omitted from output entirely (or rendered as `{ links }` only if `links()` configures one for that key). An explicit `null` on the instance still renders as `data: null` — `optional` distinguishes "not loaded" from "explicitly empty".
+
+The bare-class form is unchanged.
+
 ### Custom attributes
 
 Override `attributes()` to transform or compute attributes.

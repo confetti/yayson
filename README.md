@@ -81,6 +81,49 @@ class BikePresenter extends Presenter {
 }
 ```
 
+### Declaring cardinality and optional relationships
+
+By default a missing relationship renders as `data: null`. This isn't valid JSON:API for to-many relationships (the spec requires `[]`) and can mislead clients when a relationship simply wasn't loaded. Use the config form to declare cardinality and optional semantics:
+
+```javascript
+class BikePresenter extends Presenter {
+  static type = 'bikes'
+
+  relationships() {
+    return {
+      wheels: { presenter: WheelPresenter, hasMany: true },
+      manufacturer: { presenter: ManufacturerPresenter, optional: true },
+      accessories: { presenter: AccessoryPresenter, hasMany: true, optional: true },
+    }
+  }
+}
+
+BikePresenter.render({ id: 1 })
+```
+
+This produces:
+
+```javascript
+{
+  data: {
+    id: '1',
+    type: 'bikes',
+    attributes: {},
+    relationships: {
+      wheels: { data: [] } // hasMany + no data → empty array, not null
+      // manufacturer and accessories omitted entirely — they weren't loaded
+    }
+  }
+}
+```
+
+- **`hasMany: true`** — declares a to-many relationship. Empty or missing data renders as `data: []` instead of `data: null`.
+- **`optional: true`** — when the relationship key is absent from the instance, the relationship is omitted from the output (or rendered with just `links` if `links()` configures one for that key). An explicit `null` on the instance still renders as `data: null` — `optional` distinguishes "not loaded" from "explicitly empty".
+
+In `payload()` output, `optional` omission is disabled (a write request asserts state, so dropping a relationship would be misleading), but `hasMany` still applies so a client can correctly clear a to-many with `data: []`.
+
+The bare-class form (`relationships() { return { wheels: WheelPresenter } }`) is unchanged.
+
 ### Filtering attributes with fields
 
 Use the static `fields` property to limit which attributes are included in the output:

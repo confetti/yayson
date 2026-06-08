@@ -78,8 +78,9 @@ export default function createLegacyPresenter(Presenter: Presenter) {
       }
 
       for (const key in relationships) {
-        const factory = relationships[key]
-        if (!factory) throw new Error(`Presenter for ${key} in ${this.constructor.type} is not defined`)
+        const entry = relationships[key]
+        if (!entry) throw new Error(`Presenter for ${key} in ${this.constructor.type} is not defined`)
+        const factory = typeof entry === 'function' ? entry : entry.presenter
 
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Factory returns PresenterInstance, we know it's LegacyPresenter
         const presenter = new factory(scope) as LegacyPresenter
