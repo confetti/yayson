@@ -1477,6 +1477,8 @@ describe('Store', function () {
       delete (Object.prototype as any).polluted
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime cleanup
       delete (Object.prototype as any).viaIncluded
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime cleanup
+      delete (Object.prototype as any).cachePoll
     })
 
     it('should not pollute Object.prototype via type="__proto__"', function () {
@@ -1552,10 +1554,22 @@ describe('Store', function () {
 
       // Unsafe names are dropped (never become own properties of the model)
       expect(Object.prototype.hasOwnProperty.call(model, '__proto__')).to.equal(false)
+      expect(Object.prototype.hasOwnProperty.call(model, 'constructor')).to.equal(false)
       expect(Object.prototype.hasOwnProperty.call(model, 'prototype')).to.equal(false)
       // A legitimate relationship is still resolved
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime probe
       expect((model as any).author.id).to.equal('5')
+    })
+
+    it('should not pollute via a plain-object cache passed to find()', function () {
+      const store = new Store()
+      store.sync({ data: { type: '__proto__', id: 'cachePoll', attributes: { hacked: 'YES' } } })
+      // A caller-supplied plain {} cache must not let type="__proto__" reach Object.prototype
+      store.find('__proto__', 'cachePoll', {})
+
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime probe
+      expect(({} as any).cachePoll).to.equal(undefined)
+      expect(Object.getOwnPropertyDescriptor(Object.prototype, 'cachePoll')).to.equal(undefined)
     })
   })
 })

@@ -10,7 +10,7 @@ import type {
 } from './types.js'
 import { TYPE, LINKS, META } from './symbols.js'
 import { validate } from './schema.js'
-import { safeObject, isUnsafeKey } from './safe.js'
+import { safeObject, safeCache, isUnsafeKey } from './safe.js'
 
 interface LegacyStoreRecordType {
   type: string
@@ -133,8 +133,9 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     return model
   }
 
-  toModel(rec: LegacyStoreRecordType, type: string, models: StoreModels): StoreModel {
+  toModel(rec: LegacyStoreRecordType, type: string, modelsArg: StoreModels): StoreModel {
     const idStr = String(rec.data.id)
+    const models = safeCache(modelsArg)
 
     if (!models[type]) {
       models[type] = safeObject<StoreModels[string]>()
@@ -258,13 +259,13 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
   }
 
   find<T extends string>(type: T, id: string | number, models?: StoreModels): InferModelType<S, T> | null {
-    const result = this.#findModel(type, String(id), models ?? this.models)
+    const result = this.#findModel(type, String(id), safeCache(models ?? this.models))
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Type inference: maps string literal type parameter to schema type
     return result as InferModelType<S, T> | null
   }
 
   findAll<T extends string>(type: T, models?: StoreModels): InferModelType<S, T>[] {
-    const modelsObj = models ?? this.models
+    const modelsObj = safeCache(models ?? this.models)
     const recs = this.findRecords(type)
     if (recs.length === 0) {
       return []

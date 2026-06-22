@@ -15,7 +15,7 @@ import type {
 } from './types.js'
 import { TYPE, LINKS, META, REL_LINKS, REL_META } from './symbols.js'
 import { validate } from './schema.js'
-import { safeObject, isUnsafeKey } from './safe.js'
+import { safeObject, safeCache, isUnsafeKey } from './safe.js'
 
 function hasId<T extends StoreModelWithOptionalId>(model: T): model is T & { id: string | number } {
   return model.id != null
@@ -156,7 +156,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
 
   toModel(rec: StoreRecord, type: string, models: StoreModels): StoreModel {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- StoreRecord always has id
-    const model = this.#createModel(rec, { models }) as StoreModel
+    const model = this.#createModel(rec, { models: safeCache(models) }) as StoreModel
 
     // Validate with schema if provided
     if (this.schemas && this.schemas[rec.type]) {
@@ -208,13 +208,13 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
   }
 
   find<T extends string>(type: T, id: string | number, models?: StoreModels): InferModelType<S, T> | null {
-    const result = this.#findModel(type, id, models ?? safeObject<StoreModels>())
+    const result = this.#findModel(type, id, safeCache(models))
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from schema registry
     return result as InferModelType<S, T> | null
   }
 
   findAll<T extends string>(type: T, models?: StoreModels): InferModelType<S, T>[] {
-    const modelsObj = models ?? safeObject<StoreModels>()
+    const modelsObj = safeCache(models)
     const recs = this.findRecords(type)
     if (recs == null) {
       return []
