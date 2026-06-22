@@ -10,6 +10,7 @@ import type {
 } from './types.js'
 import { TYPE, LINKS, META } from './symbols.js'
 import { validate } from './schema.js'
+import { safeObject, safeCache, isUnsafeKey } from './safe.js'
 
 interface LegacyStoreRecordType {
   type: string
@@ -48,20 +49,23 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
   models: StoreModels
 
   constructor(options?: LegacyStoreOptions<S>) {
-    this.types = options?.types || {}
+    // Null-prototype: read with untrusted `name`/`type` values, so "__proto__"
+    // must not resolve to Object.prototype.
+    this.types = safeObject<Record<string, string>>()
+    Object.assign(this.types, options?.types)
     this.schemas = options?.schemas
     this.strict = options?.strict ?? false
     this.records = []
-    this.relations = {}
+    this.relations = safeObject<Record<string, Record<string, string>>>()
     this.validationErrors = []
-    this.models = {}
+    this.models = safeObject<StoreModels>()
   }
 
   reset(): void {
     this.records = []
-    this.relations = {}
+    this.relations = safeObject<Record<string, Record<string, string>>>()
     this.validationErrors = []
-    this.models = {}
+    this.models = safeObject<StoreModels>()
   }
 
   #createStub(type: string, id: string): StoreModel {
@@ -78,7 +82,10 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     const relations = this.relations[type]
     if (!relations) return
 
-    for (const attribute in relations) {
+    for (const attribute of Object.keys(relations)) {
+      if (isUnsafeKey(attribute)) {
+        continue
+      }
       const relationType = relations[attribute]!
       const value = model[attribute]
       if (Array.isArray(value)) {
@@ -111,24 +118,27 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     if (models && hasId(model)) {
       const idStr = String(model.id)
       if (!models[type]) {
-        models[type] = {}
+        models[type] = safeObject<StoreModels[string]>()
       }
       models[type]![idStr] = model
     }
 
     const resolver = (relationType: string, id: string): StoreModel => {
-      return this.#findModel(relationType, id, models ?? {}) ?? this.#createStub(relationType, id)
+      return (
+        this.#findModel(relationType, id, models ?? safeObject<StoreModels>()) ?? this.#createStub(relationType, id)
+      )
     }
     this.#resolveRelationships(model, type, resolver)
 
     return model
   }
 
-  toModel(rec: LegacyStoreRecordType, type: string, models: StoreModels): StoreModel {
+  toModel(rec: LegacyStoreRecordType, type: string, modelsArg: StoreModels): StoreModel {
     const idStr = String(rec.data.id)
+    const models = safeCache(modelsArg)
 
     if (!models[type]) {
-      models[type] = {}
+      models[type] = safeObject<StoreModels[string]>()
     }
 
     if (models[type]![idStr]) {
@@ -169,14 +179,17 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
   }
 
   setupRelations(links: LegacyLinks): void {
-    for (const key in links) {
+    for (const key of Object.keys(links)) {
       const value = links[key]!
       const parts = key.split('.')
       const typeRaw = parts[0]!
       const attribute = parts[1]!
+      if (isUnsafeKey(attribute)) {
+        continue
+      }
       const type = this.types[typeRaw] || typeRaw
       if (!this.relations[type]) {
-        this.relations[type] = {}
+        this.relations[type] = safeObject<Record<string, string>>()
       }
       this.relations[type]![attribute] = this.types[value.type] || value.type
     }
@@ -208,7 +221,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     }
 
     let name: string | undefined
-    for (const key in data) {
+    for (const key of Object.keys(data)) {
       if (key !== 'meta' && key !== 'links') {
         name = key
         break
@@ -246,20 +259,20 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
   }
 
   find<T extends string>(type: T, id: string | number, models?: StoreModels): InferModelType<S, T> | null {
-    const result = this.#findModel(type, String(id), models ?? this.models)
+    const result = this.#findModel(type, String(id), safeCache(models ?? this.models))
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Type inference: maps string literal type parameter to schema type
     return result as InferModelType<S, T> | null
   }
 
   findAll<T extends string>(type: T, models?: StoreModels): InferModelType<S, T>[] {
-    const modelsObj = models ?? this.models
+    const modelsObj = safeCache(models ?? this.models)
     const recs = this.findRecords(type)
     if (recs.length === 0) {
       return []
     }
     recs.forEach((rec) => {
       if (!modelsObj[type]) {
-        modelsObj[type] = {}
+        modelsObj[type] = safeObject<StoreModels[string]>()
       }
       return this.toModel(rec, type, modelsObj)
     })
@@ -292,7 +305,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
   syncAll(data: LegacyData): StoreResult {
     // Clear validation errors and models cache from previous sync
     this.validationErrors = []
-    this.models = {}
+    this.models = safeObject<StoreModels>()
 
     if (data.links) {
       this.setupRelations(data.links)
@@ -300,7 +313,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
 
     const syncedRecords: LegacyStoreRecordType[] = []
 
-    for (const name in data) {
+    for (const name of Object.keys(data)) {
       if (name === 'meta' || name === 'links') {
         continue
       }

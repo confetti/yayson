@@ -15,6 +15,7 @@ import type {
 } from './types.js'
 import { TYPE, LINKS, META, REL_LINKS, REL_META } from './symbols.js'
 import { validate } from './schema.js'
+import { safeObject, safeCache, isUnsafeKey } from './safe.js'
 
 function hasId<T extends StoreModelWithOptionalId>(model: T): model is T & { id: string | number } {
   return model.id != null
@@ -75,7 +76,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
       includeRelMeta?: boolean
     },
   ): StoreModelWithOptionalId {
-    const models = options?.models ?? {}
+    const models = options?.models ?? safeObject<StoreModels>()
 
     const model: StoreModelWithOptionalId = { ...(resource.attributes || {}) }
     if (resource.id != null) {
@@ -94,7 +95,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     if (hasId(model)) {
       const idStr = String(model.id)
       if (!models[type]) {
-        models[type] = {}
+        models[type] = safeObject<StoreModels[string]>()
       }
       if (!models[type][idStr]) {
         models[type][idStr] = model
@@ -120,7 +121,11 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
   ): void {
     const includeRelMeta = options?.includeRelMeta ?? true
 
-    for (const key in relationships) {
+    // Object.keys (not for...in) so a polluted Object.prototype can't inject members.
+    for (const key of Object.keys(relationships)) {
+      if (isUnsafeKey(key)) {
+        continue
+      }
       const rel = relationships[key]
       const { data, links, meta } = rel
 
@@ -151,7 +156,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
 
   toModel(rec: StoreRecord, type: string, models: StoreModels): StoreModel {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- StoreRecord always has id
-    const model = this.#createModel(rec, { models }) as StoreModel
+    const model = this.#createModel(rec, { models: safeCache(models) }) as StoreModel
 
     // Validate with schema if provided
     if (this.schemas && this.schemas[rec.type]) {
@@ -203,20 +208,20 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
   }
 
   find<T extends string>(type: T, id: string | number, models?: StoreModels): InferModelType<S, T> | null {
-    const result = this.#findModel(type, id, models ?? {})
+    const result = this.#findModel(type, id, safeCache(models))
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from schema registry
     return result as InferModelType<S, T> | null
   }
 
   findAll<T extends string>(type: T, models?: StoreModels): InferModelType<S, T>[] {
-    const modelsObj = models ?? {}
+    const modelsObj = safeCache(models)
     const recs = this.findRecords(type)
     if (recs == null) {
       return []
     }
     recs.forEach((rec) => {
       if (!modelsObj[type]) {
-        modelsObj[type] = {}
+        modelsObj[type] = safeObject<StoreModels[string]>()
       }
       return this.toModel(rec, type, modelsObj)
     })
@@ -292,7 +297,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
       syncData(body.included)
       const recs = syncData(body.data)
 
-      const models: StoreModels = {}
+      const models: StoreModels = safeObject<StoreModels>()
       const result: StoreResult = recs.map((rec) => this.toModel(rec, rec.type, models))
       if (body.meta != null) {
         result[META] = body.meta

@@ -1469,4 +1469,107 @@ describe('Store', function () {
       expect(store.validationErrors.length).to.equal(0)
     })
   })
+
+  describe('Prototype pollution', function () {
+    afterEach(function () {
+      // Clean up in case a regression reintroduces pollution
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime cleanup
+      delete (Object.prototype as any).polluted
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime cleanup
+      delete (Object.prototype as any).viaIncluded
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime cleanup
+      delete (Object.prototype as any).cachePoll
+    })
+
+    it('should not pollute Object.prototype via type="__proto__"', function () {
+      const store = new Store()
+      store.sync({
+        data: { type: '__proto__', id: 'polluted', attributes: { hacked: 'YES' } },
+      })
+
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime probe
+      expect(({} as any).polluted).to.equal(undefined)
+      expect(Object.getOwnPropertyDescriptor(Object.prototype, 'polluted')).to.equal(undefined)
+    })
+
+    it('should not pollute Object.prototype via an included resource with type="__proto__"', function () {
+      // The included resource is materialized because a relationship references
+      // it, so this exercises the real vector (and bypasses any data.type check).
+      const store = new Store()
+      store.sync({
+        data: {
+          type: 'events',
+          id: '1',
+          relationships: { author: { data: { type: '__proto__', id: 'viaIncluded' } } },
+        },
+        included: [{ type: '__proto__', id: 'viaIncluded', attributes: { hacked: 'YES' } }],
+      })
+
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime probe
+      expect(({} as any).viaIncluded).to.equal(undefined)
+      expect(Object.getOwnPropertyDescriptor(Object.prototype, 'viaIncluded')).to.equal(undefined)
+    })
+
+    it('should not pollute Object.prototype via build() with type="__proto__"', function () {
+      Store.build({
+        data: { type: '__proto__', id: 'polluted', attributes: { hacked: 'YES' } },
+      })
+
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime probe
+      expect(({} as any).polluted).to.equal(undefined)
+    })
+
+    it('should not mutate a model prototype via a relationship named "__proto__"', function () {
+      const store = new Store()
+      const model = store.sync({
+        data: { type: 'thing', id: '1', relationships: { ['__proto__']: { data: null } } },
+      })
+
+      // The model must keep its normal prototype (not be stripped to null)
+      expect(Object.getPrototypeOf(model)).to.equal(Object.prototype)
+      // And the global prototype must be untouched
+      expect(Object.getPrototypeOf({})).to.equal(Object.prototype)
+    })
+
+    it('should reject unsafe relationship member names (__proto__/constructor/prototype)', function () {
+      const store = new Store()
+      const model = store.sync({
+        data: {
+          type: 'thing',
+          id: '1',
+          relationships: {
+            ['__proto__']: { data: { type: 'other', id: '2' } },
+            constructor: { data: { type: 'other', id: '3' } },
+            prototype: { data: { type: 'other', id: '4' } },
+            author: { data: { type: 'other', id: '5' } },
+          },
+        },
+        included: [
+          { type: 'other', id: '2' },
+          { type: 'other', id: '3' },
+          { type: 'other', id: '4' },
+          { type: 'other', id: '5' },
+        ],
+      })
+
+      // Unsafe names are dropped (never become own properties of the model)
+      expect(Object.prototype.hasOwnProperty.call(model, '__proto__')).to.equal(false)
+      expect(Object.prototype.hasOwnProperty.call(model, 'constructor')).to.equal(false)
+      expect(Object.prototype.hasOwnProperty.call(model, 'prototype')).to.equal(false)
+      // A legitimate relationship is still resolved
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime probe
+      expect((model as any).author.id).to.equal('5')
+    })
+
+    it('should not pollute via a plain-object cache passed to find()', function () {
+      const store = new Store()
+      store.sync({ data: { type: '__proto__', id: 'cachePoll', attributes: { hacked: 'YES' } } })
+      // A caller-supplied plain {} cache must not let type="__proto__" reach Object.prototype
+      store.find('__proto__', 'cachePoll', {})
+
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime probe
+      expect(({} as any).cachePoll).to.equal(undefined)
+      expect(Object.getOwnPropertyDescriptor(Object.prototype, 'cachePoll')).to.equal(undefined)
+    })
+  })
 })

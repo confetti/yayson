@@ -344,4 +344,34 @@ describe('LegacyStore', function () {
       expect(model.image).to.be.null
     })
   })
+
+  describe('Prototype pollution', function () {
+    afterEach(function () {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime cleanup
+      delete (Object.prototype as any).legpoll
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime cleanup
+      delete (Object.prototype as any).polluteViaRelations
+    })
+
+    it('should not pollute Object.prototype when a type mapping yields "__proto__"', function () {
+      const store = new LegacyStore({ types: { posts: '__proto__' } })
+      store.sync({ posts: { id: 'legpoll', name: 'evil' } })
+
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime probe
+      expect(({} as any).legpoll).to.equal(undefined)
+      expect(Object.getOwnPropertyDescriptor(Object.prototype, 'legpoll')).to.equal(undefined)
+    })
+
+    it('should not pollute Object.prototype via the relations map (type mapping -> "__proto__")', function () {
+      const store = new LegacyStore({ types: { foo: '__proto__' } })
+      store.sync({
+        links: { 'foo.polluteViaRelations': { type: 'bar' } },
+        foo: { id: '1' },
+      })
+
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime probe
+      expect(({} as any).polluteViaRelations).to.equal(undefined)
+      expect(Object.getOwnPropertyDescriptor(Object.prototype, 'polluteViaRelations')).to.equal(undefined)
+    })
+  })
 })
