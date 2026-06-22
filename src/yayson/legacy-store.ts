@@ -268,7 +268,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     }
     recs.forEach((rec) => {
       if (!modelsObj[type]) {
-        modelsObj[type] = {}
+        modelsObj[type] = safeObject<StoreModels[string]>()
       }
       return this.toModel(rec, type, modelsObj)
     })
