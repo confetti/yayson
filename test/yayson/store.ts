@@ -1490,10 +1490,16 @@ describe('Store', function () {
       expect(Object.getOwnPropertyDescriptor(Object.prototype, 'polluted')).to.equal(undefined)
     })
 
-    it('should not pollute Object.prototype via included with type="__proto__"', function () {
+    it('should not pollute Object.prototype via an included resource with type="__proto__"', function () {
+      // The included resource is materialized because a relationship references
+      // it, so this exercises the real vector (and bypasses any data.type check).
       const store = new Store()
       store.sync({
-        data: { type: 'events', id: '1', attributes: { name: 'Demo' } },
+        data: {
+          type: 'events',
+          id: '1',
+          relationships: { author: { data: { type: '__proto__', id: 'viaIncluded' } } },
+        },
         included: [{ type: '__proto__', id: 'viaIncluded', attributes: { hacked: 'YES' } }],
       })
 
