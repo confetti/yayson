@@ -49,7 +49,10 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
   models: StoreModels
 
   constructor(options?: LegacyStoreOptions<S>) {
-    this.types = options?.types || {}
+    // Null-prototype: read with untrusted `name`/`type` values, so "__proto__"
+    // must not resolve to Object.prototype.
+    this.types = safeObject<Record<string, string>>()
+    Object.assign(this.types, options?.types)
     this.schemas = options?.schemas
     this.strict = options?.strict ?? false
     this.records = []
