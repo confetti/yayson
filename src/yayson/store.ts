@@ -282,16 +282,22 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
 
     // Snapshot for rollback if strict validation throws
     const previousRecords = [...this.records]
+    const recordsByKey = new Map<string, StoreRecord>()
+    const addRecord = (record: StoreRecord): void => {
+      const key = JSON.stringify([record.type, String(record.id)])
+      // Delete first so replacements move to the end, matching remove-and-append.
+      recordsByKey.delete(key)
+      recordsByKey.set(key, record)
+    }
+    previousRecords.forEach(addRecord)
 
     const syncData = (data: JsonApiDocument['data'] | JsonApiDocument['included']): StoreRecord[] => {
       if (data == null) {
         return []
       }
       const add = (obj: StoreRecordType): StoreRecord => {
-        const { type, id } = obj
-        this.remove(type, id)
         const rec = new StoreRecord(obj)
-        this.records.push(rec)
+        addRecord(rec)
         return rec
       }
 
@@ -325,6 +331,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     try {
       syncData(body.included)
       const recs = syncData(body.data)
+      this.records = [...recordsByKey.values()]
 
       const models: StoreModels = safeObject<StoreModels>()
       const result: StoreResult = recs.map((rec) => this.toModel(rec, rec.type, models))

@@ -29,6 +29,69 @@ describe('LegacyStore', function () {
     expect(event.name).to.equal('Demo')
   })
 
+  it('should ingest unique resources without repeatedly scanning stored records', function () {
+    const count = 1000
+    const nodes = Array.from({ length: count }, (_, index) => ({ id: String(index + 1) }))
+    let recordReads = 0
+    this.store.records = new Proxy(this.store.records, {
+      get(target, property, receiver) {
+        // Count record visits, not elapsed time, so the test is independent of CPU speed.
+        if (typeof property === 'string' && /^(0|[1-9]\d*)$/.test(property)) recordReads++
+        return Reflect.get(target, property, receiver)
+      },
+    })
+
+    const result = this.store.syncAll({ nodes })
+    const ingestionReads = recordReads
+
+    expect(result.map((model: { id: string }) => model.id)).to.deep.equal(nodes.map((node) => node.id))
+    expect(this.store.records).to.have.lengthOf(count)
+    // Allow several linear passes, but not a scan of all earlier records per insertion.
+    expect(ingestionReads, 'record reads during ingestion').to.be.at.most(count * 10)
+  })
+
+  it('should replace matching records and append replacements in input order', function () {
+    this.store.syncAll({
+      events: [{ id: 1, name: 'old' }, { id: '2' }],
+      other: { id: '1' },
+    })
+
+    this.store.syncAll({
+      events: [{ id: '1', name: 'first replacement' }, { id: '3' }, { id: 1, name: 'last replacement' }],
+    })
+
+    expect(
+      this.store.records.map((rec: { type: string; data: { id: string | number } }) => [rec.type, rec.data.id]),
+    ).to.deep.equal([
+      ['event', '2'],
+      ['other', '1'],
+      ['event', '3'],
+      ['event', 1],
+    ])
+    expect(this.store.findRecord('event', '1').data.name).to.equal('last replacement')
+  })
+
+  it('should batch replacements without repeatedly scanning existing records', function () {
+    const count = 1000
+    const nodes = Array.from({ length: count }, (_, index) => ({ id: String(index + 1) }))
+    this.store.syncAll({ nodes })
+    let recordReads = 0
+    this.store.records = new Proxy(this.store.records, {
+      get(target, property, receiver) {
+        if (typeof property === 'string' && /^(0|[1-9]\d*)$/.test(property)) recordReads++
+        return Reflect.get(target, property, receiver)
+      },
+    })
+
+    const result = this.store.syncAll({ nodes: nodes.map((node) => ({ ...node, updated: true })) })
+    const ingestionReads = recordReads
+
+    expect(result).to.have.lengthOf(count)
+    expect(result.every((model: { updated: boolean }) => model.updated)).to.equal(true)
+    expect(this.store.records).to.have.lengthOf(count)
+    expect(ingestionReads, 'record reads during replacement').to.be.at.most(count * 10)
+  })
+
   describe('deep acyclic to-one relationships', function () {
     const depth = 5000
 

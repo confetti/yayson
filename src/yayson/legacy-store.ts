@@ -362,6 +362,14 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     }
 
     const syncedRecords: LegacyStoreRecordType[] = []
+    const recordsByKey = new Map<string, LegacyStoreRecordType>()
+    const addRecord = (record: LegacyStoreRecordType): void => {
+      const key = JSON.stringify([record.type, String(record.data.id)])
+      // Delete first so replacements move to the end, matching remove-and-append.
+      recordsByKey.delete(key)
+      recordsByKey.set(key, record)
+    }
+    this.records.forEach(addRecord)
 
     for (const name of Object.keys(data)) {
       if (name === 'meta' || name === 'links') {
@@ -372,9 +380,13 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
       const type = this.types[name] || name
 
       const add = (d: Record<string, unknown>): void => {
-        this.remove(type, String(d.id))
         const rec: LegacyStoreRecordType = { type, data: d }
-        this.records.push(rec)
+        // Preserve remove()'s additional type mapping for legacy aliases.
+        const replacementType = this.types[type] || type
+        if (replacementType !== type) {
+          recordsByKey.delete(JSON.stringify([replacementType, String(d.id)]))
+        }
+        addRecord(rec)
         syncedRecords.push(rec)
       }
 
@@ -385,6 +397,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
       }
     }
 
+    this.records = [...recordsByKey.values()]
     for (const rec of syncedRecords) {
       this.toModel(rec, rec.type, this.models)
     }
