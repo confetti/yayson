@@ -37,6 +37,73 @@ describe('LegacyStore', function () {
       })
     })
 
+    describe('Relationship Validation', function () {
+      it('should skip validation for the model being built but validate its stored relationships', function () {
+        const validatedNames: string[] = []
+        const store = new LegacyStore({
+          schemas: {
+            roots: z.object({ requiredField: z.string() }),
+            nodes: z.object({ name: z.string() }).transform((node) => {
+              validatedNames.push(node.name)
+              return { name: node.name.toUpperCase() }
+            }),
+          },
+          strict: true,
+        })
+        store.syncAll({ nodes: { id: '2', name: 'child' } })
+        validatedNames.length = 0
+
+        const root = store.build({
+          links: { 'roots.next': { type: 'nodes' } },
+          roots: { next: '2' },
+        })
+
+        expect(root).not.to.have.property('requiredField')
+        expect(root.next).to.have.property('name', 'CHILD')
+        expect(validatedNames).to.deep.equal(['child'])
+      })
+
+      it('should validate children before their parent and cache the transformed models', function () {
+        const validatedIds: string[] = []
+        const schema = z.object({ id: z.string(), next: z.any() }).transform((node) => {
+          if (node.next !== null) expect(node.next.validated).to.equal(true)
+          validatedIds.push(node.id)
+          return { ...node, validated: true }
+        })
+        const store = new LegacyStore({
+          types: { nodes: 'node' },
+          schemas: { node: schema },
+          strict: true,
+        })
+        const nodes = Array.from({ length: 3 }, (_, index) => ({
+          id: String(index + 1),
+          next: index < 2 ? String(index + 2) : null,
+        }))
+
+        const result = store.syncAll({ links: { 'nodes.next': { type: 'nodes' } }, nodes })
+
+        expect(result[0].validated).to.equal(true)
+        expect(result[0].next).to.equal(result[1])
+        expect(result[1].next).to.equal(result[2])
+        expect(store.find('node', '2')).to.equal(result[1])
+        expect(validatedIds).to.deep.equal(['3', '2', '1'])
+      })
+
+      it('should allow schemas to strip ids from related models', function () {
+        const store = new LegacyStore({ schemas: { nodes: z.object({ name: z.string() }) }, strict: true })
+        const [root, child] = store.syncAll({
+          links: { 'roots.next': { type: 'nodes' } },
+          roots: { id: '1', next: '2' },
+          nodes: { id: '2', name: 'child' },
+        })
+
+        expect(root.next).to.equal(child)
+        expect(root.next).to.have.property('name', 'child')
+        expect(root.next).not.to.have.property('id')
+        expect(store.find('nodes', '2')).to.equal(child)
+      })
+    })
+
     describe('Strict Mode', function () {
       it('should validate data with schema in strict mode', function () {
         const eventSchema = z.object({

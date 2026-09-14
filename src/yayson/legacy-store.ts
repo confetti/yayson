@@ -74,11 +74,10 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     return stub
   }
 
-  #resolveRelationships(
+  *#resolveRelationships(
     model: StoreModel | StoreModelWithOptionalId,
     type: string,
-    resolver: (relationType: string, id: string) => StoreModel,
-  ): void {
+  ): Generator<{ type: string; id: string }, void, StoreModel> {
     const relations = this.relations[type]
     if (!relations) return
 
@@ -89,18 +88,24 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
       const relationType = relations[attribute]!
       const value = model[attribute]
       if (Array.isArray(value)) {
-        model[attribute] = value
-          .filter((id: unknown) => id != null)
-          .map((id: unknown) => resolver(relationType, String(id)))
+        const related: StoreModel[] = []
+        for (const id of value.filter((id: unknown) => id != null)) {
+          related.push(yield { type: relationType, id: String(id) })
+        }
+        model[attribute] = related
       } else if (value != null) {
-        model[attribute] = resolver(relationType, String(value))
+        model[attribute] = yield { type: relationType, id: String(value) }
       } else {
         model[attribute] = null
       }
     }
   }
 
-  #createModel(rec: LegacyStoreRecordType, type: string, options?: { models?: StoreModels }): StoreModelWithOptionalId {
+  *#createModel(
+    rec: LegacyStoreRecordType,
+    type: string,
+    options?: { models?: StoreModels },
+  ): Generator<{ type: string; id: string }, StoreModelWithOptionalId, StoreModel> {
     const models = options?.models
 
     const model: StoreModelWithOptionalId = { ...rec.data }
@@ -120,14 +125,59 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
       setCachedModel(models, type, idStr, model)
     }
 
-    const resolver = (relationType: string, id: string): StoreModel => {
-      return (
-        this.#findModel(relationType, id, models ?? safeObject<StoreModels>()) ?? this.#createStub(relationType, id)
-      )
-    }
-    this.#resolveRelationships(model, type, resolver)
+    yield* this.#resolveRelationships(model, type)
 
     return model
+  }
+
+  #resolveModel(
+    rec: LegacyStoreRecordType,
+    type: string,
+    options: { shouldValidate: true; models: StoreModels } | { shouldValidate: false; models?: undefined },
+  ): StoreModelWithOptionalId {
+    // Each generator pauses at a relationship until its child is fully resolved.
+    // Keep unfinished models on an explicit stack instead of using recursive calls.
+    const pendingModelResolutions = [
+      { iterator: this.#createModel(rec, type, { models: options.models }), record: rec, type, ...options },
+    ]
+    let resolved: StoreModel | undefined
+    while (pendingModelResolutions.length > 0) {
+      const current = pendingModelResolutions[pendingModelResolutions.length - 1]
+      const result = resolved === undefined ? current.iterator.next() : current.iterator.next(resolved)
+      resolved = undefined
+      if (result.done) {
+        const model = current.shouldValidate
+          ? this.#validateModel(current.record, current.type, result.value, current.models)
+          : result.value
+        pendingModelResolutions.pop()
+        if (pendingModelResolutions.length === 0) return model
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Related models originate from StoreRecords; schemas may strip the id
+        resolved = model as StoreModel
+        continue
+      }
+
+      const ref = result.value
+      const relatedRecord = this.findRecord(ref.type, ref.id)
+      if (!relatedRecord) {
+        resolved = this.#createStub(ref.type, ref.id)
+        continue
+      }
+      // Preserve build()'s separate cache for each relationship of its root.
+      const relatedModels = current.models ?? safeObject<StoreModels>()
+      const cached = getCachedModel(relatedModels, ref.type, ref.id)
+      if (cached) {
+        resolved = cached
+      } else {
+        pendingModelResolutions.push({
+          iterator: this.#createModel(relatedRecord, ref.type, { models: relatedModels }),
+          record: relatedRecord,
+          type: ref.type,
+          models: relatedModels,
+          shouldValidate: true,
+        })
+      }
+    }
+    throw new Error('Model resolution completed without a model')
   }
 
   toModel(rec: LegacyStoreRecordType, type: string, modelsArg: StoreModels): StoreModel {
@@ -139,11 +189,20 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
       return cached
     }
 
-    const result = this.#createModel(rec, type, { models })
-    if (!hasId(result)) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Stored models are checked for an id before validation
+    return this.#resolveModel(rec, type, { shouldValidate: true, models }) as StoreModel
+  }
+
+  #validateModel(
+    rec: LegacyStoreRecordType,
+    type: string,
+    model: StoreModelWithOptionalId,
+    models: StoreModels,
+  ): StoreModel {
+    if (!hasId(model)) {
       throw new Error(`Expected model of type ${type} to have an id`)
     }
-    const model = result
+    const idStr = String(rec.data.id)
 
     if (this.schemas && this.schemas[type]) {
       const schema = this.schemas[type]
@@ -232,7 +291,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     }
 
     const type = this.types[name] || name
-    return this.#createModel({ type, data: value }, type)
+    return this.#resolveModel({ type, data: value }, type, { shouldValidate: false })
   }
 
   /** @deprecated Use retrieve() instead. */

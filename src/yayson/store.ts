@@ -3,6 +3,7 @@ import type {
   JsonApiDocument,
   JsonApiLink,
   JsonApiRelationships,
+  JsonApiResource,
   JsonApiResourceIdentifier,
   SchemaRegistry,
   StoreModel,
@@ -62,7 +63,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     return stub
   }
 
-  #createModel(
+  *#createModel(
     resource: {
       type: string
       id?: string | number | null
@@ -75,7 +76,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
       models?: StoreModels
       includeRelMeta?: boolean
     },
-  ): StoreModelWithOptionalId {
+  ): Generator<JsonApiResourceIdentifier, StoreModelWithOptionalId, StoreModel> {
     const models = options?.models ?? safeObject<StoreModels>()
 
     const model: StoreModelWithOptionalId = { ...(resource.attributes || {}) }
@@ -100,22 +101,18 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     }
 
     if (resource.relationships != null) {
-      const resolver = (ref: JsonApiResourceIdentifier): StoreModel => {
-        return this.#findModel(ref.type, ref.id, models) ?? this.#createStub(ref.type, ref.id)
-      }
-      this.#resolveRelationships(model, resource.relationships, resolver, {
+      yield* this.#resolveRelationships(model, resource.relationships, {
         includeRelMeta: options?.includeRelMeta,
       })
     }
     return model
   }
 
-  #resolveRelationships(
+  *#resolveRelationships(
     model: StoreModel | StoreModelWithOptionalId,
     relationships: JsonApiRelationships,
-    resolver: (ref: JsonApiResourceIdentifier) => StoreModel | StoreModelWithOptionalId,
     options?: { includeRelMeta?: boolean },
-  ): void {
+  ): Generator<JsonApiResourceIdentifier, void, StoreModel> {
     const includeRelMeta = options?.includeRelMeta ?? true
 
     // Object.keys (not for...in) so a polluted Object.prototype can't inject members.
@@ -132,14 +129,16 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
       }
 
       if (Array.isArray(data)) {
-        model[key] = data.filter((item) => item.id != null).map(resolver)
+        const related: StoreModel[] = []
+        for (const item of data.filter((item) => item.id != null)) {
+          related.push(yield item)
+        }
+        model[key] = related
       } else if (data != null && data.id != null) {
-        const relModel = resolver(data)
+        const relModel = yield data
         if (includeRelMeta) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- REL_LINKS/REL_META only used when resolver returns StoreModel
-          const modelWithMeta = relModel as StoreModel
-          modelWithMeta[REL_LINKS] = links || {}
-          modelWithMeta[REL_META] = meta || {}
+          relModel[REL_LINKS] = links || {}
+          relModel[REL_META] = meta || {}
         }
         model[key] = relModel
       } else if (data == null && (links != null || meta != null) && includeRelMeta) {
@@ -151,10 +150,46 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     }
   }
 
+  #resolveModel(resource: JsonApiResource, models: StoreModels, record?: StoreRecord): StoreModelWithOptionalId {
+    // Each generator pauses at a relationship until its child is fully resolved.
+    // Keep unfinished models on an explicit stack instead of using recursive calls.
+    const pendingModelResolutions = [{ iterator: this.#createModel(resource, { models }), record }]
+    let resolved: StoreModel | undefined
+    while (pendingModelResolutions.length > 0) {
+      const current = pendingModelResolutions[pendingModelResolutions.length - 1]
+      const result = resolved === undefined ? current.iterator.next() : current.iterator.next(resolved)
+      resolved = undefined
+      if (result.done) {
+        const model = current.record ? this.#validateModel(current.record, result.value) : result.value
+        pendingModelResolutions.pop()
+        if (pendingModelResolutions.length === 0) return model
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Related models originate from StoreRecords; schemas may strip the id
+        resolved = model as StoreModel
+        continue
+      }
+
+      const ref = result.value
+      const cached = getCachedModel(models, ref.type, String(ref.id))
+      if (cached) {
+        resolved = cached
+        continue
+      }
+      const rec = this.findRecord(ref.type, ref.id)
+      if (rec) {
+        pendingModelResolutions.push({ iterator: this.#createModel(rec, { models }), record: rec })
+      } else {
+        resolved = this.#createStub(ref.type, ref.id)
+      }
+    }
+    throw new Error('Model resolution completed without a model')
+  }
+
   toModel(rec: StoreRecord, type: string, models: StoreModels): StoreModel {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- StoreRecord always has id
-    const model = this.#createModel(rec, { models: safeCache(models) }) as StoreModel
+    return this.#resolveModel(rec, safeCache(models), rec) as StoreModel
+  }
 
+  #validateModel(rec: StoreRecord, model: StoreModelWithOptionalId): StoreModelWithOptionalId {
     // Validate with schema if provided
     if (this.schemas && this.schemas[rec.type]) {
       const schema = this.schemas[rec.type]
@@ -331,7 +366,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     if (data == null || Array.isArray(data)) {
       throw new Error('build() expects a single resource in data, not null or an array')
     }
-    return this.#createModel(data)
+    return this.#resolveModel(data, safeObject<StoreModels>())
   }
 
   retrieve<T extends string>(type: T, body: JsonApiDocument): InferModelType<S, T> | null {

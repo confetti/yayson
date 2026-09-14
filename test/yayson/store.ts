@@ -27,6 +27,160 @@ describe('Store', function () {
     expect(events[0].name).to.equal('Demo')
   })
 
+  describe('deep acyclic to-one relationships', function () {
+    const depth = 5000
+
+    beforeEach(function () {
+      this.resources = Array.from({ length: depth }, (_, index) => ({
+        type: 'nodes',
+        id: String(index + 1),
+        attributes: { position: index + 1 },
+        relationships: {
+          next: { data: index + 1 < depth ? { type: 'nodes', id: String(index + 2) } : null },
+        },
+      }))
+    })
+
+    function expectCompleteChain(node: any) {
+      // Walk iteratively so the assertions don't introduce their own stack limit.
+      for (let position = 1; position <= depth; position++) {
+        expect(node.id).to.equal(String(position))
+        expect(node[TYPE]).to.equal('nodes')
+        expect(node.position).to.equal(position)
+        node = node.next
+      }
+      expect(node).to.equal(null)
+    }
+
+    it('should resolve the complete chain with syncAll()', function () {
+      const result = this.store.syncAll({ data: this.resources[0], included: this.resources.slice(1) })
+
+      expect(result).to.have.lengthOf(1)
+      expectCompleteChain(result[0])
+    })
+
+    it('should resolve the complete chain with find()', function () {
+      this.store.syncAll({ data: [], included: this.resources })
+
+      const result = this.store.find('nodes', '1')
+
+      expectCompleteChain(result)
+    })
+
+    it('should resolve the complete chain with findAll()', function () {
+      this.store.syncAll({ data: [], included: this.resources })
+
+      const result = this.store.findAll('nodes')
+
+      expect(result).to.have.lengthOf(depth)
+      expectCompleteChain(result[0])
+    })
+
+    it('should resolve the complete chain with build()', function () {
+      this.store.syncAll({ data: [], included: this.resources })
+
+      const result = this.store.build({ data: this.resources[0] })
+
+      expectCompleteChain(result)
+    })
+  })
+
+  describe('deep acyclic to-many relationships', function () {
+    const depth = 5000
+
+    beforeEach(function () {
+      this.resources = Array.from({ length: depth }, (_, index) => ({
+        type: 'nodes',
+        id: String(index + 1),
+        attributes: { position: index + 1 },
+        relationships: {
+          next: { data: index + 1 < depth ? [{ type: 'nodes', id: String(index + 2) }] : [] },
+        },
+      }))
+    })
+
+    function expectCompleteChain(node: any) {
+      // Walk iteratively so the assertions don't introduce their own stack limit.
+      for (let position = 1; position <= depth; position++) {
+        expect(node.id).to.equal(String(position))
+        expect(node[TYPE]).to.equal('nodes')
+        expect(node.position).to.equal(position)
+        expect(node.next).to.have.lengthOf(position < depth ? 1 : 0)
+        node = node.next[0]
+      }
+      expect(node).to.equal(undefined)
+    }
+
+    it('should resolve the complete chain with syncAll()', function () {
+      const result = this.store.syncAll({ data: this.resources[0], included: this.resources.slice(1) })
+
+      expect(result).to.have.lengthOf(1)
+      expectCompleteChain(result[0])
+    })
+
+    it('should resolve the complete chain with find()', function () {
+      this.store.syncAll({ data: [], included: this.resources })
+
+      const result = this.store.find('nodes', '1')
+
+      expectCompleteChain(result)
+    })
+
+    it('should resolve the complete chain with findAll()', function () {
+      this.store.syncAll({ data: [], included: this.resources })
+
+      const result = this.store.findAll('nodes')
+
+      expect(result).to.have.lengthOf(depth)
+      expectCompleteChain(result[0])
+    })
+
+    it('should resolve the complete chain with build()', function () {
+      this.store.syncAll({ data: [], included: this.resources })
+
+      const result = this.store.build({ data: this.resources[0] })
+
+      expectCompleteChain(result)
+    })
+  })
+
+  it('should finish validating children before validating their parent', function () {
+    const validatedIds: string[] = []
+    const schema = z.object({ id: z.string(), next: z.any() }).transform((node) => {
+      if (node.next !== null) expect(node.next.validated).to.equal(true)
+      validatedIds.push(node.id)
+      return { ...node, validated: true }
+    })
+    const store = new Store({ schemas: { nodes: schema }, strict: true })
+    const resources = Array.from({ length: 3 }, (_, index) => ({
+      type: 'nodes',
+      id: String(index + 1),
+      relationships: {
+        next: { data: index < 2 ? { type: 'nodes', id: String(index + 2) } : null },
+      },
+    }))
+
+    const [root] = store.syncAll({ data: resources[0], included: resources.slice(1) })
+
+    expect(root.validated).to.equal(true)
+    expect(validatedIds).to.deep.equal(['3', '2', '1'])
+  })
+
+  it('should allow schemas to strip ids from related models', function () {
+    const store = new Store({ schemas: { nodes: z.object({ name: z.string() }) }, strict: true })
+    const [root] = store.syncAll({
+      data: {
+        type: 'roots',
+        id: '1',
+        relationships: { next: { data: { type: 'nodes', id: '2' } } },
+      },
+      included: [{ type: 'nodes', id: '2', attributes: { name: 'child' } }],
+    })
+
+    expect(root.next).to.have.property('name', 'child')
+    expect(root.next).not.to.have.property('id')
+  })
+
   it('should allow an attribute namned type', function () {
     this.store.syncAll({
       data: {

@@ -29,6 +29,121 @@ describe('LegacyStore', function () {
     expect(event.name).to.equal('Demo')
   })
 
+  describe('deep acyclic to-one relationships', function () {
+    const depth = 5000
+
+    beforeEach(function () {
+      this.nodes = Array.from({ length: depth }, (_, index) => ({
+        id: String(index + 1),
+        position: index + 1,
+        next: index + 1 < depth ? String(index + 2) : null,
+      }))
+    })
+
+    function expectCompleteChain(node: any) {
+      // Walk iteratively so the assertions don't introduce their own stack limit.
+      for (let position = 1; position <= depth; position++) {
+        expect(node.id).to.equal(String(position))
+        expect(node[TYPE]).to.equal('nodes')
+        expect(node.position).to.equal(position)
+        node = node.next
+      }
+      expect(node).to.equal(null)
+    }
+
+    it('should resolve the complete chain with syncAll()', function () {
+      const result = this.store.syncAll({ links: { 'nodes.next': { type: 'nodes' } }, nodes: this.nodes })
+
+      expect(result).to.have.lengthOf(depth)
+      expectCompleteChain(result[0])
+    })
+
+    describe('with unresolved stored records', function () {
+      beforeEach(function () {
+        this.store.setupRelations({ 'nodes.next': { type: 'nodes' } })
+        // Seed records without syncAll() resolving the chain or filling the model cache.
+        this.store.records = this.nodes.map((data: object) => ({ type: 'nodes', data }))
+      })
+
+      it('should resolve the complete chain with find()', function () {
+        const result = this.store.find('nodes', '1')
+
+        expectCompleteChain(result)
+      })
+
+      it('should resolve the complete chain with findAll()', function () {
+        const result = this.store.findAll('nodes')
+
+        expect(result).to.have.lengthOf(depth)
+        expectCompleteChain(result[0])
+      })
+
+      it('should resolve the complete chain with build()', function () {
+        const result = this.store.build({ nodes: this.nodes[0] })
+
+        expectCompleteChain(result)
+      })
+    })
+  })
+
+  describe('deep acyclic to-many relationships', function () {
+    const depth = 5000
+
+    beforeEach(function () {
+      this.nodes = Array.from({ length: depth }, (_, index) => ({
+        id: String(index + 1),
+        position: index + 1,
+        next: index + 1 < depth ? [String(index + 2)] : [],
+      }))
+    })
+
+    function expectCompleteChain(node: any) {
+      // Walk iteratively so the assertions don't introduce their own stack limit.
+      for (let position = 1; position <= depth; position++) {
+        expect(node.id).to.equal(String(position))
+        expect(node[TYPE]).to.equal('nodes')
+        expect(node.position).to.equal(position)
+        expect(node.next).to.have.lengthOf(position < depth ? 1 : 0)
+        node = node.next[0]
+      }
+      expect(node).to.equal(undefined)
+    }
+
+    it('should resolve the complete chain with syncAll()', function () {
+      const result = this.store.syncAll({ links: { 'nodes.next': { type: 'nodes' } }, nodes: this.nodes })
+
+      expect(result).to.have.lengthOf(depth)
+      expectCompleteChain(result[0])
+    })
+
+    describe('with unresolved stored records', function () {
+      beforeEach(function () {
+        this.store.setupRelations({ 'nodes.next': { type: 'nodes' } })
+        // Seed records without syncAll() resolving the chain or filling the model cache.
+        this.store.records = this.nodes.map((data: object) => ({ type: 'nodes', data }))
+      })
+
+      it('should resolve the complete chain with find()', function () {
+        const result = this.store.find('nodes', '1')
+
+        expectCompleteChain(result)
+      })
+
+      it('should resolve the complete chain with findAll()', function () {
+        const result = this.store.findAll('nodes')
+
+        expect(result).to.have.lengthOf(depth)
+        expectCompleteChain(result[0])
+      })
+
+      it('should resolve the complete chain with build()', function () {
+        const result = this.store.build({ nodes: this.nodes[0] })
+
+        expectCompleteChain(result)
+      })
+    })
+  })
+
   it('should populate relations', function () {
     this.store.syncAll({
       links: {
