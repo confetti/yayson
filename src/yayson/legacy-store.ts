@@ -10,7 +10,7 @@ import type {
 } from './types.js'
 import { TYPE, LINKS, META } from './symbols.js'
 import { validate } from './schema.js'
-import { safeObject, safeCache, isUnsafeKey } from './safe.js'
+import { safeObject, safeCache, isUnsafeKey, getCachedModel, getCachedModels, setCachedModel } from './safe.js'
 
 interface LegacyStoreRecordType {
   type: string
@@ -117,10 +117,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
 
     if (models && hasId(model)) {
       const idStr = String(model.id)
-      if (!models[type]) {
-        models[type] = safeObject<StoreModels[string]>()
-      }
-      models[type]![idStr] = model
+      setCachedModel(models, type, idStr, model)
     }
 
     const resolver = (relationType: string, id: string): StoreModel => {
@@ -137,12 +134,9 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     const idStr = String(rec.data.id)
     const models = safeCache(modelsArg)
 
-    if (!models[type]) {
-      models[type] = safeObject<StoreModels[string]>()
-    }
-
-    if (models[type]![idStr]) {
-      return models[type]![idStr]!
+    const cached = getCachedModel(models, type, idStr)
+    if (cached) {
+      return cached
     }
 
     const result = this.#createModel(rec, type, { models })
@@ -171,7 +165,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
       validatedModel[LINKS] = model[LINKS]
       validatedModel[META] = model[META]
 
-      models[type]![idStr] = validatedModel
+      setCachedModel(models, type, idStr, validatedModel)
       return validatedModel
     }
 
@@ -208,7 +202,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
     if (rec == null) {
       return null
     }
-    return models[type]?.[id] ?? this.toModel(rec, type, models)
+    return getCachedModel(models, type, id) ?? this.toModel(rec, type, models)
   }
 
   static build(data: LegacyData): StoreModelWithOptionalId {
@@ -271,13 +265,10 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
       return []
     }
     recs.forEach((rec) => {
-      if (!modelsObj[type]) {
-        modelsObj[type] = safeObject<StoreModels[string]>()
-      }
       return this.toModel(rec, type, modelsObj)
     })
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Type inference: maps string literal type parameter to schema type
-    return Object.values(modelsObj[type] || {}) as InferModelType<S, T>[]
+    return getCachedModels(modelsObj, type) as InferModelType<S, T>[]
   }
 
   remove(type: string, id?: string | number): void {
@@ -339,7 +330,7 @@ export default class LegacyStore<S extends SchemaRegistry = SchemaRegistry> {
       this.toModel(rec, rec.type, this.models)
     }
 
-    const result: StoreResult = syncedRecords.map((rec) => this.models[rec.type]![String(rec.data.id)]!)
+    const result: StoreResult = syncedRecords.map((rec) => getCachedModel(this.models, rec.type, String(rec.data.id))!)
     if (data.meta != null) {
       result[META] = data.meta
     }

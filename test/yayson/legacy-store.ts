@@ -346,6 +346,37 @@ describe('LegacyStore', function () {
   })
 
   describe('Prototype pollution', function () {
+    describe('Relationship id="__proto__" with ordinary inner cache maps', function () {
+      let store: InstanceType<typeof LegacyStore>
+      const record = { type: 'events', data: { id: '1', author: '__proto__' } }
+
+      beforeEach(function () {
+        store = new LegacyStore()
+        store.syncAll({
+          links: { 'events.author': { type: 'people' } },
+          events: [record.data],
+          people: [{ id: '__proto__', name: 'real included model' }],
+        })
+      })
+
+      function expectRealAuthor(result: unknown) {
+        expect(result).to.have.property('author').that.does.not.equal(Object.prototype)
+        expect(result).to.have.property('author').that.includes({ id: '__proto__', name: 'real included model' })
+      }
+
+      it('should resolve find() to the stored person', function () {
+        expectRealAuthor(store.find('events', '1', { people: {} }))
+      })
+
+      it('should resolve findAll() to the stored person', function () {
+        expectRealAuthor(store.findAll('events', { people: {} })[0])
+      })
+
+      it('should resolve toModel() to the stored person', function () {
+        expectRealAuthor(store.toModel(record, 'events', { people: {} }))
+      })
+    })
+
     afterEach(function () {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime cleanup
       delete (Object.prototype as any).legpoll

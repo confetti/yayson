@@ -15,7 +15,7 @@ import type {
 } from './types.js'
 import { TYPE, LINKS, META, REL_LINKS, REL_META } from './symbols.js'
 import { validate } from './schema.js'
-import { safeObject, safeCache, isUnsafeKey } from './safe.js'
+import { safeObject, safeCache, isUnsafeKey, getCachedModel, getCachedModels, setCachedModel } from './safe.js'
 
 function hasId<T extends StoreModelWithOptionalId>(model: T): model is T & { id: string | number } {
   return model.id != null
@@ -94,11 +94,8 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
     // Cache before resolving relationships (for circular refs)
     if (hasId(model)) {
       const idStr = String(model.id)
-      if (!models[type]) {
-        models[type] = safeObject<StoreModels[string]>()
-      }
-      if (!models[type][idStr]) {
-        models[type][idStr] = model
+      if (!getCachedModel(models, type, idStr)) {
+        setCachedModel(models, type, idStr, model)
       }
     }
 
@@ -196,7 +193,7 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
 
   #findModel(type: string, id: string | number, models: StoreModels): StoreModel | null {
     const idStr = String(id)
-    const cached = models[type]?.[idStr]
+    const cached = getCachedModel(models, type, idStr)
     if (cached) {
       return cached
     }
@@ -220,13 +217,10 @@ export default class Store<S extends SchemaRegistry = SchemaRegistry> {
       return []
     }
     recs.forEach((rec) => {
-      if (!modelsObj[type]) {
-        modelsObj[type] = safeObject<StoreModels[string]>()
-      }
       return this.toModel(rec, type, modelsObj)
     })
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Enable type inference from schema registry
-    return Object.values(modelsObj[type] || {}) as InferModelType<S, T>[]
+    return getCachedModels(modelsObj, type) as InferModelType<S, T>[]
   }
 
   remove(type: string, id?: string | number): void {

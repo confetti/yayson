@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { z } from 'zod'
 import yayson from '../../src/yayson.js'
-import { TYPE, LINKS, REL_LINKS, REL_META, META } from '../../src/utils.js'
+import { TYPE, LINKS, REL_LINKS, REL_META, META, getRelationshipLinks, getRelationshipMeta } from '../../src/utils.js'
 
 const { Store } = yayson()
 
@@ -1559,6 +1559,90 @@ describe('Store', function () {
       // A legitimate relationship is still resolved
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime probe
       expect((model as any).author.id).to.equal('5')
+    })
+
+    describe('Relationship id="__proto__" with caller caches', function () {
+      let store: InstanceType<typeof Store>
+      const links = { related: 'https://attacker.invalid/relationship' }
+      const meta = { permission: 'attacker-controlled' }
+      const attributes = { name: 'real included model', isAdmin: true }
+      const record = {
+        type: 'events',
+        id: '1',
+        relationships: {
+          author: { data: { type: 'people', id: '__proto__' }, links, meta },
+        },
+      }
+      const protectedKeys = [REL_LINKS, REL_META, 'isAdmin', 'name', 'permission', 'related']
+
+      beforeEach(function () {
+        store = new Store()
+        store.sync({
+          data: record,
+          included: [{ type: 'people', id: '__proto__', attributes }],
+        })
+      })
+
+      afterEach(function () {
+        // Mocha runs cleanup even when an assertion fails.
+        for (const key of protectedKeys) {
+          Reflect.deleteProperty(Object.prototype, key)
+        }
+      })
+
+      function expectSafeAuthor(result: unknown) {
+        // Neither the relationship symbols nor payload fields should become global.
+        for (const key of protectedKeys) {
+          expect(Object.prototype).not.to.have.own.property(key)
+          expect({ id: 'unrelated' }).not.to.have.property(key)
+        }
+        expect(getRelationshipLinks({ id: 'unrelated' })).to.equal(undefined)
+        expect(getRelationshipMeta({ id: 'unrelated' })).to.equal(undefined)
+
+        // Resolve the actual person and retain their relationship metadata.
+        expect(result).to.have.property('author').that.does.not.equal(Object.prototype)
+        expect(result)
+          .to.have.property('author')
+          .that.includes({ id: '__proto__', ...attributes })
+        expect(result).to.have.property('author').with.property(REL_LINKS).that.deep.equals(links)
+        expect(result).to.have.property('author').with.property(REL_META).that.deep.equals(meta)
+      }
+
+      it('should safely resolve find() with an ordinary inner map', function () {
+        expectSafeAuthor(store.find('events', '1', { people: {} }))
+      })
+
+      it('should safely resolve findAll() with an ordinary inner map', function () {
+        expectSafeAuthor(store.findAll('events', { people: {} })[0])
+      })
+
+      it('should safely resolve toModel() with an ordinary inner map', function () {
+        expectSafeAuthor(store.toModel(record, 'events', { people: {} }))
+      })
+
+      it('should safely resolve find() with the default cache', function () {
+        expectSafeAuthor(store.find('events', '1'))
+      })
+
+      it('should safely resolve findAll() with the default cache', function () {
+        expectSafeAuthor(store.findAll('events')[0])
+      })
+
+      it('should safely resolve toModel() with an empty null-prototype cache', function () {
+        expectSafeAuthor(store.toModel(record, 'events', Object.create(null)))
+      })
+
+      it('should safely resolve find() with a null-prototype inner map', function () {
+        expectSafeAuthor(store.find('events', '1', { people: Object.create(null) }))
+      })
+
+      it('should safely resolve findAll() with a null-prototype inner map', function () {
+        expectSafeAuthor(store.findAll('events', { people: Object.create(null) })[0])
+      })
+
+      it('should safely resolve toModel() with a null-prototype inner map', function () {
+        expectSafeAuthor(store.toModel(record, 'events', { people: Object.create(null) }))
+      })
     })
 
     it('should not pollute via a plain-object cache passed to find()', function () {

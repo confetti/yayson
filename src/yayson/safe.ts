@@ -1,3 +1,5 @@
+import type { StoreModel, StoreModels } from './types.js'
+
 /**
  * Defenses against prototype pollution, since yayson keys lookup tables and
  * model objects by strings from untrusted documents (`type`, `id`, member
@@ -14,21 +16,60 @@ export function safeObject<T extends object>(): T {
 }
 
 /**
- * Normalize a caller-supplied cache to a null-prototype object, so a public
- * `models` argument that happens to be a plain `{}` can't let type="__proto__"
- * resolve through Object.prototype. Already-null-prototype caches pass through
- * unchanged (preserving identity/memoization).
+ * Normalize both cache levels so untrusted types and ids cannot resolve through
+ * inherited properties. Preserve already-safe map identities and cached models
+ * for memoization and circular relationship resolution.
  */
-export function safeCache<T extends object>(cache: T | undefined): T {
+export function safeCache(cache: StoreModels | undefined): StoreModels {
   if (cache === undefined) {
-    return safeObject<T>()
+    return safeObject<StoreModels>()
   }
-  if (Object.getPrototypeOf(cache) === null) {
-    return cache
+  const safe = Object.getPrototypeOf(cache) === null ? cache : Object.assign(safeObject<StoreModels>(), cache)
+  for (const type of Object.keys(safe)) {
+    const models = safe[type]
+    // The caller may supply an ordinary inner map (e.g. { people: {} }).
+    // Copy it into a null-prototype map so ids like "__proto__" cannot resolve
+    // to inherited values. Already-safe maps and the cached models stay unchanged.
+    if (Object.getPrototypeOf(models) !== null) {
+      safe[type] = Object.assign(safeObject<StoreModels[string]>(), models)
+    }
   }
-  const safe = safeObject<T>()
-  Object.assign(safe, cache)
   return safe
+}
+
+/** Cache reads must never fall back to inherited types or ids, even before normalization. */
+function getCache(cache: StoreModels, type: string): StoreModels[string] | undefined {
+  return Object.hasOwn(cache, type) ? cache[type] : undefined
+}
+
+export function getCachedModel(cache: StoreModels, type: string, id: string): StoreModel | undefined {
+  const models = getCache(cache, type)
+  return models && Object.hasOwn(models, id) ? models[id] : undefined
+}
+
+export function getCachedModels(cache: StoreModels, type: string): StoreModel[] {
+  const models = getCache(cache, type)
+  return models ? Object.values(models) : []
+}
+
+/** Safe on ordinary objects too: never invoke an inherited setter such as __proto__. */
+export function setCachedModel(cache: StoreModels, type: string, id: string, model: StoreModel): void {
+  let models = getCache(cache, type)
+  if (!models || Object.getPrototypeOf(models) !== null) {
+    models = Object.assign(safeObject<StoreModels[string]>(), models)
+    Object.defineProperty(cache, type, {
+      value: models,
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    })
+  }
+  Object.defineProperty(models, id, {
+    value: model,
+    writable: true,
+    enumerable: true,
+    configurable: true,
+  })
 }
 
 const UNSAFE_KEYS = new Set<string>(['__proto__', 'constructor', 'prototype'])
